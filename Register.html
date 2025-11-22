@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="LogIn.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="inner-box">
+        <h3>Create Your Account</h3>
+        <h4>Join BabyStar and start your pregnancy journey</h4>
+
+        <form>
+            <div class="registration">
+                <label for="fullname">Fullname</label>
+                <input type="text" id="fullname"> 
+            </div>
+
+            <div class="registration">
+                <label for="email">Email</label>
+                <input type="text" id="email"> 
+            </div>
+
+            <div class="registration">
+                <label for="password">Password</label>
+                <input type="password" id="password">
+                <div id="password-error"></div>
+            </div>
+
+            <div class="registration">
+                <label for="password2">Re-enter your password</label>
+                <input type="text" id="password2"> 
+                <div id="password2-error"></div>
+            </div>
+
+            <div class="user-type">
+                <div class="userblock">
+                    <input type="radio" name="user" value="Mother" id="Mother">
+                    <label for="Mother">Expectant mother</label>
+                </div>
+
+                <div class="userblock">
+                    <input type="radio" name="user" value="Other" id="Other">
+                    <label for="Other">Family member</label>
+                </div>
+            </div>
+
+            <input type="submit" class="button" value="Create Account" id="submitBtn">
+
+            <p> Already have an account? <span> Log In </span>
+        </form>
+    </div>
+
+
+
+    <script src="Register.js"></script>
+</body>
+</html>

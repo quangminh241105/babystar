@@ -1,0 +1,163 @@
+body {
+    background: linear-gradient(to bottom,rgba(255, 227, 240, 0.5),rgba(217, 30, 143, 0.5));
+    background-repeat: no-repeat;
+    height: 100vh;
+    margin:0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+#inner-box {
+    background-color: #FFE3F0;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #CDBBBB;
+    border-radius: 20px;
+    padding: 60px;
+    width: 20%;
+    box-shadow: 0 6px 18px rgba(217, 30, 143, 0.25);
+}
+
+h3 {
+    font-size: 25px;
+    font-family: 'Poppins';
+    font-weight: 550;
+    color: #8A0E52;
+    margin-bottom: 0;
+}
+
+h4 {
+    margin-top: 0;
+    font-family: 'Poppins';
+    font-weight: 500;
+    color: #8A0E52;
+}
+
+label {
+    font-family: 'Poppins';
+    color: #8A0E52;
+    display: block
+}
+
+.registration {
+    margin-bottom: 25px;
+}
+
+#email, #password, #fullname, #password2  {
+    border-color: #ED7EAF;
+    border-radius: 8px;
+    height: 30px;
+    width: 95%;
+    background-color:whitesmoke;
+    outline: none; 
+}
+
+#email:focus, #password:focus, #fullname:focus, #password2:focus {
+    border-color: #D91E8F;
+    box-shadow: 0 0 8px rgba(217, 30, 143, 0.3) !important;
+    background-color: #fff0f8;
+}
+
+
+.button {
+    display: block;
+    background-color: #E00072;
+    font-family: 'Poppins';
+    color: white;
+    width: 50%;
+    height: 50px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 30px;
+    border-width: 0;
+    margin-top: 30px;
+    font-size: 17px;
+    box-shadow: 0 6px 18px rgba(217, 30, 143, 0.25);
+    transition: all 0.25s ease;
+}
+
+.button:hover {
+    background-color: #ff2a9a;  /* lighter pink */
+    transform: translateY(-3px); /* small lift */
+    box-shadow: 0 6px 18px rgba(224, 0, 114, 0.3);
+}
+
+.button:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(224, 0, 114, 0.2);
+}
+
+p {
+    text-align: center;
+    font-family: 'Poppins';
+    color: #8A0E52;
+    font-size: 14px;
+}
+
+span {
+    font-weight: bold;
+    transition: all 0.25s ease;
+    cursor: pointer; /* makes it feel clickable */
+}
+span:hover {
+    color: #ff3ca0; 
+    transform: scale(1.08);
+    text-shadow: 0 0 10px rgba(255, 60, 160, 0.6);
+}
+span:active {
+    transform: scale(0.9);
+    color: #5A0835;
+}
+
+
+.user-type {
+    display: flex;
+    flex-direction: row;
+    gap: 50px;
+    font-family: 'Poppins';
+    font-size: 15px;
+    color: #8A0E52;
+}
+
+.userblock {
+    display: flex;
+    align-items: center;  
+    gap: 10px;            
+}
+
+/* Hide default radio */
+.user-type input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ED7EAF;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-right: 8px;
+}
+
+/* Pink hover glow */
+.user-type input[type="radio"]:hover {
+    box-shadow: 0 0 6px rgba(217, 30, 143, 0.4);
+}
+
+/* When selected */
+.user-type input[type="radio"]:checked {
+    border-color: #D91E8F;
+    background-color: #D91E8F;
+}
+
+/* Label spacing + click effect */
+.user-type label {
+    cursor: pointer;
+    transition: color 0.25s ease;
+}
+
+.user-type label:hover {
+    color: #B31374;
+}
