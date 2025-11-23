@@ -58,7 +58,7 @@ app.response.render = function(view, options, callback) {
 };
 
 // Connect to MongoDB then start server
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/pregnancy_app';
+const MONGO_URI = process.env.MONGO_URI;
 mongoose.connect(MONGO_URI, {
 	useNewUrlParser: true,
 	useUnifiedTopology: true,
