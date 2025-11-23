@@ -1,31 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - BabyStar</title>
-    <link rel="stylesheet" href="/css/login.css">
-</head>
-<body>
-    <div id="inner-box">
-        <h3>Welcome To BabyStar</h3>
-        <h4>Your AI-Powered pregnancy companion</h4>
+<link rel="stylesheet" href="/css/login.css">
 
-        <form>
-            <div class="registration">
-                <label for="email">Email</label>
-                <input type="text" id="email"> 
-            </div>
+<div id="inner-box">
+    <h3>Welcome To BabyStar</h3>
+    <h4>Your AI-Powered pregnancy companion</h4>
 
-            <div class="registration">
-                <label for="password">Password</label>
-                <input type="password" id="password">
-            </div>
+    <form>
+        <div class="registration">
+            <label for="email">Email</label>
+            <input type="text" id="email">
+        </div>
 
-            <input type="submit" class="button" value="Log In">
+        <div class="registration">
+            <label for="password">Password</label>
+            <input type="password" id="password">
+        </div>
 
-            <p> Don't have an account? <span> Register now </span>
-        </form>
-    </div>
-</body>
-</html>
+        <input type="submit" class="button" value="Log In">
+
+        <p> Don't have an account? <a href="/auth/register"><span> Register now </span></a> 
+    </form>
+</div>

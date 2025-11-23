@@ -96,10 +96,15 @@ p {
     font-size: 14px;
 }
 
+a {
+    text-decoration: none;
+}
+
 span {
     font-weight: bold;
     transition: all 0.25s ease;
     cursor: pointer; /* makes it feel clickable */
+    color: #5A0835;
 }
 span:hover {
     color: #ff3ca0; 
