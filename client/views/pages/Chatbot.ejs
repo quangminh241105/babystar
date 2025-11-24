@@ -1,0 +1,66 @@
+<link rel="stylesheet" href="/css/Chatbot.css">
+
+<div class="featureCard">
+        <div class="icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="purple" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot-icon lucide-bot"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+        </div>
+
+        <div class="feature">
+            <div class="featureName"> AI Pregnancy Assistant </div>
+            <div class="featureDescription"> Ask me anything about pregnancy, health and wellness </div>
+        </div>
+    </div>
+
+    <div class="chatBox">
+        <div class="AIChatBubble">
+            <div class="AIchatIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot-icon lucide-bot"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+            </div>
+
+            <div class="chat">
+                <div class="chatText"> Hello! I'm your BabyStar AI assistant. I can help answer questions about pregnancy, nutrition, exercise, and more. What would you like to know? </div>
+                <div class="AIchatTime"> 14:26 </div>
+            </div>
+        </div>
+
+        <div class="UserChatBubble">
+            <div class="UserchatIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="purple" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-icon lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+
+            <div class="chat">
+                <div class="UserChatText"> Hello! I'm your BabyStar AI assistant. I can help answer questions about pregnancy, nutrition, exercise, and more. What would you like to know? </div>
+                <div class="UserChatTime"> 14:26 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="userInput">
+        <div>Quick Questions:</div>
+
+        <div id="quickQuestions">
+            <div class="question" id="ques1">What foods should I avoid?</div>
+            <div class="question" id="ques2">Is it safe to exercise?</div>
+            <div class="question" id="ques3">How can I manage morning sickness?</div>
+            <div class="question" id="ques4">What are Braxton Hicks contradictions?</div>
+        </div>
+
+        <div id="messageForm">
+            <form>
+                <input type="text" placeholder="Enter your question here" id="messageInput">
+                <button type="submit" class="sendButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
+                        viewBox="0 0 24 24" fill="none" stroke="purple" 
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                        class="lucide lucide-send-icon lucide-send">
+                        <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
+                        <path d="m21.854 2.147-10.94 10.939"/>
+                    </svg>
+                </button>
+        </div>
+    </div>
+
+
+
+
+    <script src="/js/Chatbot.js"></script>

@@ -1,0 +1,98 @@
+body {
+    font-family: 'Poppins';
+}
+
+.mainBox {
+    background: linear-gradient(to right, #7000FF, #F82181);
+    border-radius: 15px;
+    box-sizing: border-box;
+    width: 70%;
+    padding: 30px;
+    margin:auto;
+    margin-bottom: 30px;
+    color: white;
+}
+
+h3 {
+    margin-top: 0;
+}
+
+#keyFeatures {
+    display: flex;
+    justify-content:flex-start;
+    gap: 3%;
+}
+
+.keyFeatureBox {
+    background-color: purple;
+    border-radius: 15px;
+    padding: 15px;
+}
+
+#pregnancyInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#pregnancyWeek {
+    font-size: larger;
+    font-weight: bold;
+}
+
+#pregnancyEmoji {
+    font-size: 60px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.sectionName {
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.featureCard {
+    background-color: #FFF5FA;          
+    border: 2px solid #ED7EAF;    
+    border-radius: 15px; 
+    box-shadow: 0 8px 24px rgba(217, 30, 143, 0.35);
+    padding: 20px;
+    width: 28%;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    transition: 0.25s ease;
+}
+
+.featureCard:hover {
+    background-color: #FFEAF3;        
+    border-color: #D91E8F;              
+    box-shadow: 0 6px 14px rgba(217, 30, 143, 0.18);
+    transform: translateY(-3px);
+}
+
+.featureCard:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(217, 30, 143, 0.15);
+}
+
+.featureDescription {
+    color: grey;
+}
+
+#quickActions {
+    width: 70%;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+}
+
+#featureSection {
+    width: 70%;
+    margin: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: 25px;
+}

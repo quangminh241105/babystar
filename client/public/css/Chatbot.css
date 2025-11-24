@@ -1,0 +1,178 @@
+body {
+    font-family: 'Poppins';
+}
+
+.featureCard {
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #FFF5FA;     
+    
+    /* border if like */ 
+    /* border-width: 1px 1px 0 1px; 
+    border-style: solid;
+    /* border-color: rgba(0, 0, 0, 0.15);   */
+    border-radius: 15px 15px 0 0; 
+
+    /* box shadow instead of border */
+    box-shadow: 0 6px 30px rgba(236, 89, 170, 0.45);
+
+    padding: 20px;
+    width: 63%;
+
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.featureName {
+    font-weight: bold;
+}
+
+.featureDescription {
+    color: grey;
+    font-size: 14px;
+}
+
+.chatBox {
+    margin-left: auto;
+    margin-right: auto;
+    width: 63%;
+    background-color: #FFF5FA;      
+    /* border-width: 1px;
+    border-style: solid;    
+    border-color: rgba(0, 0, 0, 0.15);    */
+
+    box-shadow: 0 6px 30px rgba(236, 89, 170, 0.45);
+
+    padding: 20px;
+
+    display: flex;          
+    flex-direction: column; 
+    gap: 20px;              
+}
+
+.AIChatBubble {
+    display: inline-flex;
+    box-sizing: border-box;
+    max-width: 60%;
+    background-color: #ECE6F7;
+    padding: 20px;
+    border-radius: 15px;
+    gap: 15px;
+    align-items: center;
+}
+
+.AIchatIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background-color: purple;
+    border-radius: 50%;
+}
+
+.AIchatTime {
+    font-size: 13px;
+    color: grey;
+}
+
+.UserChatBubble {
+    margin-left: auto;
+    display: inline-flex;
+    flex-direction: row-reverse;
+    box-sizing: border-box;
+    max-width: 60%;
+    background-color: #E03FD8;
+    padding: 20px;
+    border-radius: 15px;
+    gap: 15px;
+    align-items: center;
+}
+
+.UserchatIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background-color:#ECE6F7;
+    border-radius: 50%;
+}
+
+.UserChatText {
+    color: white;
+}
+
+.UserChatTime {
+    font-size: 13px;
+    color: yellow;
+}
+
+.userInput {
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #FFF5FA;          
+    /* border-width: 0 1px 1px 1px; 
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.15); */
+    border-radius: 0 0 15px 15px;
+
+    box-shadow: 0 6px 30px rgba(236, 89, 170, 0.45);
+
+    padding: 20px;
+    width: 63%;
+}
+
+#quickQuestions {
+    margin-top: 12px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.question {
+    font-family:Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 10px;
+    background-color: #FFF5FA;          
+    border: 2px solid #ED7EAF;    
+    border-radius: 10px; 
+    transition: 0.25s ease;
+}
+
+.question:hover {
+    background-color: #FFEAF3;        
+    border-color: #D91E8F;              
+    box-shadow: 0 6px 14px rgba(217, 30, 143, 0.18);
+}
+
+#messageForm {
+    margin-top: 50px;
+}
+
+#messageForm form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+#messageInput {
+    background-color: #FFF0F7;       /* very light pink */
+    border: 2px solid #F8B6D2;       /* pastel pink border */
+    border-radius: 10px; 
+    padding: 10px 15px;
+    box-shadow: 0 2px 6px rgba(217, 30, 143, 0.2); /* subtle shadow for depth */
+    width: 90%;
+    transition: all 0.2s ease;
+}
+
+#messageInput:focus {
+    border-color: #E03FD8;           /* stronger pink on focus */
+    box-shadow: 0 4px 12px rgba(224, 63, 216, 0.3); /* slightly larger glow */
+    outline: none;
+}
+
+.sendButton {
+    border: none;
+}
