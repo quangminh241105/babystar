@@ -1,47 +1,52 @@
 <link rel="stylesheet" href="/css/login.css">
 
 <div id="inner-box">
-    <h3>Create Your Account</h3>
-    <h4>Join BabyStar and start your pregnancy journey</h4>
+  <h3>Create Your Account</h3>
+  <h4>Join BabyStar and start your pregnancy journey</h4>
 
-    <form>
-        <div class="registration">
-            <label for="fullname">Fullname</label>
-            <input type="text" id="fullname">
-        </div>
+  <form id="registerForm" novalidate>
+    <div class="registration">
+      <label for="fullname">Fullname</label>
+      <input type="text" id="fullname" name="fullname" />
+      <div id="fullname-error" class="field-error"></div>
+    </div>
 
-        <div class="registration">
-            <label for="email">Email</label>
-            <input type="text" id="email">
-        </div>
+    <div class="registration">
+      <label for="email">Email</label>
+      <input type="text" id="email" name="email" />
+      <div id="email-error" class="field-error"></div>
+    </div>
 
-        <div class="registration">
-            <label for="password">Password</label>
-            <input type="password" id="password">
-            <div id="password-error"></div>
-        </div>
+    <div class="registration">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" />
+      <div id="password-error" class="field-error"></div>
+    </div>
 
-        <div class="registration">
-            <label for="password2">Re-enter your password</label>
-            <input type="password" id="password2">
-            <div id="password2-error"></div>
-        </div>
+    <div class="registration">
+      <label for="password2">Re-enter your password</label>
+      <input type="password" id="password2" name="password2" />
+      <div id="password2-error" class="field-error"></div>
+    </div>
 
-        <div class="user-type">
-            <div class="userblock">
-                <input type="radio" name="user" value="Mother" id="Mother">
-                <label for="Mother">Expectant mother</label>
-            </div>
+    <div class="user-type">
+      <div class="userblock">
+        <input type="radio" name="user" value="Mother" id="Mother" />
+        <label for="Mother">Expectant mother</label>
+      </div>
 
-            <div class="userblock">
-                <input type="radio" name="user" value="Other" id="Other">
-                <label for="Other">Family member</label>
-            </div>
-        </div>
+      <div class="userblock">
+        <input type="radio" name="user" value="Other" id="Other" />
+        <label for="Other">Family member</label>
+      </div>
+    </div>
 
-        <input type="submit" class="button" value="Create Account" id="submitBtn">
+    <div id="general-error" class="field-error"></div>
 
-        <p> Already have an account? <a href="/auth/login"><span>Log In</span></a> 
-    </form>
+    <input type="submit" class="button" value="Create Account" id="submitBtn" />
+
+    <p> Already have an account? <a href="/auth/login"><span>Log In</span></a>
+  </form>
 </div>
+
 <script src="/js/auth/register.js"></script>

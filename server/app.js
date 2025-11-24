@@ -3,9 +3,32 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// -----------------------------
+// Session config (24h)
+// -----------------------------
+const SESSION_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+app.use(session({
+	name: process.env.SESSION_NAME || 'baby_star_sid',
+	secret: process.env.SESSION_SECRET || 'please-change-this-secret',
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		maxAge: SESSION_MAX_AGE,
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production' // enable when using HTTPS
+	}
+}));
+
+// Make session user available to all views as `user`
+app.use((req, res, next) => {
+	res.locals.user = req.session && req.session.user ? req.session.user : null;
+	next();
+});
 
 // Middleware
 app.use(express.json());

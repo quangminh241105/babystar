@@ -1,5 +1,9 @@
 <%- include('partials/header') %>
-<%- include('partials/navbar') %>
+
+<!-- if the page have title of login or register, dont show navbar -->
+<% if (title !== 'Login' && title !== 'Register') { %>
+  <%- include('partials/navbar') %>
+<% } %>
 
 <%- body %>
 

@@ -1,22 +1,28 @@
 <link rel="stylesheet" href="/css/login.css">
 
 <div id="inner-box">
-    <h3>Welcome To BabyStar</h3>
-    <h4>Your AI-Powered pregnancy companion</h4>
+  <h3>Welcome To BabyStar</h3>
+  <h4>Your AI-Powered pregnancy companion</h4>
 
-    <form>
-        <div class="registration">
-            <label for="email">Email</label>
-            <input type="text" id="email">
-        </div>
+  <form id="loginForm" novalidate>
+    <div class="registration">
+      <label for="email">Email</label>
+      <input type="text" id="email" name="email" />
+      <div id="email-error" class="field-error"></div>
+    </div>
 
-        <div class="registration">
-            <label for="password">Password</label>
-            <input type="password" id="password">
-        </div>
+    <div class="registration">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" />
+      <div id="password-error" class="field-error"></div>
+    </div>
 
-        <input type="submit" class="button" value="Log In">
+    <div id="general-error" class="field-error"></div>
 
-        <p> Don't have an account? <a href="/auth/register"><span> Register now </span></a> 
-    </form>
+    <input type="submit" class="button" value="Log In">
+
+    <p> Don't have an account? <a href="/auth/register"><span> Register now </span></a>
+  </form>
 </div>
+
+<script src="/js/auth/login.js"></script>
