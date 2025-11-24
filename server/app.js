@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const mongoose = require('mongoose');
 
 const app = express();
@@ -13,22 +14,28 @@ app.use(express.static(path.join(__dirname, '../client/public')));
 
 // View engine setup
 app.set('view engine', 'ejs');
-// change views root so includes resolve from ../client/views
+// Set view root to resolve from ../client/views
 app.set('views', path.join(__dirname, '../client/views'));
 
-// Replace individual routes by importing routers from /server/routes
-const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter } = require('./routes/indexRouter');
-
-// Require models so they're registered (no variable needed here)
+// Import models
 require('./models/user');
 
-// Mount routers
-app.use('/', indexRouter);            // serves GET '/'
-app.use('/auth', authRouter);         // serves /login and /register
-app.use('/partner', partnerRouter);   // placeholder partner routes
-app.use('/admin', adminRouter);       // placeholder admin routes
+// -----------------------------
+// Routes
+// -----------------------------
 
-// Save original render
+// Importing routers from /server/routes
+const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter } = require('./routes/indexRouter');
+
+// Mount routers
+app.use('/', indexRouter);            // Import the index routes
+app.use('/auth', authRouter);         // Import the auth routes
+app.use('/partner', partnerRouter);   // Import the partner routes
+app.use('/admin', adminRouter);       // Import the admin routes
+
+// -----------------------------
+// Render wrapper
+// -----------------------------
 const originalRender = app.response.render;
 app.response.render = function(view, options, callback) {
 	// normalize args
@@ -38,38 +45,71 @@ app.response.render = function(view, options, callback) {
 	}
 	options = options || {};
 
-	// Only wrap views inside pages/ and avoid wrapping the layout itself
-	if (typeof view === 'string' && view.indexOf('pages/') === 0 && view !== 'pages/layout') {
-		// render the requested page to a string first, then render the layout with body
-		return app.render(view, options, (err, rendered) => {
-			if (err) {
-				if (callback) return callback(err);
-				// fallback error handling
-				return this.req && this.req.next ? this.req.next(err) : this.status(500).send(err.message || 'Render error');
-			}
-			const layoutOptions = Object.assign({}, options, { body: rendered });
-			// call original response.render to render pages/layout
-			return originalRender.call(this, 'pages/layout', layoutOptions, callback);
-		});
+	// explicit opt-out or rendering the layout itself -> short-circuit
+	if (options.noLayout === true || options.layout === false || view === 'layout') {
+		return originalRender.call(this, view, options, callback);
 	}
 
-	// default behavior
-	return originalRender.call(this, view, options, callback);
+	// determine views root (may be array or string)
+	let viewsRoot = app.get('views');
+	// if (Array.isArray(viewsRoot)) viewsRoot = viewsRoot[0];
+
+	// quick page detection: startsWith('pages/') OR file exists under views/pages
+	const isPageView = (typeof view === 'string') && (
+		view.indexOf('pages/') === 0 ||
+		(viewsRoot && (
+			fs.existsSync(path.join(viewsRoot, 'pages', `${view}.ejs`)) ||
+			fs.existsSync(path.join(viewsRoot, 'pages', view, 'index.ejs'))
+		))
+	);
+
+	if (!isPageView) {
+		return originalRender.call(this, view, options, callback);
+	}
+
+	// render page to string once, then render top-level layout with body
+	return app.render(view, options, (err, rendered) => {
+		if (err) {
+			if (callback) return callback(err);
+			return this.req && this.req.next ? this.req.next(err) : this.status(500).send(err.message || 'Render error');
+		}
+		const layoutOptions = Object.assign({}, options, { body: rendered });
+		return originalRender.call(this, 'layout', layoutOptions, callback);
+	});
 };
 
-// Connect to MongoDB then start server
-const MONGO_URI = process.env.MONGO_URI;
+// -----------------------------
+// Connect to MongoDB then start
+// -----------------------------
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/pregnancy_app';
+
+function startServer() {
+	app.listen(PORT, () => {
+		console.log(`Server running on http://localhost:${PORT}`);
+	});
+}
+
 mongoose.connect(MONGO_URI, {
 	useNewUrlParser: true,
 	useUnifiedTopology: true,
 })
 .then(() => {
-	console.log('✅ Connected to MongoDB');
-	app.listen(PORT, () => {
-	  console.log(`Server running on http://localhost:${PORT}`);
-	});
+	console.log(`✅ Connected to MongoDB (${MONGO_URI.startsWith('mongodb+srv://') ? 'Atlas' : 'local/custom host'})`);
+	startServer();
 })
 .catch(err => {
 	console.error('❌ MongoDB connection error:', err);
 	process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+	console.log('Shutting down gracefully...');
+	try {
+		await mongoose.disconnect();
+		console.log('MongoDB disconnected');
+	} catch (e) {
+		console.error('Error disconnecting MongoDB', e);
+	}
+	process.exit(0);
 });
