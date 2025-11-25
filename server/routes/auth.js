@@ -38,6 +38,7 @@ router.post('/register', async (req, res) => {
       role
     });
 
+    // save new user
     await newUser.save();
 
     // store minimal user in session to avoid extra DB fetches
