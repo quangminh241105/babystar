@@ -1,0 +1,122 @@
+<style>
+  .profile-container { max-width:600px; margin:32px auto; padding:0 16px; font-family:system-ui,-apple-system,"Segoe UI",Roboto; }
+  .profile-header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
+  .profile-avatar { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#eee; }
+  .profile-header h2 { margin:0; color:#333; }
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; margin-bottom:4px; font-weight:600; color:#333; font-size:0.95rem; }
+  .form-group input, .form-group textarea { width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:0.95rem; font-family:inherit; }
+  .form-group textarea { resize:vertical; min-height:80px; }
+  .btn { padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.95rem; }
+  .btn-primary { background:#6c4bd1; color:#fff; }
+  .btn-danger { background:#d9534f; color:#fff; margin-left:8px; }
+  .error-msg { color:#d9534f; font-size:0.9rem; margin-top:8px; }
+  .success-msg { color:#5cb85c; font-size:0.9rem; margin-top:8px; }
+</style>
+
+<div class="profile-container">
+  <div class="profile-header">
+    <img id="avatarPreview" class="profile-avatar" src="<%= user.profileImage || '/images/default-avatar.png' %>" alt="Profile picture">
+    <div>
+      <h2><%= user.name %></h2>
+      <p style="margin:0; color:#666; font-size:0.9rem;"><%= user.email %></p>
+    </div>
+  </div>
+
+  <form id="profileForm" novalidate>
+    <div class="form-group">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" value="<%= user.name %>" required>
+    </div>
+
+    <div class="form-group">
+      <label for="profileImage">Profile Image URL</label>
+      <input type="text" id="profileImage" name="profileImage" value="<%= user.profileImage || '' %>" placeholder="https://example.com/image.jpg">
+      <small style="color:#666; font-size:0.85rem;">Paste an image URL or upload (future feature)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="bio">Bio</label>
+      <textarea id="bio" name="bio" maxlength="300" placeholder="Tell us about yourself"><%= user.bio || '' %></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="phone">Phone</label>
+      <input type="tel" id="phone" name="phone" value="<%= user.phone || '' %>" placeholder="+1234567890">
+    </div>
+
+    <div class="form-group">
+      <label for="dueDate">Due Date (optional)</label>
+      <input type="date" id="dueDate" name="dueDate" value="<%= user.dueDate ? new Date(user.dueDate).toISOString().split('T')[0] : '' %>">
+    </div>
+
+    <div id="formMessage"></div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <button type="button" class="btn btn-danger" id="deleteBtn">Delete Account</button>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('profileForm');
+  const msg = document.getElementById('formMessage');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const profileImageInput = document.getElementById('profileImage');
+
+  // Preview image on URL change
+  profileImageInput.addEventListener('input', () => {
+    const url = profileImageInput.value.trim();
+    if (url) avatarPreview.src = url;
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.textContent = '';
+    const data = {
+      name: document.getElementById('name').value,
+      profileImage: profileImageInput.value,
+      bio: document.getElementById('bio').value,
+      phone: document.getElementById('phone').value,
+      dueDate: document.getElementById('dueDate').value
+    };
+
+    try {
+      const resp = await fetch('/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await resp.json();
+      if (resp.ok && result.success) {
+        msg.innerHTML = '<div class="success-msg">Profile updated successfully!</div>';
+        // refresh page after short delay so navbar updates
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        const errMsg = result.errors?.general || 'Update failed';
+        msg.innerHTML = `<div class="error-msg">${errMsg}</div>`;
+      }
+    } catch (err) {
+      console.error(err);
+      msg.innerHTML = '<div class="error-msg">Network error</div>';
+    }
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+    try {
+      const resp = await fetch('/auth/profile', { method: 'DELETE' });
+      const result = await resp.json();
+      if (resp.ok && result.success) {
+        alert('Account deleted');
+        window.location.href = '/';
+      } else {
+        alert('Delete failed: ' + (result.errors?.general || 'unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error');
+    }
+  });
+});
+</script>

@@ -217,7 +217,10 @@ const userSchema = new mongoose.Schema({
 	privacyPolicyAcceptedAt: { type: Date },
 	
 	// [IMPROVED] Soft delete support
-	deletedAt: { type: Date, default: null }
+	deletedAt: { type: Date, default: null },
+	
+	// ===== LANGUAGE PREFERENCE =====
+	language: { type: String, enum: ['en', 'vi'], default: 'en' } // add language preference
 	
 }, {
 	timestamps: true, // Adds createdAt and updatedAt
