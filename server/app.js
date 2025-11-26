@@ -34,10 +34,10 @@ app.use((req, res, next) => {
 // -----------------------------
 // i18n Middleware
 // -----------------------------
-const translations = {
-	en: require('./i18n/en.json'),
-	vi: require('./i18n/vi.json')
-};
+// const translations = {
+// 	en: require('./i18n/en.json'),
+// 	vi: require('./i18n/vi.json')
+// };
 
 app.use((req, res, next) => {
 	// determine language from session or default to 'en'
