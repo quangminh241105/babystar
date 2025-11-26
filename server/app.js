@@ -20,7 +20,7 @@ app.use(session({
 	cookie: {
 		maxAge: SESSION_MAX_AGE,
 		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production' // enable when using HTTPS
+		secure: process.env.NODE_ENV === 'production' // enable when using HTTPSn 
 	}
 }));
 
@@ -28,6 +28,26 @@ app.use(session({
 app.use((req, res, next) => {
 	res.locals.user = req.session && req.session.user ? req.session.user : null;
 	res.locals.currentPath = req.path;
+	next();
+});
+
+// -----------------------------
+// i18n Middleware
+// -----------------------------
+const translations = {
+	en: require('./i18n/en.json'),
+	vi: require('./i18n/vi.json')
+};
+
+app.use((req, res, next) => {
+	// determine language from session or default to 'en'
+	const lang = (req.session && req.session.language) || 'en';
+	const dict = translations[lang] || translations.en;
+
+	// expose translation helper and current language to views
+	res.locals.lang = lang;
+	res.locals.t = (key) => dict[key] || key;
+
 	next();
 });
 

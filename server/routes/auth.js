@@ -3,6 +3,14 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 
+// Simple middleware: require logged-in user
+function requireAuth(req, res, next) {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ success: false, errors: { general: 'Unauthorized' }});
+  }
+  next();
+}
+
 router.get('/login', (req, res) => {
   res.render('pages/auth/login', { title: 'Login' });
 });
@@ -261,90 +269,53 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// PUT /auth/profile - Update user profile
-router.put('/profile', async (req, res) => {
+// GET /auth/profile - render profile page
+router.get('/profile', requireAuth, async (req, res) => {
   try {
-    if (!req.session?.user?.id) {
-      return res.status(401).json({ success: false, errors: { general: 'Not authenticated' } });
-    }
+    const user = await User.findById(req.session.user.id).select('-passwordHash');
+    if (!user) return res.redirect('/auth/login');
+    res.render('pages/auth/profile', { title: 'Profile', user });
+  } catch (err) {
+    console.error('Profile fetch error:', err);
+    res.redirect('/');
+  }
+});
 
-    const { firstName, lastName, phone, dateOfBirth, profileImageUrl } = req.body || {};
-    const errors = {};
-
-    // Validation
-    if (firstName !== undefined) {
-      if (!firstName || !firstName.trim()) {
-        errors.firstName = 'First name is required';
-      } else if (firstName.trim().length < 2) {
-        errors.firstName = 'First name must be at least 2 characters';
-      }
-    }
-    
-    if (lastName !== undefined) {
-      if (!lastName || !lastName.trim()) {
-        errors.lastName = 'Last name is required';
-      } else if (lastName.trim().length < 2) {
-        errors.lastName = 'Last name must be at least 2 characters';
-      }
-    }
-    
-    if (phone && !/^[+]?[\d\s()-]{7,20}$/.test(phone)) {
-      errors.phone = 'Please enter a valid phone number';
-    }
-    
-    if (dateOfBirth) {
-      const dob = new Date(dateOfBirth);
-      const today = new Date();
-      const age = today.getFullYear() - dob.getFullYear();
-      if (isNaN(dob.getTime()) || age < 13 || age > 100) {
-        errors.dateOfBirth = 'Please enter a valid date of birth';
-      }
-    }
-
-    if (Object.keys(errors).length) {
-      return res.status(400).json({ success: false, errors });
-    }
-
-    // Find and update user
+// PUT /auth/profile - update profile (JSON)
+router.put('/profile', requireAuth, async (req, res) => {
+  try {
+    const { name, bio, phone, dueDate, profileImage } = req.body || {};
     const user = await User.findById(req.session.user.id);
-    if (!user) {
-      req.session.destroy();
-      return res.status(401).json({ success: false, errors: { general: 'User not found' } });
-    }
+    if (!user) return res.status(404).json({ success: false, errors: { general: 'User not found' }});
 
-    // Update fields if provided
-    if (firstName !== undefined) user.firstName = firstName.trim();
-    if (lastName !== undefined) user.lastName = lastName.trim();
-    if (phone !== undefined) user.phone = phone ? phone.trim() : undefined;
-    if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined;
-    if (profileImageUrl !== undefined) user.profileImageUrl = profileImageUrl || undefined;
+    // Update allowed fields
+    if (name && name.trim()) user.name = name.trim();
+    if (bio !== undefined) user.bio = bio.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+    if (dueDate !== undefined) user.dueDate = dueDate ? new Date(dueDate) : null;
+    if (profileImage !== undefined) user.profileImage = profileImage.trim();
 
     await user.save();
 
-    // Update session with new info
-    req.session.user = {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      profileImageUrl: user.profileImageUrl
-    };
+    // Update session name so navbar reflects changes immediately
+    req.session.user.name = user.name;
 
-    req.session.save((err) => {
-      if (err) {
-        console.error('[PROFILE] Session save error:', err);
-      }
-      return res.json({ 
-        success: true, 
-        message: 'Profile updated successfully',
-        user: user.toPublic()
-      });
-    });
+    return res.json({ success: true, user: user.toPublic() });
   } catch (err) {
     console.error('Profile update error:', err);
-    return res.status(500).json({ success: false, errors: { general: 'Server error' } });
+    return res.status(500).json({ success: false, errors: { general: 'Server error' }});
+  }
+});
+
+// DELETE /auth/profile - delete account
+router.delete('/profile', requireAuth, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.session.user.id);
+    req.session.destroy(() => {});
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Delete account error:', err);
+    return res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 
