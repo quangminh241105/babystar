@@ -84,7 +84,7 @@
     <div class="nav-links">
         <div class="greeting">
             Hello, <strong>
-                <%= user && user.name ? user.name : 'Guest' %>
+                <%= user && user.fullName ? user.fullName : 'Guest' %>
             </strong>
             <% if (user) { %>
                 <span class="badge">Session: active</span>
@@ -94,7 +94,7 @@
         </div>
 
         <% if (user) { %>
-            <a href="/profile">Profile</a>
+            <a href="/auth/profile">Profile</a>
             <a href="/auth/logout">Logout</a>
             <% } else { %>
                 <a href="/auth/login">Login</a>

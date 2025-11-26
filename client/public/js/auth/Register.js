@@ -7,62 +7,110 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!el) {
       el = document.createElement('div');
       el.id = id + '-error';
+      el.className = 'field-error';
       const input = document.getElementById(id);
       if (input && input.parentNode) input.parentNode.appendChild(el);
     }
     el.textContent = msg || '';
   };
 
+  const clearErrors = () => {
+    ['fullname', 'email', 'password', 'password2', 'general'].forEach(field => setError(field, ''));
+  };
+
+  // Google Sign Up button
+  const googleBtn = document.getElementById('googleSignUp');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', () => {
+      window.location.href = '/auth/google';
+    });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    // collect values (inputs use ids from your markup)
+    
+    // Collect form values
     const fullname = (document.getElementById('fullname') || {}).value || '';
     const email = (document.getElementById('email') || {}).value || '';
     const password = (document.getElementById('password') || {}).value || '';
     const password2 = (document.getElementById('password2') || {}).value || '';
-    const userRadio = document.querySelector('input[name="user"]:checked');
-    const user = userRadio ? userRadio.value : '';
 
-    // clear errors
-    setError('fullname', '');
-    setError('email', '');
-    setError('password', '');
-    setError('password2', '');
-    setError('general', '');
+    // Clear previous errors
+    clearErrors();
 
-    // basic client-side checks
-    let clientErrors = false;
-    if (!fullname.trim()) { setError('fullname', 'Full name is required'); clientErrors = true; }
-    if (!email.trim()) { setError('email', 'Email is required'); clientErrors = true; }
-    if (!password) { setError('password', 'Password is required'); clientErrors = true; }
-    if (password !== password2) { setError('password2', 'Passwords do not match'); clientErrors = true; }
-    if (clientErrors) return;
+    // Client-side validation
+    let hasErrors = false;
+    
+    if (!fullname.trim()) { 
+      setError('fullname', 'Full name is required'); 
+      hasErrors = true; 
+    } else if (fullname.trim().length < 2) {
+      setError('fullname', 'Name must be at least 2 characters');
+      hasErrors = true;
+    }
+    
+    if (!email.trim()) { 
+      setError('email', 'Email is required'); 
+      hasErrors = true; 
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('email', 'Please enter a valid email');
+      hasErrors = true;
+    }
+    
+    if (!password) { 
+      setError('password', 'Password is required'); 
+      hasErrors = true; 
+    } else if (password.length < 6) {
+      setError('password', 'Password must be at least 6 characters');
+      hasErrors = true;
+    }
+    
+    if (!password2) {
+      setError('password2', 'Please confirm your password');
+      hasErrors = true;
+    } else if (password !== password2) { 
+      setError('password2', 'Passwords do not match'); 
+      hasErrors = true; 
+    }
+
+    if (hasErrors) return;
+
+    // Disable submit button during request
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.value = 'Creating Account...';
+    }
 
     try {
       const resp = await fetch('/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullname, email, password, password2, user })
+        body: JSON.stringify({ fullname, email, password, password2 })
       });
       const data = await resp.json();
+      
       if (resp.ok && data.success) {
-        // registered: redirect to login (optionally add query param)
-        window.location.href = '/auth/login?registered=1';
+        window.location.href = data.redirect || '/';
         return;
       }
-      // show server validation errors
+      
+      // Show server validation errors
       if (data && data.errors) {
         Object.keys(data.errors).forEach(key => {
-          const msg = data.errors[key];
-          if (key === 'general') setError('general', msg);
-          else setError(key, msg);
+          setError(key, data.errors[key]);
         });
       } else {
         setError('general', 'Unexpected server error');
       }
     } catch (err) {
-      console.error(err);
-      setError('general', 'Network error');
+      console.error('Registration error:', err);
+      setError('general', 'Network error. Please try again.');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.value = 'Create Account';
+      }
     }
   });
 });

@@ -1,0 +1,96 @@
+<% if (title !=='Login' && title !=='Register' && title !=='Home' ) { %>
+    <style>
+        .breadcrumb-gap {
+            height: 2rem;
+            width: 100%;
+        }
+
+        .breadcrumb-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 1rem 2rem;
+            /* background-color: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0; */
+        }
+
+        .back-to-home {
+            text-decoration: none;
+            color: #0066cc;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        .back-to-home:hover {
+            color: #0052a3;
+            text-decoration: underline;
+        }
+
+        .breadcrumb {
+            flex: 1;
+        }
+
+        .breadcrumb ol {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb li {
+            display: flex;
+            align-items: center;
+        }
+
+        .breadcrumb li:not(:last-child)::after {
+            content: '/';
+            margin-left: 0.5rem;
+            color: #999;
+        }
+
+        .breadcrumb a {
+            color: #0066cc;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+            color: #0052a3;
+        }
+
+        .breadcrumb .current {
+            color: #666;
+            font-weight: 500;
+        }
+    </style>
+    <div class="breadcrumb-container">
+        <a href="/" class="back-to-home">← BACK TO HOMEPAGE</a>
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+                <li><a href="/">Home</a></li>
+                <% const pathSegments=currentPath.split('/').filter(segment=> segment);
+                    pathSegments.forEach((segment, index) => {
+                    const isLast = index === pathSegments.length - 1;
+                    const displayName = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+                    const href = '/' + pathSegments.slice(0, index + 1).join('/');
+                    %>
+                    <li>
+                        <% if (isLast) { %>
+                            <span class="current">
+                                <%= displayName %>
+                            </span>
+                            <% } else { %>
+                                <a href="<%= href %>">
+                                    <%= displayName %>
+                                </a>
+                                <% } %>
+                    </li>
+                    <% }); %>
+            </ol>
+        </nav>
+    </div>
+    <% } %>

@@ -1,10 +1,11 @@
 <%- include('partials/header') %>
 
-<!-- if the page have title of login or register, dont show navbar -->
-<% if (title !== 'Login' && title !== 'Register') { %>
-  <%- include('partials/navbar') %>
-<% } %>
+  <% if (title !=='Login' && title !=='Register' ) { %>
+    <%- include('partials/navbar') %>
+      <% } %>
 
-<%- body %>
+        <%- include('partials/breadcrumb') %>
 
-<%- include('partials/footer') %>
+          <%- body %>
+
+            <%- include('partials/footer') %>

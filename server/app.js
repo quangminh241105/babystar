@@ -27,6 +27,7 @@ app.use(session({
 // Make session user available to all views as `user`
 app.use((req, res, next) => {
 	res.locals.user = req.session && req.session.user ? req.session.user : null;
+	res.locals.currentPath = req.path;
 	next();
 });
 
