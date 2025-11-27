@@ -229,7 +229,7 @@ router.get('/logout', (req, res) => {
         console.error('Logout error:', err);
       }
       res.clearCookie('connect.sid'); // Clear session cookie
-      return res.redirect('/');
+      return res.redirect('/landingpage');
     });
   } else {
     return res.redirect('/');

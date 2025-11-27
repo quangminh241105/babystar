@@ -39,17 +39,17 @@ app.use((req, res, next) => {
 // 	vi: require('./i18n/vi.json')
 // };
 
-app.use((req, res, next) => {
-	// determine language from session or default to 'en'
-	const lang = (req.session && req.session.language) || 'en';
-	const dict = translations[lang] || translations.en;
+// app.use((req, res, next) => {
+// 	// determine language from session or default to 'en'
+// 	const lang = (req.session && req.session.language) || 'en';
+// 	const dict = translations[lang] || translations.en;
 
-	// expose translation helper and current language to views
-	res.locals.lang = lang;
-	res.locals.t = (key) => dict[key] || key;
+// 	// expose translation helper and current language to views
+// 	res.locals.lang = lang;
+// 	res.locals.t = (key) => dict[key] || key;
 
-	next();
-});
+// 	next();
+// });
 
 // Middleware
 app.use(express.json());
@@ -76,6 +76,12 @@ app.use('/', indexRouter);            // Import the index routes
 app.use('/auth', authRouter);         // Import the auth routes
 app.use('/partner', partnerRouter);   // Import the partner routes
 app.use('/admin', adminRouter);       // Import the admin routes
+app.use('/landingpage', require('./routes/landingpage'));
+
+// Redirect root to landing page
+app.get('/', (req, res) => {
+  res.redirect('/landingpage');
+});
 
 // -----------------------------
 // Render wrapper
@@ -129,7 +135,7 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/pregnancy_
 
 function startServer() {
 	app.listen(PORT, () => {
-		console.log(`Server running on http://localhost:${PORT}`);
+		console.log(`Server running on http://localhost:${PORT}/landingpage`);
 	});
 }
 
