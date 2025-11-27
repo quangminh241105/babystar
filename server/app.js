@@ -63,6 +63,7 @@ app.set('views', path.join(__dirname, '../client/views'));
 
 // Import models
 require('./models/user');
+// const { User, HealthLog, WeeklyReport, Conversation } = require('./models');
 
 // -----------------------------
 // Routes
