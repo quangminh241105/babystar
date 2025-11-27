@@ -1,0 +1,145 @@
+body {
+    background: linear-gradient(to bottom right, #fdf2f8, #faf5ff, #eff6ff);
+}
+
+#linkCodeSection {
+    font-family: 'Poppins', sans-serif;
+    border: 1px solid #99f6e4;
+    border-radius: 14px;
+    padding: 30px;
+    max-width: 70%;
+    margin: 0 auto 30px auto;
+    background: linear-gradient(to right, #f0fdfa, #eff6ff);
+} 
+
+#linkCodeSection h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    margin-top: 0;
+}
+
+
+#linkCodeSection p {
+    color: grey;
+}
+
+#linkCodeDisplay {
+    background-color: white;
+    border-radius: 15px;
+    text-align: center;
+    padding: 20px;
+}
+
+#copyCode {
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 10px;
+    width: 15%;
+    padding: 5px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    font-size: 15px;
+}
+
+#linkCode {
+    font-size: 38px;
+    color: #333;
+    font-weight: 500;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+#linkAccountSection {
+    font-family: 'Poppins', sans-serif;
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 14px;
+    padding: 30px;
+    max-width: 70%;
+    margin: 0 auto 30px auto;
+    background-color: white;
+}
+
+#linkAccountSection h4 {
+    margin-top: 0;
+    margin-bottom: 1px;
+}
+
+#linkAccountSection p {
+    margin-top: 1px;
+    color: grey;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.userIcon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 50%;
+    background-color: aquamarine;
+}
+
+.email, .dateLinked {
+    color: grey;
+}
+
+.linkedAccount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.removeButton {
+    background: #ffffffcc; /* slight transparency */
+    backdrop-filter: blur(4px);
+    border-radius: 12px;
+    border: 1px solid rgba(200, 200, 200, 1);
+    padding: 10px 18px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.removeButton:hover {
+    background-color: #f7f7f7;   
+    border-color: rgba(180, 180, 180, 0.8);
+}
+
+.removeButton:active {
+    background-color: #eaeaea;
+    border-color: #a8a8a8;
+    transform: scale(0.97);
+}
+
+#permissionSection {
+    font-family: 'Poppins', sans-serif;
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 14px;
+    padding: 30px;
+    max-width: 70%;
+    margin: 0 auto 30px auto;
+    background-color: #fff7ed;
+    border: 1px solid #fed7aa;
+}
+
+#permissionSection h3 {
+    margin-top: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
