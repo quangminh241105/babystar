@@ -31,26 +31,6 @@ app.use((req, res, next) => {
 	next();
 });
 
-// -----------------------------
-// i18n Middleware
-// -----------------------------
-// const translations = {
-// 	en: require('./i18n/en.json'),
-// 	vi: require('./i18n/vi.json')
-// };
-
-app.use((req, res, next) => {
-	// determine language from session or default to 'en'
-	const lang = (req.session && req.session.language) || 'en';
-	const dict = translations[lang] || translations.en;
-
-	// expose translation helper and current language to views
-	res.locals.lang = lang;
-	res.locals.t = (key) => dict[key] || key;
-
-	next();
-});
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -63,6 +43,7 @@ app.set('views', path.join(__dirname, '../client/views'));
 
 // Import models
 require('./models/user');
+// const { User, HealthLog, WeeklyReport, Conversation } = require('./models');
 
 // -----------------------------
 // Routes
