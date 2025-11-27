@@ -17,4 +17,12 @@ router.get('/link-account', (req, res) => {
   res.render('pages/linkaccount', { title: 'Link Account' });
 });
 
+router.get('/diet-plan', (req, res) => {
+  res.render('pages/dietplanner', { title: 'Diet Planner' });
+});
+
+router.get('/exercise-plan', (req, res) => {
+  res.render('pages/exerciseplanner', { title: 'Diet Planner' });
+});
+
 module.exports = router;

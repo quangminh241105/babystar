@@ -1,0 +1,439 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #fef5f8 0%, #fff0f5 50%, #ffe4ec 100%);
+  min-height: 100vh;
+  color: #2d3748;
+  padding: 0;
+  position: relative;
+}
+
+.planner-content {
+  padding: 2rem 150px;
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* AI Badge */
+.ai-badge {
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  color: #1B5E20;
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(46, 125, 50, 0.15);
+  animation: fadeInDown 0.6s ease;
+}
+
+.ai-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.ai-text {
+  flex: 1;
+}
+
+.ai-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-badge-header strong {
+  font-size: 1.125rem;
+  color: #1B5E20;
+}
+
+.ai-powered-tag {
+  background: linear-gradient(135deg, #9C27B0, #BA68C8);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ai-text p {
+  font-size: 0.875rem;
+  color: #2E7D32;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Page Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: fadeInUp 0.8s ease;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #C44569;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: #718096;
+}
+
+/* Weekly Goal Banner */
+.goal-banner {
+  background: linear-gradient(135deg, #FFF3CD, #FFF9E6);
+  border-left: 4px solid #FFC107;
+  padding: 2rem;
+  border-radius: 16px;
+  margin-bottom: 3rem;
+  animation: fadeInUp 1s ease;
+}
+
+.goal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #F57C00;
+  margin-bottom: 1rem;
+}
+
+.goal-description {
+  font-size: 1.125rem;
+  color: #5D4037;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.goal-description strong {
+  color: #F57C00;
+  font-size: 1.25rem;
+}
+
+.goal-benefits {
+  font-size: 0.95rem;
+  color: #6D4C41;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title.warning {
+  color: #E53E3E;
+}
+
+.section-title.emergency {
+  color: #C53030;
+}
+
+.title-icon {
+  font-size: 1.5rem;
+}
+
+.section-subtitle {
+  font-size: 1rem;
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+/* Exercise Cards */
+.exercises-section {
+  margin-bottom: 4rem;
+}
+
+.exercise-card {
+  background: white;
+  border: 1px solid #E8E8E8;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  animation: slideIn 0.8s ease;
+}
+
+.exercise-card:hover {
+  border-color: #C44569;
+  box-shadow: 0 4px 12px rgba(196, 69, 105, 0.1);
+  transform: translateY(-2px);
+}
+
+.exercise-header {
+  margin-bottom: 1rem;
+}
+
+.exercise-title-group h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.exercise-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.exercise-duration {
+  font-weight: 600;
+  color: #C44569;
+}
+
+.exercise-separator {
+  color: #CBD5E0;
+}
+
+.exercise-frequency {
+  color: #718096;
+}
+
+.exercise-benefit {
+  font-size: 0.9rem;
+  color: #4A5568;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.exercise-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  padding-top: 1rem;
+  border-top: 1px solid #F5F5F5;
+}
+
+.exercise-tips li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: #4A5568;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.exercise-tips li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #48BB78;
+  font-weight: 600;
+}
+
+/* Weekly Schedule */
+.schedule-section {
+  margin-bottom: 4rem;
+  animation: fadeInUp 1.4s ease;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.day-card {
+  background: white;
+  border: 1px solid #E8E8E8;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.day-card:hover {
+  border-color: #C44569;
+  box-shadow: 0 4px 12px rgba(196, 69, 105, 0.1);
+  transform: translateY(-2px);
+}
+
+.day-card.rest-day {
+  background: linear-gradient(135deg, #FFF5F7, #FFE4EC);
+}
+
+.day-header {
+  background: linear-gradient(135deg, #FF6B9D, #C44569);
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.day-card.rest-day .day-header {
+  background: linear-gradient(135deg, #9C27B0, #BA68C8);
+}
+
+.day-activities {
+  padding: 1rem;
+}
+
+.activity-item {
+  font-size: 0.875rem;
+  color: #2d3748;
+  padding: 0.5rem 0;
+  line-height: 1.4;
+}
+
+.activity-item:not(:last-child) {
+  border-bottom: 1px solid #F5F5F5;
+}
+
+/* Safety Guidelines */
+.safety-section {
+  margin-bottom: 4rem;
+  animation: fadeInUp 1.6s ease;
+}
+
+.safety-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.safety-item {
+  background: linear-gradient(135deg, #FFF5F5, #FFE5E5);
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border-left: 4px solid #E53E3E;
+  color: #742a2a;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.safety-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.2);
+}
+
+/* Emergency Section */
+.emergency-section {
+  background: linear-gradient(135deg, #FFF5F5, #FFE5E5);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #C53030;
+  animation: fadeInUp 1.8s ease;
+}
+
+.emergency-subtitle {
+  font-size: 1rem;
+  color: #742a2a;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.emergency-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+.emergency-item {
+  background: white;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  color: #C53030;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-left: 3px solid #C53030;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .planner-content {
+    padding: 2rem 100px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .planner-content {
+    padding: 2rem 50px;
+  }
+  
+  .schedule-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .planner-content {
+    padding: 1rem 2rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .schedule-grid,
+  .safety-grid,
+  .emergency-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .planner-content {
+    padding: 1rem;
+  }
+
+  .ai-badge {
+    flex-direction: column;
+    text-align: center;
+  }
+}
