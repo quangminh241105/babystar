@@ -4,6 +4,10 @@ const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const MongoStore = require('connect-mongo'); // ADD THIS
+const http = require('http');
+const { Server: IOServer } = require('socket.io');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,17 +16,41 @@ const PORT = process.env.PORT || 3000;
 // Session config (24h)
 // -----------------------------
 const SESSION_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
-app.use(session({
-	name: process.env.SESSION_NAME || 'baby_star_sid',
-	secret: process.env.SESSION_SECRET || 'please-change-this-secret',
+const SESSION_SECRET = process.env.SESSION_SECRET || 'please-change-this-secret';
+const SESSION_NAME = process.env.SESSION_NAME || 'baby_star_sid';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/pregnancy_app';
+
+// Create MongoStore for sessions - this ensures sessions persist and are shared
+const sessionStore = MongoStore.create({
+	mongoUrl: MONGO_URI,
+	collectionName: 'sessions',
+	ttl: SESSION_MAX_AGE / 1000, // TTL in seconds
+	autoRemove: 'native'
+});
+
+// create session middleware instance so we can reuse it for socket.io
+const sessionMiddleware = session({
+	name: SESSION_NAME,
+	secret: SESSION_SECRET,
 	resave: false,
 	saveUninitialized: false,
+	store: sessionStore, // USE MONGO STORE
 	cookie: {
 		maxAge: SESSION_MAX_AGE,
 		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production' // enable when using HTTPSn 
+		secure: false, // Set to true only in production with HTTPS
+		sameSite: 'lax'
 	}
-}));
+});
+
+// Cookie parser middleware
+const cookieParserMiddleware = cookieParser();
+
+app.use(cookieParserMiddleware);
+app.use(sessionMiddleware);
+
+// Make session middleware available for other modules if needed
+app.set('sessionMiddleware', sessionMiddleware);
 
 // Make session user available to all views as `user`
 app.use((req, res, next) => {
@@ -73,16 +101,13 @@ require('./models/user');
 const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter } = require('./routes/indexRouter');
 
 // Mount routers
-app.use('/', indexRouter);            // Import the index routes
-app.use('/auth', authRouter);         // Import the auth routes
-app.use('/partner', partnerRouter);   // Import the partner routes
-app.use('/admin', adminRouter);       // Import the admin routes
-app.use('/landingpage', require('./routes/landingpage'));
-
-// Redirect root to landing page
-app.get('/', (req, res) => {
-  res.redirect('/landingpage');
-});
+app.use('/', indexRouter);
+app.use('/auth', authRouter);
+app.use('/partner', partnerRouter);
+app.use('/admin', adminRouter);
+// app.use('/landingpage', require('./routes/landingpage'));
+app.use('/chatbot', require('./chatbot/routes'));
+// app.get('/', (req, res) => res.redirect('/landingpage'));
 
 // -----------------------------
 // Render wrapper
@@ -130,13 +155,30 @@ app.response.render = function(view, options, callback) {
 };
 
 // -----------------------------
-// Connect to MongoDB then start
+// Create HTTP server and attach socket.io
 // -----------------------------
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/pregnancy_app';
+const server = http.createServer(app);
 
+// Socket.IO - kept for future use but chatbot uses HTTP API
+const io = new IOServer(server, {
+	cors: { origin: true, credentials: true }
+});
+
+// Socket.IO is available for future real-time features
+// Currently chatbot uses HTTP API for reliability
+io.on('connection', (socket) => {
+	console.log('Socket connected:', socket.id);
+	socket.on('disconnect', () => {
+		console.log('Socket disconnected:', socket.id);
+	});
+});
+
+// -----------------------------
+// Connect to MongoDB then start server
+// -----------------------------
 function startServer() {
-	app.listen(PORT, () => {
-		console.log(`Server running on http://localhost:${PORT}/landingpage`);
+	server.listen(PORT, () => {
+		console.log(`Server running on http://localhost:${PORT}`);
 	});
 }
 

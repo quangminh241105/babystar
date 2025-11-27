@@ -2,49 +2,55 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
+const { requireAuth, redirectIfLoggedIn } = require('../middleware');
 
-// Simple middleware: require logged-in user
-function requireAuth(req, res, next) {
-  if (!req.session || !req.session.user) {
-    return res.status(401).json({ success: false, errors: { general: 'Unauthorized' }});
-  }
-  next();
-}
-
-router.get('/login', (req, res) => {
-  res.render('pages/auth/login', { title: 'Login' });
+// GET /auth - redirect based on login status
+router.get('/', (req, res) => {
+  if (req.session?.user) return res.redirect('/');
+  res.redirect('/auth/login');
 });
 
-router.get('/register', (req, res) => {
-  res.render('pages/auth/register', { title: 'Register' });
+// GET /auth/login - render login page
+router.get('/login', redirectIfLoggedIn, (req, res) => {
+  // Pass redirect URL to the view so the form can use it
+  const redirect = req.query.redirect || '/';
+  res.render('pages/auth/login', { title: 'Login', redirect });
 });
 
-// POST /auth/register
+// GET /auth/register - render register page
+router.get('/register', redirectIfLoggedIn, (req, res) => {
+  const redirect = req.query.redirect || '/';
+  res.render('pages/auth/register', { title: 'Register', redirect });
+});
+
+// POST /auth/register - create new account
 router.post('/register', async (req, res) => {
   try {
     const { fullname, email, password, password2 } = req.body || {};
-    
     const errors = {};
 
-    // Validation
-    if (!fullname || !fullname.trim()) {
+    // Validate fullname
+    if (!fullname?.trim()) {
       errors.fullname = 'Full name is required';
     } else if (fullname.trim().length < 2) {
       errors.fullname = 'Name must be at least 2 characters';
     }
     
-    if (!email || !email.trim()) {
+    // Validate email
+    if (!email?.trim()) {
       errors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = 'Please enter a valid email';
     }
     
+    // Validate password
     if (!password) {
       errors.password = 'Password is required';
     } else if (password.length < 6) {
       errors.password = 'Password must be at least 6 characters';
     }
     
+    // Validate password confirmation
     if (!password2) {
       errors.password2 = 'Please confirm password';
     } else if (password !== password2) {
@@ -59,33 +65,29 @@ router.post('/register', async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
     const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
-      return res.status(400).json({ success: false, errors: { email: 'Email already in use' } });
+      return res.status(400).json({ success: false, errors: { email: 'Email already in use' }});
     }
 
-    // Parse fullname into firstName and lastName
+    // Parse name
     const nameParts = fullname.trim().split(/\s+/);
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Create new user with basic info (other details can be added later via profile)
+    // Create user
     const newUser = new User({
       email: normalizedEmail,
-      passwordHash,
+      passwordHash: await bcrypt.hash(password, 12),
       authProvider: 'email',
-      firstName: firstName,
-      lastName: lastName,
+      firstName,
+      lastName,
       role: 'user',
       isActive: true,
       termsAcceptedAt: new Date()
     });
 
-    // Save new user
     await newUser.save();
 
-    // Store user info in session
+    // Set session
     req.session.user = { 
       id: newUser._id, 
       firstName: newUser.firstName,
@@ -95,104 +97,64 @@ router.post('/register', async (req, res) => {
       role: newUser.role
     };
 
-    // Save session and respond
     req.session.save((err) => {
-      if (err) {
-        console.error('[REGISTER] Session save error:', err);
-        return res.status(500).json({ success: false, errors: { general: 'Session error' } });
-      }
-      return res.json({ success: true, redirect: '/' });
+      if (err) return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+      res.json({ success: true, redirect: '/' });
     });
     
   } catch (err) {
     console.error('Register error:', err);
-    
-    // Handle MongoDB duplicate key error
     if (err.code === 11000) {
-      return res.status(400).json({ success: false, errors: { email: 'Email already in use' } });
+      return res.status(400).json({ success: false, errors: { email: 'Email already in use' }});
     }
-    
-    // Handle validation errors
-    if (err.name === 'ValidationError') {
-      const errors = {};
-      for (const field in err.errors) {
-        errors[field] = err.errors[field].message;
-      }
-      return res.status(400).json({ success: false, errors });
-    }
-    
-    return res.status(500).json({ success: false, errors: { general: 'Server error. Please try again.' } });
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 
-// POST /auth/login
+// POST /auth/login - authenticate user
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body || {};
+    const { email, password, redirect } = req.body || {};
     
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({ success: false, errors: { general: 'Email and password required' } });
+    // Validate inputs are strings
+    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, errors: { general: 'Email and password required' }});
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    console.log('[LOGIN] Attempting login for:', normalizedEmail);
-
-    // Find user and explicitly include passwordHash (since it has select: false)
+    // Find user with password hash
     const user = await User.findOne({ 
-      email: normalizedEmail,
-      authProvider: 'email' // Only allow email login for email auth users
+      email: email.toLowerCase().trim(),
+      authProvider: 'email'
     }).select('+passwordHash');
-
-    console.log('[LOGIN] User found:', user ? 'Yes' : 'No');
     
     if (!user) {
-      return res.status(400).json({ success: false, errors: { general: 'Invalid email or password' } });
+      return res.status(400).json({ success: false, errors: { general: 'Invalid email or password' }});
     }
 
-    console.log('[LOGIN] User details:', {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: user.fullName,
-      hasPasswordHash: !!user.passwordHash
-    });
-
-    // Check if account is locked
+    // Check account status
     if (user.isLocked) {
-      const lockTimeRemaining = Math.ceil((user.lockUntil - Date.now()) / (1000 * 60));
-      return res.status(423).json({ 
-        success: false, 
-        errors: { general: `Account locked. Try again in ${lockTimeRemaining} minutes.` } 
-      });
+      const mins = Math.ceil((user.lockUntil - Date.now()) / 60000);
+      return res.status(423).json({ success: false, errors: { general: `Account locked. Try again in ${mins} minutes.` }});
     }
 
-    // Check if account is active
     if (!user.isActive) {
-      return res.status(403).json({ success: false, errors: { general: 'Account is deactivated' } });
+      return res.status(403).json({ success: false, errors: { general: 'Account is deactivated' }});
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    console.log('[LOGIN] Password valid:', isPasswordValid);
-    
-    if (!isPasswordValid) {
-      // Increment failed login attempts
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
       await user.incLoginAttempts();
-      return res.status(400).json({ success: false, errors: { general: 'Invalid email or password' } });
+      return res.status(400).json({ success: false, errors: { general: 'Invalid email or password' }});
     }
 
-    // Reset login attempts on successful login
-    if (user.resetLoginAttempts) {
-      await user.resetLoginAttempts();
-    }
-
-    // Update last login info
+    // Reset attempts and update login info
+    if (user.resetLoginAttempts) await user.resetLoginAttempts();
     user.lastLoginAt = new Date();
-    user.lastLoginIP = req.ip || req.connection?.remoteAddress;
+    user.lastLoginIP = req.ip;
     await user.save();
 
-    // Store user info in session
+    // Set session
     req.session.user = { 
       id: user._id, 
       firstName: user.firstName,
@@ -203,69 +165,41 @@ router.post('/login', async (req, res) => {
       profileImageUrl: user.profileImageUrl
     };
 
-    console.log('[LOGIN] Session user set:', req.session.user);
-
-    // Explicitly save session before responding
     req.session.save((err) => {
-      if (err) {
-        console.error('[LOGIN] Session save error:', err);
-        return res.status(500).json({ success: false, errors: { general: 'Session error' } });
-      }
-      console.log('[LOGIN] Session saved successfully');
-      return res.json({ success: true });
+      if (err) return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+      // Return the redirect URL (sanitize to prevent open redirect)
+      const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
+      res.json({ success: true, redirect: safeRedirect });
     });
 
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ success: false, errors: { general: 'Server error. Please try again.' } });
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 
-// GET /auth/logout
+// GET /auth/logout - destroy session
 router.get('/logout', (req, res) => {
-  if (req.session) {
-    req.session.destroy(err => {
-      if (err) {
-        console.error('Logout error:', err);
-      }
-      res.clearCookie('connect.sid'); // Clear session cookie
-      return res.redirect('/landingpage');
-    });
-  } else {
-    return res.redirect('/');
-  }
+  req.session?.destroy(() => {});
+  res.clearCookie('connect.sid');
+  res.redirect('/');
 });
 
-// GET /auth/debug-session - Debug endpoint to see session contents
-router.get('/debug-session', (req, res) => {
-  return res.json({
-    sessionExists: !!req.session,
-    sessionUser: req.session?.user || null,
-    sessionID: req.sessionID,
-    resLocalsUser: res.locals.user || null
-  });
-});
-
-// GET /auth/me - Get current user info
+// GET /auth/me - get current user info
 router.get('/me', async (req, res) => {
-  try {
-    if (!req.session?.user?.id) {
-      return res.status(401).json({ success: false, errors: { general: 'Not authenticated' } });
-    }
+  if (!req.session?.user?.id) {
+    return res.status(401).json({ success: false, errors: { general: 'Not authenticated' }});
+  }
 
+  try {
     const user = await User.findById(req.session.user.id);
     if (!user) {
       req.session.destroy();
-      return res.status(401).json({ success: false, errors: { general: 'User not found' } });
+      return res.status(401).json({ success: false, errors: { general: 'User not found' }});
     }
-
-    return res.json({ 
-      success: true, 
-      user: user.toPublic() 
-    });
+    res.json({ success: true, user: user.toPublic() });
   } catch (err) {
-    console.error('Get user error:', err);
-    return res.status(500).json({ success: false, errors: { general: 'Server error' } });
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 
@@ -276,34 +210,30 @@ router.get('/profile', requireAuth, async (req, res) => {
     if (!user) return res.redirect('/auth/login');
     res.render('pages/auth/profile', { title: 'Profile', user });
   } catch (err) {
-    console.error('Profile fetch error:', err);
     res.redirect('/');
   }
 });
 
-// PUT /auth/profile - update profile (JSON)
+// PUT /auth/profile - update profile
 router.put('/profile', requireAuth, async (req, res) => {
   try {
     const { name, bio, phone, dueDate, profileImage } = req.body || {};
     const user = await User.findById(req.session.user.id);
     if (!user) return res.status(404).json({ success: false, errors: { general: 'User not found' }});
 
-    // Update allowed fields
-    if (name && name.trim()) user.name = name.trim();
+    // Update fields
+    if (name?.trim()) user.name = name.trim();
     if (bio !== undefined) user.bio = bio.trim();
     if (phone !== undefined) user.phone = phone.trim();
     if (dueDate !== undefined) user.dueDate = dueDate ? new Date(dueDate) : null;
     if (profileImage !== undefined) user.profileImage = profileImage.trim();
 
     await user.save();
-
-    // Update session name so navbar reflects changes immediately
     req.session.user.name = user.name;
 
-    return res.json({ success: true, user: user.toPublic() });
+    res.json({ success: true, user: user.toPublic() });
   } catch (err) {
-    console.error('Profile update error:', err);
-    return res.status(500).json({ success: false, errors: { general: 'Server error' }});
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 
@@ -312,48 +242,34 @@ router.delete('/profile', requireAuth, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.session.user.id);
     req.session.destroy(() => {});
-    return res.json({ success: true });
+    res.json({ success: true });
   } catch (err) {
-    console.error('Delete account error:', err);
-    return res.status(500).json({ success: false, errors: { general: 'Server error' }});
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 
-// POST /auth/forgot-password
+// POST /auth/forgot-password - request password reset
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body || {};
+    if (!email) return res.status(400).json({ success: false, errors: { email: 'Email is required' }});
+
+    const user = await User.findOne({ email: email.toLowerCase().trim(), authProvider: 'email' });
     
-    if (!email) {
-      return res.status(400).json({ success: false, errors: { email: 'Email is required' } });
-    }
-
-    const user = await User.findOne({ 
-      email: email.toLowerCase().trim(),
-      authProvider: 'email'
-    });
-
     // Always return success to prevent email enumeration
-    if (!user) {
-      return res.json({ success: true, message: 'If an account exists, a reset link has been sent.' });
+    if (user) {
+      const resetToken = user.generatePasswordResetToken();
+      await user.save();
+      console.log(`Password reset token for ${email}: ${resetToken}`);
     }
 
-    // Generate reset token
-    const resetToken = user.generatePasswordResetToken();
-    await user.save();
-
-    // TODO: Send email with reset link
-    // For now, just log the token (in production, send via email)
-    console.log(`Password reset token for ${email}: ${resetToken}`);
-
-    return res.json({ success: true, message: 'If an account exists, a reset link has been sent.' });
+    res.json({ success: true, message: 'If an account exists, a reset link has been sent.' });
   } catch (err) {
-    console.error('Forgot password error:', err);
-    return res.status(500).json({ success: false, errors: { general: 'Server error' } });
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 
-// POST /auth/reset-password
+// POST /auth/reset-password - reset password with token
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, password, password2 } = req.body || {};
@@ -365,11 +281,9 @@ router.post('/reset-password', async (req, res) => {
     if (!password2) errors.password2 = 'Please confirm password';
     if (password && password2 && password !== password2) errors.password2 = 'Passwords do not match';
 
-    if (Object.keys(errors).length) {
-      return res.status(400).json({ success: false, errors });
-    }
+    if (Object.keys(errors).length) return res.status(400).json({ success: false, errors });
 
-    // Hash the token to compare with stored hash
+    // Find user by hashed token
     const crypto = require('crypto');
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -378,11 +292,9 @@ router.post('/reset-password', async (req, res) => {
       passwordResetExpires: { $gt: Date.now() }
     }).select('+passwordResetToken +passwordResetExpires');
 
-    if (!user) {
-      return res.status(400).json({ success: false, errors: { token: 'Invalid or expired reset token' } });
-    }
+    if (!user) return res.status(400).json({ success: false, errors: { token: 'Invalid or expired token' }});
 
-    // Update password
+    // Update password and clear reset fields
     user.passwordHash = await bcrypt.hash(password, 12);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
@@ -390,10 +302,9 @@ router.post('/reset-password', async (req, res) => {
     user.lockUntil = undefined;
     await user.save();
 
-    return res.json({ success: true, message: 'Password reset successful. You can now login.' });
+    res.json({ success: true, message: 'Password reset successful.' });
   } catch (err) {
-    console.error('Reset password error:', err);
-    return res.status(500).json({ success: false, errors: { general: 'Server error' } });
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
 

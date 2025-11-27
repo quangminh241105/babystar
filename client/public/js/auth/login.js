@@ -26,59 +26,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  form.addEventListener('submit', async (e) => {
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = (document.getElementById('email') || {}).value || '';
-    const password = (document.getElementById('password') || {}).value || '';
-
-    clearErrors();
-
-    // Client-side validation
-    let hasErrors = false;
-    if (!email.trim()) { 
-      setError('email', 'Email is required'); 
-      hasErrors = true; 
+    
+    // Get form values - ensure they're strings
+    const emailEl = document.getElementById('email');
+    const passwordEl = document.getElementById('password');
+    const redirectEl = document.getElementById('redirect');
+    
+    const email = emailEl?.value?.trim() || '';
+    const password = passwordEl?.value || '';
+    const redirect = redirectEl?.value || '/';
+    
+    // Clear previous errors
+    document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+    
+    // Basic validation
+    if (!email || !password) {
+      const errorEl = document.getElementById('general-error');
+      if (errorEl) errorEl.textContent = 'Email and password required';
+      return;
     }
-    if (!password) { 
-      setError('password', 'Password is required'); 
-      hasErrors = true; 
-    }
-    if (hasErrors) return;
-
-    // Disable submit button
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.value = 'Signing in...';
-    }
-
+    
     try {
       const resp = await fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, redirect })
       });
+      
       const data = await resp.json();
       
-      if (resp.ok && data.success) {
+      if (data.success) {
         window.location.href = data.redirect || '/';
-        return;
-      }
-      
-      if (data && data.errors) {
-        const msg = data.errors.general || data.errors.email || data.errors.password || 'Invalid credentials';
-        setError('general', msg);
       } else {
-        setError('general', 'Unexpected server error');
+        // Show errors
+        if (data.errors?.general) {
+          const el = document.getElementById('general-error');
+          if (el) el.textContent = data.errors.general;
+        }
+        if (data.errors?.email) {
+          const el = document.getElementById('email-error');
+          if (el) el.textContent = data.errors.email;
+        }
+        if (data.errors?.password) {
+          const el = document.getElementById('password-error');
+          if (el) el.textContent = data.errors.password;
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('general', 'Network error. Please try again.');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.value = 'Log In';
-      }
+      const errorEl = document.getElementById('general-error');
+      if (errorEl) errorEl.textContent = 'Network error. Please try again.';
     }
   });
 });

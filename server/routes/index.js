@@ -1,28 +1,42 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuthRedirect } = require('../middleware');
 
+// Homepage or Welcome page based on authentication
 router.get('/', (req, res) => {
+  if (req.session && req.session.user) {
+      res.render('pages/home', { title: 'Home' });
+      return;
+  }
+  else {
+      res.render('pages/index', { title: 'Welcome' });
+      return;
+  }
+});
+
+// All routes require authentication
+router.get('/home', requireAuthRedirect, (req, res) => {
   res.render('pages/home', { title: 'Home' });
 });
 
-router.get('/chatbot', (req, res) => {
+router.get('/chatbot', requireAuthRedirect, (req, res) => {
   res.render('pages/chatbot', { title: 'Chatbot' });
 });
 
-router.get('/weekly-report', (req, res) => {
+router.get('/weekly-report', requireAuthRedirect, (req, res) => {
   res.render('pages/weekly-report', { title: 'Weekly Report' });
 });
 
-router.get('/link-account', (req, res) => {
+router.get('/link-account', requireAuthRedirect, (req, res) => {
   res.render('pages/linkaccount', { title: 'Link Account' });
 });
 
-router.get('/diet-plan', (req, res) => {
+router.get('/diet-plan', requireAuthRedirect, (req, res) => {
   res.render('pages/dietplanner', { title: 'Diet Planner' });
 });
 
-router.get('/exercise-plan', (req, res) => {
-  res.render('pages/exerciseplanner', { title: 'Diet Planner' });
+router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
+  res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
 });
 
 module.exports = router;

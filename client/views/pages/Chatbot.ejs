@@ -1,63 +1,208 @@
 <link rel="stylesheet" href="/css/chatbot.css">
 
+<!-- Header card -->
 <div class="featureCard">
-        <div class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="purple" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot-icon lucide-bot"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-        </div>
+    <div class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="purple"
+            stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 8V4H8" />
+            <rect width="16" height="12" x="4" y="8" rx="2" />
+            <path d="M2 14h2" /><path d="M20 14h2" />
+            <path d="M15 13v2" /><path d="M9 13v2" />
+        </svg>
+    </div>
+    <div class="feature">
+        <div class="featureName">AI Pregnancy Assistant</div>
+        <div class="featureDescription">Ask me anything about pregnancy, health and wellness</div>
+    </div>
+</div>
 
-        <div class="feature">
-            <div class="featureName"> AI Pregnancy Assistant </div>
-            <div class="featureDescription"> Ask me anything about pregnancy, health and wellness </div>
-        </div>
+<!-- Chat messages container -->
+<div class="chatBox" id="chatBox"></div>
+
+<!-- User input section - fixed at bottom -->
+<div class="userInput">
+    <div>Quick Questions:</div>
+
+    <div id="quickQuestions">
+        <div class="question" data-question="What foods should I avoid during pregnancy?">What foods should I avoid?</div>
+        <div class="question" data-question="Is it safe to exercise during pregnancy?">Is it safe to exercise?</div>
+        <div class="question" data-question="How can I manage morning sickness?">How can I manage morning sickness?</div>
+        <div class="question" data-question="What are Braxton Hicks contractions?">What are Braxton Hicks contractions?</div>
     </div>
 
-    <div class="chatBox">
-        <div class="AIChatBubble">
+    <div id="messageForm">
+        <form id="chatForm">
+            <input type="text" placeholder="Enter your question here" id="messageInput" disabled>
+            <button type="submit" class="sendButton" id="sendBtn" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
+                    <path d="m21.854 2.147-10.94 10.939" />
+                </svg>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+(async function () {
+    // ===== DOM Elements =====
+    const chatBox = document.getElementById('chatBox');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatForm = document.getElementById('chatForm');
+    const quickQuestions = document.querySelectorAll('.question');
+    
+    // ===== State =====
+    let conversationId = null; // Tracks current conversation for context
+
+    // ===== Utility Functions =====
+    
+    // Format current time as HH:MM
+    function formatTime() {
+        const now = new Date();
+        return now.getHours().toString().padStart(2, '0') + ':' + 
+               now.getMinutes().toString().padStart(2, '0');
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Enable/disable all input elements
+    function enableInput(enable) {
+        messageInput.disabled = !enable;
+        sendBtn.disabled = !enable;
+        quickQuestions.forEach(q => q.classList.toggle('disabled', !enable));
+    }
+
+    // ===== Message Display Functions =====
+
+    // Add AI assistant message to chat
+    function addAIMessage(text) {
+        const bubble = document.createElement('div');
+        bubble.className = 'AIChatBubble';
+        bubble.innerHTML = `
             <div class="AIchatIcon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot-icon lucide-bot"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8V4H8" />
+                    <rect width="16" height="12" x="4" y="8" rx="2" />
+                    <path d="M2 14h2" /><path d="M20 14h2" />
+                    <path d="M15 13v2" /><path d="M9 13v2" />
+                </svg>
             </div>
-
             <div class="chat">
-                <div class="chatText"> Hello! I'm your BabyStar AI assistant. I can help answer questions about pregnancy, nutrition, exercise, and more. What would you like to know? </div>
-                <div class="AIchatTime"> 14:26 </div>
-            </div>
-        </div>
+                <div class="chatText">${escapeHtml(text)}</div>
+                <div class="AIchatTime">${formatTime()}</div>
+            </div>`;
+        chatBox.appendChild(bubble);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-        <div class="UserChatBubble">
+    // Add user message to chat
+    function addUserMessage(text) {
+        const bubble = document.createElement('div');
+        bubble.className = 'UserChatBubble';
+        bubble.innerHTML = `
             <div class="UserchatIcon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="purple" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-icon lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="purple" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
             </div>
-
             <div class="chat">
-                <div class="UserChatText"> Hello! I'm your BabyStar AI assistant. I can help answer questions about pregnancy, nutrition, exercise, and more. What would you like to know? </div>
-                <div class="UserChatTime"> 14:26 </div>
-            </div>
-        </div>
-    </div>
+                <div class="UserChatText">${escapeHtml(text)}</div>
+                <div class="UserChatTime">${formatTime()}</div>
+            </div>`;
+        chatBox.appendChild(bubble);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-    <div class="userInput">
-        <div>Quick Questions:</div>
+    // ===== API Functions =====
 
-        <div id="quickQuestions">
-            <div class="question" id="ques1">What foods should I avoid?</div>
-            <div class="question" id="ques2">Is it safe to exercise?</div>
-            <div class="question" id="ques3">How can I manage morning sickness?</div>
-            <div class="question" id="ques4">What are Braxton Hicks contradictions?</div>
-        </div>
+    // Check if user has valid session
+    async function checkSession() {
+        try {
+            const resp = await fetch('/chatbot/debug-session', { credentials: 'include' });
+            const data = await resp.json();
+            return !!data.sessionUser;
+        } catch {
+            return false;
+        }
+    }
 
-        <div id="messageForm">
-            <form>
-                <input type="text" placeholder="Enter your question here" id="messageInput">
-                <button type="submit" class="sendButton">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
-                        viewBox="0 0 24 24" fill="none" stroke="purple" 
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-                        class="lucide lucide-send-icon lucide-send">
-                        <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
-                        <path d="m21.854 2.147-10.94 10.939"/>
-                    </svg>
-                </button>
-        </div>
-    </div>
+    // Send message to server and get AI response
+    async function sendMessageToServer(text) {
+        const resp = await fetch('/chatbot/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ message: text, conversationId })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            conversationId = data.conversationId; // Save for conversation context
+            return data.assistant;
+        }
+        throw new Error(data.errors?.general || 'Server error');
+    }
 
-    <script src="/js/Chatbot.js"></script>
+    // ===== Main Send Message Handler =====
+    async function sendMessage(text) {
+        if (!text.trim()) return;
+        
+        addUserMessage(text);
+        messageInput.value = '';
+        enableInput(false);
+
+        try {
+            const reply = await sendMessageToServer(text);
+            addAIMessage(reply);
+        } catch (e) {
+            addAIMessage('Sorry, an error occurred. Please try again.');
+        }
+        
+        enableInput(true);
+        messageInput.focus();
+    }
+
+    // ===== Initialization =====
+    
+    // Check session and initialize chat
+    const hasSession = await checkSession();
+    if (!hasSession) {
+        addAIMessage('Please login to use the chatbot. Redirecting...');
+        setTimeout(() => {
+            window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+        }, 2000);
+        return;
+    }
+
+    // Session valid - enable chat and show greeting
+    enableInput(true);
+    addAIMessage("Hello! I'm your BabyStar AI assistant. I can help answer questions about pregnancy, nutrition, exercise, and more. What would you like to know?");
+
+    // ===== Event Listeners =====
+
+    // Form submit
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        sendMessage(messageInput.value);
+    });
+
+    // Quick question clicks
+    quickQuestions.forEach(q => {
+        q.addEventListener('click', () => {
+            if (!q.classList.contains('disabled')) {
+                sendMessage(q.dataset.question);
+            }
+        });
+    });
+})();
+</script>
