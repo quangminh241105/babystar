@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Progress - BabyStar</title>
+  <link rel="stylesheet" href="/css/weekly-report.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="report-container">
+    <!-- Page Header -->
+    <header class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">📊 Weekly Progress & Reports</h1>
+        <div class="week-badge">
+          <span class="week-number">Week 24</span>
+          <span class="separator">•</span>
+          <span class="trimester">2nd Trimester</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Quick Stats Cards -->
+    <section class="stats-grid">
+      <div class="stat-card weight-card">
+        <div class="stat-label">Average Weight</div>
+        <div class="stat-value">68.3 kg</div>
+        <div class="stat-status positive">
+          <span class="icon">✓</span>
+          Within healthy range
+        </div>
+      </div>
+
+      <div class="stat-card sleep-card">
+        <div class="stat-label">Average Sleep</div>
+        <div class="stat-value">6.5 hours</div>
+        <div class="stat-status info">
+          <span class="icon">😴</span>
+          Good sleep quality
+        </div>
+      </div>
+
+      <div class="stat-card logs-card">
+        <div class="stat-label">Health Logs</div>
+        <div class="stat-value">2 entries</div>
+        <div class="stat-status success">
+          <span class="icon">🎉</span>
+          Great consistency!
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Weight Tracking</h2>
+          <p class="chart-subtitle">Your weight progression over time</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="weightChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Sleep Tracking</h2>
+          <p class="chart-subtitle">Your sleep hours per night</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="sleepChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mood & Symptoms -->
+    <section class="insights-section">
+      <div class="insight-card mood-card">
+        <div class="card-header">
+          <h2 class="card-title">Mood Tracking</h2>
+          <p class="card-subtitle">Distribution of your moods over time</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="moodChart"></canvas>
+        </div>
+      </div>
+
+      <div class="insight-card symptoms-card">
+        <div class="card-header">
+          <h2 class="card-title">Most Common Symptoms</h2>
+          <p class="card-subtitle">Symptoms you've experienced this period</p>
+        </div>
+        <div class="symptoms-list">
+          <div class="symptom-item">
+            <div class="symptom-info">
+              <span class="symptom-emoji">🤢</span>
+              <span class="symptom-name">Nausea</span>
+            </div>
+            <div class="symptom-bar">
+              <div class="symptom-fill" style="width: 30%;"></div>
+            </div>
+            <span class="symptom-days">1 days</span>
+          </div>
+
+          <div class="symptom-item">
+            <div class="symptom-info">
+              <span class="symptom-emoji">😴</span>
+              <span class="symptom-name">Fatigue</span>
+            </div>
+            <div class="symptom-bar">
+              <div class="symptom-fill" style="width: 30%;"></div>
+            </div>
+            <span class="symptom-days">1 days</span>
+          </div>
+
+          <div class="symptom-item">
+            <div class="symptom-info">
+              <span class="symptom-emoji">💆</span>
+              <span class="symptom-name">Back pain</span>
+            </div>
+            <div class="symptom-bar">
+              <div class="symptom-fill" style="width: 30%;"></div>
+            </div>
+            <span class="symptom-days">1 days</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Baby Development -->
+    <section class="baby-development-section">
+      <div class="dev-header">
+        <span class="dev-emoji">👶</span>
+        <h2 class="dev-title">Baby Development - Week 24</h2>
+      </div>
+      <p class="dev-subtitle">What's happening this week</p>
+
+      <div class="dev-content">
+        <div class="dev-card size-card-dev">
+          <div class="dev-card-header">
+            <span class="dev-icon">🍈</span>
+            <h3>Size</h3>
+          </div>
+          <p>Your baby is about the size of a <strong>cantaloupe</strong>, measuring around <strong>30 cm long</strong>.</p>
+        </div>
+
+        <div class="dev-card development-card-dev">
+          <div class="dev-card-header">
+            <span class="dev-icon">🧠</span>
+            <h3>Development</h3>
+          </div>
+          <p>Baby's brain is growing rapidly, and they're developing patterns of sleep and wakefulness. You might notice more regular movement patterns now.</p>
+        </div>
+
+        <div class="dev-card feelings-card-dev">
+          <div class="dev-card-header">
+            <span class="dev-icon">💗</span>
+            <h3>What You Might Feel</h3>
+          </div>
+          <p>You may experience increased appetite, vivid dreams, and more noticeable baby movements. Some back pain is common as your center of gravity shifts.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/weekly-report.js"></script>
+</body>
+</html>

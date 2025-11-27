@@ -1,99 +1,364 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-    font-family: 'Poppins';
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #fef5f8 0%, #fff0f5 50%, #ffe4ec 100%);
+  min-height: 100vh;
+  color: #2d3748;
+  padding: 0;
+  position: relative; /* Establish stacking context */
 }
 
+.home-content {
+  padding: 2rem 150px;
+  position: relative;
+  z-index: 1; /* Below navbar */
+}
+
+/* Container for content below navbar */
+.home-content {
+  padding: 2rem 150px; /* Move padding to content wrapper */
+}
+
+/* Header Section */
 .mainBox {
-    background: linear-gradient(to right, #7000FF, #F82181);
-    border-radius: 15px;
-    box-sizing: border-box;
-    width: 70%;
-    padding: 30px;
-    margin:auto;
-    margin-bottom: 30px;
-    margin-top: 40px;
-    color: white;
+  background: white;
+  border-radius: 24px;
+  padding: 3rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 30px rgba(196, 69, 105, 0.12);
+  animation: fadeInUp 0.6s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-h3 {
-    margin-top: 0;
+.mainBox:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(196, 69, 105, 0.18);
 }
 
+.mainBox h3 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #C44569;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.mainBox p {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #555;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 2rem;
+}
+
+/* Key Features */
 #keyFeatures {
-    display: flex;
-    justify-content:flex-start;
-    gap: 3%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 .keyFeatureBox {
-    background-color: purple;
-    border-radius: 15px;
-    padding: 15px;
+  background: linear-gradient(135deg, #fff5f7, #ffe4ec);
+  padding: 2rem 1.5rem;
+  border-radius: 20px;
+  text-align: center;
+  font-weight: 500;
+  color: #2d3748;
+  line-height: 1.6;
+  border-left: 4px solid #FF6B9D;
+  transition: all 0.3s ease;
+  animation: slideIn 0.8s ease;
 }
 
+.keyFeatureBox:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.keyFeatureBox:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.keyFeatureBox:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(255, 107, 157, 0.2);
+  border-left-color: #C44569;
+}
+
+/* Pregnancy Info Card */
 #pregnancyInfo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  background: linear-gradient(135deg, #FF6B9D, #C44569);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2.5rem 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+#pregnancyInfo::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 70%);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
 }
 
 #pregnancyWeek {
-    font-size: larger;
-    font-weight: bold;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+#pregnancyInfo p {
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  position: relative;
+  z-index: 1;
+  text-align: left;
 }
 
 #pregnancyEmoji {
-    font-size: 60px;
-    margin-top: 0;
-    margin-bottom: 0;
+  font-size: 4rem;
+  margin: 0;
+  animation: bounce 2s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
 }
 
+/* Section Names */
 .sectionName {
-    width: 70%;
-    margin-left: auto;
-    margin-right: auto;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #C44569;
+  margin: 3rem 0 1.5rem;
+  text-align: left;
+  position: relative;
+}
+
+.sectionName::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #FF6B9D, #C44569);
+  margin: 0.5rem 0 0;
+  border-radius: 2px;
+}
+
+/* Quick Actions & Features Grid */
+#quickActions,
+#featureSection {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .featureCard {
-    background-color: #FFF5FA;          
-    border: 2px solid #ED7EAF;    
-    border-radius: 15px; 
-    box-shadow: 0 8px 24px rgba(217, 30, 143, 0.35);
-    padding: 20px;
-    width: 28%;
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    transition: 0.25s ease;
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.8s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+
+.featureCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #FF6B9D, #C44569);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.featureCard:hover::before {
+  transform: scaleX(1);
 }
 
 .featureCard:hover {
-    background-color: #FFEAF3;        
-    border-color: #D91E8F;              
-    box-shadow: 0 6px 14px rgba(217, 30, 143, 0.18);
-    transform: translateY(-3px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 35px rgba(196, 69, 105, 0.15);
 }
 
-.featureCard:active {
-    transform: scale(0.97);
-    box-shadow: 0 2px 6px rgba(217, 30, 143, 0.15);
+.icon {
+  background: linear-gradient(135deg, #fff5f7, #ffe4ec);
+  padding: 1rem;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  width: 60px;
+  height: 60px;
+}
+
+.featureCard:hover .icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.feature {
+  flex: 1;
+}
+
+.featureName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
 }
 
 .featureDescription {
-    color: grey;
+  font-size: 0.9rem;
+  color: #718096;
+  line-height: 1.5;
 }
 
-#quickActions {
-    width: 70%;
-    margin: auto;
-    display: flex;
-    justify-content: space-between;
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-#featureSection {
-    width: 70%;
-    margin: auto;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    row-gap: 25px;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(30px, -30px);
+  }
+}
+
+/* Responsive - adjust margins for smaller screens */
+@media (max-width: 1400px) {
+  .home-content {
+    padding: 2rem 100px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .home-content {
+    padding: 2rem 50px;
+  }
+  
+  #quickActions,
+  #featureSection {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .home-content {
+    padding: 1rem 2rem;
+  }
+
+  .mainBox {
+    padding: 2rem 1.5rem;
+  }
+
+  .mainBox h3 {
+    font-size: 2rem;
+  }
+
+  #keyFeatures,
+  #quickActions,
+  #featureSection {
+    grid-template-columns: 1fr;
+  }
+
+  #pregnancyInfo {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 2rem;
+  }
+
+  #pregnancyInfo p {
+    text-align: center;
+  }
+
+  #pregnancyWeek {
+    font-size: 1.5rem;
+  }
+
+  #pregnancyEmoji {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-content {
+    padding: 1rem;
+  }
+
+  .featureCard {
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .icon {
+    width: 50px;
+    height: 50px;
+    padding: 0.75rem;
+  }
+
+  .featureName {
+    font-size: 1rem;
+  }
 }
