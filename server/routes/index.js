@@ -39,4 +39,25 @@ router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
   res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
 });
 
+router.get('/share-records', requireAuthRedirect, (req, res) => {
+  res.render('pages/sharerecords', { title: 'Share Records' });
+});
+
+// reminder, past-health-records, learning-quizzes, nearby-healthcare
+router.get('/reminder', requireAuthRedirect, (req, res) => {
+  res.render('pages/reminder', { title: 'Reminder' });
+});
+
+router.get('/past-health-records', requireAuthRedirect, (req, res) => {
+  res.render('pages/pasthealthrecords', { title: 'Past Health Records' });
+});
+
+router.get('/learning-quizzes', requireAuthRedirect, (req, res) => {
+  res.render('pages/learningquizzes', { title: 'Learning Quizzes' });
+});
+
+router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
+  res.render('pages/nearbyhealthcare', { title: 'Nearby Healthcare' });
+});
+
 module.exports = router;

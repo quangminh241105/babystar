@@ -105,9 +105,7 @@ app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/partner', partnerRouter);
 app.use('/admin', adminRouter);
-// app.use('/landingpage', require('./routes/landingpage'));
 app.use('/chatbot', require('./chatbot/routes'));
-// app.get('/', (req, res) => res.redirect('/landingpage'));
 
 // -----------------------------
 // Render wrapper
@@ -153,6 +151,48 @@ app.response.render = function(view, options, callback) {
 		return originalRender.call(this, 'layout', layoutOptions, callback);
 	});
 };
+
+// -----------------------------
+// Error Handling
+// -----------------------------
+
+// 404 Handler - catches unmatched routes
+app.use((req, res, next) => {
+  res.status(404).render('pages/error', {
+    title: 'Page Not Found',
+    statusCode: 404,
+    errorTitle: 'Page Not Found',
+    errorMessage: "Sorry, the page you're looking for doesn't exist or is still under development."
+  });
+});
+
+// Global Error Handler - catches all errors
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  
+  // Determine status code
+  const statusCode = err.status || err.statusCode || 500;
+  
+  // Handle view not found errors
+  if (err.message && err.message.includes('Failed to lookup view')) {
+    return res.status(404).render('pages/error', {
+      title: 'Page Not Found',
+      statusCode: 404,
+      errorTitle: 'Page Not Found',
+      errorMessage: 'This page is still under development. Please check back later.'
+    });
+  }
+  
+  // Handle other errors
+  res.status(statusCode).render('pages/error', {
+    title: 'Error',
+    statusCode: statusCode,
+    errorTitle: statusCode === 500 ? 'Server Error' : 'Something Went Wrong',
+    errorMessage: process.env.NODE_ENV === 'development' 
+      ? err.message 
+      : 'An unexpected error occurred. Please try again later.'
+  });
+});
 
 // -----------------------------
 // Create HTTP server and attach socket.io
