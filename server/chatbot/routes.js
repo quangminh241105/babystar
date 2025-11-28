@@ -24,6 +24,67 @@ router.get('/debug-session', (req, res) => {
   });
 });
 
+// GET /chatbot/conversations - get list of user's conversations
+router.get('/conversations', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const conversations = await Conversation.find({ 
+      userId, 
+      deletedAt: null 
+    })
+    .sort({ lastMessageAt: -1 })
+    .limit(50)
+    .select('title topic status lastMessageAt stats createdAt');
+    
+    res.json({ success: true, conversations });
+  } catch (err) {
+    console.error('Error fetching conversations:', err);
+    res.status(500).json({ success: false, errors: { general: 'Failed to fetch conversations' }});
+  }
+});
+
+// GET /chatbot/conversations/:id - get a specific conversation with messages
+router.get('/conversations/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const conversation = await Conversation.findOne({ 
+      _id: req.params.id, 
+      userId,
+      deletedAt: null 
+    });
+    
+    if (!conversation) {
+      return res.status(404).json({ success: false, errors: { general: 'Conversation not found' }});
+    }
+    
+    res.json({ success: true, conversation });
+  } catch (err) {
+    console.error('Error fetching conversation:', err);
+    res.status(500).json({ success: false, errors: { general: 'Failed to fetch conversation' }});
+  }
+});
+
+// DELETE /chatbot/conversations/:id - delete a conversation
+router.delete('/conversations/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const conversation = await Conversation.findOneAndUpdate(
+      { _id: req.params.id, userId },
+      { deletedAt: new Date() },
+      { new: true }
+    );
+    
+    if (!conversation) {
+      return res.status(404).json({ success: false, errors: { general: 'Conversation not found' }});
+    }
+    
+    res.json({ success: true, message: 'Conversation deleted' });
+  } catch (err) {
+    console.error('Error deleting conversation:', err);
+    res.status(500).json({ success: false, errors: { general: 'Failed to delete conversation' }});
+  }
+});
+
 // POST /chatbot/message - send message and get AI response
 router.post('/message', requireAuth, chatRateLimit, async (req, res) => {
   try {

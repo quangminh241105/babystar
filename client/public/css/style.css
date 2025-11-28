@@ -12,6 +12,7 @@
     backdrop-filter: blur(6px);
     border-bottom: 1px solid #eee;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    z-index: 9999;
 }
 
 .brand {
@@ -69,13 +70,6 @@
     grid-template-columns: 6fr 2fr 2fr;
     gap: 18px;
     align-items: start;
-}
-
-/* Responsive: stack on small screens */
-@media (max-width: 720px) {
-    .footer-inner {
-        grid-template-columns: 1fr;
-    }
 }
 
 .footer-left {
@@ -156,4 +150,55 @@
     text-align: center;
     font-size: 0.9rem;
     color: #666;
+}
+
+/* Responsive - Footer */
+@media (max-width: 992px) {
+    .footer-inner {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .footer-left {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 720px) {
+    .footer-inner {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .site-footer {
+        padding: 20px 12px;
+    }
+
+    .footer-left h4 {
+        font-size: 1rem;
+    }
+
+    .footer-left p {
+        font-size: 0.9rem;
+    }
+
+    .signup-row {
+        flex-direction: column;
+    }
+
+    .signup-row button {
+        width: 100%;
+    }
+
+    .footer-col h5 {
+        font-size: 0.9rem;
+    }
+
+    .footer-col a {
+        font-size: 0.9rem;
+    }
+
+    .footer-bottom {
+        font-size: 0.85rem;
+    }
 }

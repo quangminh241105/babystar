@@ -1,0 +1,71 @@
+  .error-container {
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 40px;
+      text-align: center;
+      font-family: system-ui, -apple-system, sans-serif;
+  }
+
+    .redirect-notice {
+        color: #777;
+        margin-top: 20px;
+        font-size: 0.9rem;
+    }
+
+    .redirect-notice #countdown {
+        font-weight: 600;
+        color: red;
+    }
+
+  .error-code {
+      font-size: 6rem;
+      font-weight: 700;
+      color: #e8c0d8;
+      margin: 0;
+      line-height: 1;
+  }
+
+  .error-title {
+      font-size: 1.5rem;
+      color: #333;
+      margin: 20px 0 10px;
+  }
+
+  .error-message {
+      color: #666;
+      margin-bottom: 30px;
+  }
+
+  .error-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+  }
+
+  .error-btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s;
+  }
+
+  .error-btn-primary {
+      background: linear-gradient(135deg, #E03FD8, #9333ea);
+      color: white;
+  }
+
+  .error-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(224, 63, 216, 0.3);
+  }
+
+  .error-btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+  }
+
+  .error-btn-secondary:hover {
+      background: #eee;
+  }

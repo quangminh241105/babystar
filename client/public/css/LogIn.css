@@ -417,7 +417,17 @@ p span:active {
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
+    .welcome-title {
+        font-size: 3rem;
+    }
+
+    .auth-left {
+        padding: 2.5rem;
+    }
+}
+
+@media (max-width: 992px) {
     .auth-layout {
         grid-template-columns: 1fr;
     }
@@ -427,22 +437,144 @@ p span:active {
     }
     
     .auth-right {
-        padding: 2rem 1rem;
+        padding: 2rem 1.5rem;
+        min-height: 100vh;
+    }
+
+    #inner-box {
+        max-width: 420px;
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+    .auth-right {
+        padding: 1.5rem 1rem;
+    }
+
+    #inner-box {
+        padding: 35px 40px;
+        max-width: 400px;
+    }
+
+    h3 {
+        font-size: 26px;
+    }
+
+    .user-type {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .auth-right {
+        padding: 1rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+
     #inner-box {
         padding: 30px 25px;
-        margin: 10px;
+        margin: 0;
+        max-width: 100%;
+        width: 100%;
+        border-radius: 20px;
     }
     
     h3 {
         font-size: 24px;
     }
+
+    h4 {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-size: 13px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    #email, #password, #fullname, #password2 {
+        height: 42px;
+        font-size: 14px;
+    }
     
     .user-type {
         flex-direction: column;
         gap: 12px;
+    }
+
+    .button {
+        height: 46px;
+        font-size: 15px;
+        margin-top: 20px;
+    }
+
+    .google-btn {
+        height: 46px;
+        font-size: 14px;
+    }
+
+    .divider {
+        margin: 20px 0;
+    }
+
+    p {
+        font-size: 13px;
+        margin-top: 16px;
+    }
+
+    .navbar-logo-img {
+        height: 40px;
+    }
+}
+
+@media (max-width: 380px) {
+    .auth-right {
+        padding: 0.75rem;
+        padding-top: 1.5rem;
+    }
+
+    #inner-box {
+        padding: 25px 20px;
+        border-radius: 16px;
+    }
+
+    h3 {
+        font-size: 22px;
+    }
+
+    h4 {
+        font-size: 12px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    #email, #password, #fullname, #password2 {
+        height: 40px;
+        font-size: 13px;
+        padding: 0 12px;
+    }
+
+    .button {
+        height: 44px;
+        font-size: 14px;
+        border-radius: 22px;
+    }
+
+    .google-btn {
+        height: 44px;
+        font-size: 13px;
+        gap: 10px;
+    }
+
+    .google-icon {
+        width: 18px;
+        height: 18px;
     }
 }

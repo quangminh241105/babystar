@@ -292,28 +292,55 @@ body {
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
+  .home-content {
+    padding: 2rem 80px;
+  }
+
+  #quickActions,
+  #featureSection {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mainBox h3 {
+    font-size: 2.25rem;
+  }
+}
+
+@media (max-width: 992px) {
   .home-content {
     padding: 2rem 50px;
   }
   
-  #quickActions,
-  #featureSection {
+  #keyFeatures {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mainBox {
+    padding: 2.5rem;
+  }
+
+  .mainBox h3 {
+    font-size: 2rem;
+  }
+
+  .mainBox p {
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 768px) {
   .home-content {
-    padding: 1rem 2rem;
+    padding: 1.5rem 2rem;
   }
 
   .mainBox {
     padding: 2rem 1.5rem;
+    border-radius: 20px;
   }
 
   .mainBox h3 {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
 
   #keyFeatures,
@@ -340,16 +367,40 @@ body {
   #pregnancyEmoji {
     font-size: 3rem;
   }
-}
 
-@media (max-width: 480px) {
-  .home-content {
-    padding: 1rem;
+  .sectionName {
+    font-size: 1.5rem;
   }
 
   .featureCard {
     padding: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .home-content {
+    padding: 1rem;
+  }
+
+  .mainBox {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .mainBox h3 {
+    font-size: 1.5rem;
+  }
+
+  .mainBox p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .featureCard {
+    padding: 1.25rem;
     gap: 1rem;
+    flex-direction: column;
+    text-align: center;
   }
 
   .icon {
@@ -360,5 +411,54 @@ body {
 
   .featureName {
     font-size: 1rem;
+  }
+
+  .featureDescription {
+    font-size: 0.85rem;
+  }
+
+  .keyFeatureBox {
+    padding: 1.5rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  #pregnancyInfo {
+    padding: 1.5rem;
+  }
+
+  #pregnancyWeek {
+    font-size: 1.25rem;
+  }
+
+  #pregnancyEmoji {
+    font-size: 2.5rem;
+  }
+
+  .sectionName {
+    font-size: 1.25rem;
+    margin: 2rem 0 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-content {
+    padding: 0.75rem;
+  }
+
+  .mainBox h3 {
+    font-size: 1.25rem;
+  }
+
+  .featureCard {
+    padding: 1rem;
+  }
+
+  .icon {
+    width: 45px;
+    height: 45px;
+  }
+
+  .featureName {
+    font-size: 0.95rem;
   }
 }

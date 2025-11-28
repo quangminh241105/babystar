@@ -224,6 +224,8 @@ function startServer() {
 
 mongoose.connect(MONGO_URI, {
 	useNewUrlParser: true,
+	ssl: true,
+	tlsAllowInvalidCertificates: true,
 	useUnifiedTopology: true,
 })
 .then(() => {

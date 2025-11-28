@@ -334,10 +334,27 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .charts-section,
+@media (max-width: 1200px) {
+  .report-container {
+    max-width: 1000px;
+  }
+
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+
   .insights-section {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .report-container {
+    padding: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .page-title {
@@ -345,16 +362,249 @@ body {
   }
   
   .dev-content {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .baby-development-section {
+    padding: 2rem;
+  }
+
+  .dev-title {
+    font-size: 1.75rem;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .report-container {
     padding: 1rem;
   }
-  
+
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  .week-badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1.5rem;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card {
+    padding: 1.5rem;
+  }
+
+  .chart-wrapper {
+    height: 200px;
+  }
+
+  .chart-title {
+    font-size: 1.125rem;
+  }
+
+  .insight-card {
+    padding: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 1.125rem;
+  }
+
+  .symptom-item {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .symptom-info {
+    min-width: 100px;
+  }
+
+  .dev-content {
+    grid-template-columns: 1fr;
+  }
+
+  .baby-development-section {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+
+  .dev-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .dev-emoji {
+    font-size: 2rem;
+  }
+
+  .dev-title {
+    font-size: 1.5rem;
+  }
+
+  .dev-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .report-container {
+    padding: 0.75rem;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .week-badge {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.85rem;
+  }
+
+  .stats-grid {
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+  }
+
+  .stat-status {
+    font-size: 0.8rem;
+  }
+
+  .chart-card {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+  }
+
+  .chart-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .chart-wrapper {
+    height: 180px;
+  }
+
+  .insight-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .symptoms-list {
+    gap: 1rem;
+  }
+
+  .symptom-info {
+    min-width: 90px;
+    gap: 0.35rem;
+  }
+
+  .symptom-emoji {
+    font-size: 1.25rem;
+  }
+
+  .symptom-name {
+    font-size: 0.9rem;
+  }
+
+  .symptom-bar {
+    height: 6px;
+  }
+
+  .symptom-days {
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+
+  .baby-development-section {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .dev-emoji {
+    font-size: 1.75rem;
+  }
+
+  .dev-title {
+    font-size: 1.35rem;
+  }
+
+  .dev-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .dev-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .dev-icon {
+    font-size: 1.5rem;
+  }
+
+  .dev-card h3 {
+    font-size: 1rem;
+  }
+
+  .dev-card p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 380px) {
+  .report-container {
+    padding: 0.5rem;
+  }
+
+  .page-title {
+    font-size: 1.35rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .dev-title {
+    font-size: 1.25rem;
+  }
+
+  .chart-wrapper {
+    height: 160px;
   }
 }

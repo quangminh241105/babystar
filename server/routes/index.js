@@ -19,9 +19,9 @@ router.get('/home', requireAuthRedirect, (req, res) => {
   res.render('pages/home', { title: 'Home' });
 });
 
-router.get('/chatbot', requireAuthRedirect, (req, res) => {
-  res.render('pages/chatbot', { title: 'Chatbot' });
-});
+// router.get('/chatbot', requireAuthRedirect, (req, res) => { (Have been moved to /chatbot)
+//   res.render('pages/chatbot', { title: 'Chatbot' });
+// });
 
 router.get('/weekly-report', requireAuthRedirect, (req, res) => {
   res.render('pages/weekly-report', { title: 'Weekly Report' });
@@ -43,7 +43,6 @@ router.get('/share-records', requireAuthRedirect, (req, res) => {
   res.render('pages/sharerecords', { title: 'Share Records' });
 });
 
-// reminder, past-health-records, learning-quizzes, nearby-healthcare
 router.get('/reminder', requireAuthRedirect, (req, res) => {
   res.render('pages/reminder', { title: 'Reminder' });
 });

@@ -2,12 +2,18 @@ body {
     background: linear-gradient(to bottom right, #fdf2f8, #faf5ff, #eff6ff);
 }
 
+.link-account-content {
+    padding: 2rem 150px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
 #linkCodeSection {
     font-family: 'Poppins', sans-serif;
     border: 1px solid #99f6e4;
     border-radius: 14px;
     padding: 30px;
-    max-width: 70%;
+    max-width: 100%;
     margin: 0 auto 30px auto;
     background: linear-gradient(to right, #f0fdfa, #eff6ff);
 } 
@@ -35,14 +41,24 @@ body {
 #copyCode {
     border: 1px solid rgba(128, 128, 128, 0.5);
     border-radius: 10px;
-    width: 15%;
-    padding: 5px;
+    width: auto;
+    min-width: 120px;
+    max-width: 200px;
+    padding: 8px 15px;
     margin-left: auto;
     margin-right: auto;
     display: flex;
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: center;
+    gap: 8px;
     font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#copyCode:hover {
+    background-color: #f7f7f7;
+    border-color: rgba(128, 128, 128, 0.7);
 }
 
 #linkCode {
@@ -58,7 +74,7 @@ body {
     border: 1px solid rgba(128, 128, 128, 0.5);
     border-radius: 14px;
     padding: 30px;
-    max-width: 70%;
+    max-width: 100%;
     margin: 0 auto 30px auto;
     background-color: white;
 }
@@ -86,6 +102,7 @@ body {
     padding: 10px;
     border-radius: 50%;
     background-color: aquamarine;
+    flex-shrink: 0;
 }
 
 .email, .dateLinked {
@@ -100,6 +117,7 @@ body {
     border-radius: 10px;
     padding: 20px;
     margin-top: 20px;
+    gap: 15px;
 }
 
 .removeButton {
@@ -112,6 +130,8 @@ body {
     color: #333;
     cursor: pointer;
     transition: 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .removeButton:hover {
@@ -130,7 +150,7 @@ body {
     border: 1px solid rgba(128, 128, 128, 0.5);
     border-radius: 14px;
     padding: 30px;
-    max-width: 70%;
+    max-width: 100%;
     margin: 0 auto 30px auto;
     background-color: #fff7ed;
     border: 1px solid #fed7aa;
@@ -142,4 +162,162 @@ body {
 
 html {
     scroll-behavior: smooth;
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+    .link-account-content {
+        padding: 2rem 100px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .link-account-content {
+        padding: 2rem 80px;
+    }
+}
+
+@media (max-width: 992px) {
+    .link-account-content {
+        padding: 2rem 50px;
+    }
+
+    #linkCode {
+        font-size: 32px;
+    }
+}
+
+@media (max-width: 768px) {
+    .link-account-content {
+        padding: 1.5rem 2rem;
+    }
+
+    #linkCodeSection,
+    #linkAccountSection,
+    #permissionSection {
+        padding: 20px;
+    }
+
+    #linkCodeSection h4 {
+        flex-wrap: wrap;
+    }
+
+    #linkCode {
+        font-size: 28px;
+    }
+
+    #copyCode {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .linkedAccount {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .userInfo {
+        flex-wrap: wrap;
+    }
+
+    .removeButton {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .link-account-content {
+        padding: 1rem;
+    }
+
+    #linkCodeSection,
+    #linkAccountSection,
+    #permissionSection {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    #linkCodeSection h4,
+    #linkAccountSection h4 {
+        font-size: 1rem;
+    }
+
+    #linkCodeSection p,
+    #linkAccountSection p {
+        font-size: 0.9rem;
+    }
+
+    #linkCode {
+        font-size: 24px;
+    }
+
+    #linkCodeDisplay {
+        padding: 15px;
+    }
+
+    #copyCode {
+        font-size: 13px;
+        padding: 5px 10px;
+        min-width: 100px;
+    }
+
+    .linkedAccount {
+        padding: 15px;
+    }
+
+    .userInfo {
+        gap: 10px;
+    }
+
+    .userIcon {
+        padding: 8px;
+    }
+
+    .userIcon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .userName {
+        font-size: 0.95rem;
+    }
+
+    .email, .dateLinked {
+        font-size: 0.85rem;
+    }
+
+    .removeButton {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+
+    #permissionSection h3 {
+        font-size: 1rem;
+    }
+
+    #permissionSection p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .link-account-content {
+        padding: 0.75rem;
+    }
+
+    #linkCodeSection,
+    #linkAccountSection,
+    #permissionSection {
+        padding: 12px;
+    }
+
+    #linkCode {
+        font-size: 20px;
+    }
+
+    .linkedAccount {
+        padding: 12px;
+    }
 }

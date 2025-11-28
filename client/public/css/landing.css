@@ -241,10 +241,26 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
+  .hero-content {
+    gap: 3rem;
+    max-width: 1000px;
+  }
+
+  .hero-text h1 {
+    font-size: 3rem;
+  }
+
+  .hero-card {
+    padding: 2.5rem;
+  }
+}
+
+@media (max-width: 992px) {
   .hero-content {
     grid-template-columns: 1fr;
     text-align: center;
+    gap: 2rem;
   }
   
   .hero-text h1 {
@@ -254,8 +270,144 @@ body {
   .hero-image {
     order: -1;
   }
+
+  .cta-buttons {
+    justify-content: center;
+  }
+
+  .hero-card {
+    max-width: 400px;
+    padding: 2rem;
+  }
   
   .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .features {
+    padding: 4rem 1.5rem;
+  }
+
+  .cta-section {
+    padding: 4rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 1.5rem;
+  }
+
+  .hero-text h1 {
+    font-size: 2rem;
+  }
+
+  .hero-text p {
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .hero-card h3 {
+    font-size: 1.5rem;
+  }
+
+  .features-grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-title h2 {
+    font-size: 2rem;
+  }
+
+  .cta-section h2 {
+    font-size: 2rem;
+  }
+
+  .features {
+    padding: 3rem 1rem;
+  }
+
+  .cta-section {
+    padding: 3rem 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero {
+    padding: 1rem;
+  }
+
+  .hero-text h1 {
+    font-size: 1.75rem;
+  }
+
+  .hero-text p {
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-card {
+    padding: 1.5rem;
+  }
+
+  .hero-card h3 {
+    font-size: 1.25rem;
+  }
+
+  .feature-card {
+    padding: 1.5rem;
+  }
+
+  .feature-icon {
+    font-size: 2.5rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1.25rem;
+  }
+
+  .section-title h2 {
+    font-size: 1.75rem;
+  }
+
+  .cta-section h2 {
+    font-size: 1.75rem;
+  }
+
+  .cta-section p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero-text h1 {
+    font-size: 1.5rem;
+  }
+
+  .hero-card h3 {
+    font-size: 1.125rem;
+  }
+
+  .hero-card p {
+    font-size: 0.875rem;
+  }
+
+  .section-title h2,
+  .cta-section h2 {
+    font-size: 1.5rem;
   }
 }

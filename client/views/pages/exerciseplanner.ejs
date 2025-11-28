@@ -1,254 +1,249 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exercise Planner - BabyStar</title>
-  <link rel="stylesheet" href="/css/exerciseplanner.css">
-</head>
-<body>
-  <div class="planner-content">
-    <!-- AI Badge -->
-    <div class="ai-badge">
-      <span class="ai-icon">✨</span>
-      <div class="ai-text">
-        <div class="ai-badge-header">
-          <strong>AI-Personalized Exercise Routine</strong>
-          <span class="ai-powered-tag">AI-Powered</span>
-        </div>
-        <p>This exercise plan adapts to your trimester, energy levels, and any symptoms you've logged. Our AI considers factors like your reported fatigue, back pain, and activity preferences to create a safe, effective routine just for you.</p>
+<link rel="stylesheet" href="/css/exerciseplanner.css">
+
+<div class="planner-content">
+  <!-- AI Badge -->
+  <div class="ai-badge">
+    <span class="ai-icon">✨</span>
+    <div class="ai-text">
+      <div class="ai-badge-header">
+        <strong>AI-Personalized Exercise Routine</strong>
+        <span class="ai-powered-tag">AI-Powered</span>
       </div>
+      <p>This exercise plan adapts to your trimester, energy levels, and any symptoms you've logged. Our AI considers
+        factors like your reported fatigue, back pain, and activity preferences to create a safe, effective routine just
+        for you.</p>
     </div>
-
-    <!-- Page Header -->
-    <header class="page-header">
-      <h1>Personalized Exercise Plan</h1>
-      <p class="subtitle">Safe and effective workouts for week 24</p>
-    </header>
-
-    <!-- Weekly Goal -->
-    <section class="goal-banner">
-      <h2 class="goal-title">💪 Weekly Exercise Goal</h2>
-      <p class="goal-description">Aim for at least <strong>150 minutes</strong> of moderate-intensity aerobic activity per week, spread throughout the week.</p>
-      <p class="goal-benefits">Regular exercise during pregnancy can help reduce back pain, prevent excess weight gain, improve sleep, and prepare your body for labor and delivery.</p>
-    </section>
-
-    <!-- Recommended Exercises -->
-    <section class="exercises-section">
-      <h2 class="section-title">
-        <span class="title-icon">🏃‍♀️</span>
-        Recommended Exercises
-      </h2>
-
-      <div class="exercise-card">
-        <div class="exercise-header">
-          <div class="exercise-title-group">
-            <h3>Walking</h3>
-            <div class="exercise-meta">
-              <span class="exercise-duration">30 minutes</span>
-              <span class="exercise-separator">•</span>
-              <span class="exercise-frequency">Daily</span>
-            </div>
-          </div>
-          <div class="exercise-benefit">Low-impact cardio, improves circulation</div>
-        </div>
-        <ul class="exercise-tips">
-          <li>Wear supportive shoes</li>
-          <li>Stay on even surfaces</li>
-          <li>Bring water</li>
-          <li>Walk with a partner when possible</li>
-        </ul>
-      </div>
-
-      <div class="exercise-card">
-        <div class="exercise-header">
-          <div class="exercise-title-group">
-            <h3>Prenatal Yoga</h3>
-            <div class="exercise-meta">
-              <span class="exercise-duration">20-30 minutes</span>
-              <span class="exercise-separator">•</span>
-              <span class="exercise-frequency">3-4 times per week</span>
-            </div>
-          </div>
-          <div class="exercise-benefit">Flexibility, relaxation, reduces back pain</div>
-        </div>
-        <ul class="exercise-tips">
-          <li>Avoid lying flat on back after 20 weeks</li>
-          <li>Use props for support</li>
-          <li>Focus on breathing</li>
-          <li>Skip inversions and deep twists</li>
-        </ul>
-      </div>
-
-      <div class="exercise-card">
-        <div class="exercise-header">
-          <div class="exercise-title-group">
-            <h3>Swimming</h3>
-            <div class="exercise-meta">
-              <span class="exercise-duration">30 minutes</span>
-              <span class="exercise-separator">•</span>
-              <span class="exercise-frequency">2-3 times per week</span>
-            </div>
-          </div>
-          <div class="exercise-benefit">Full-body workout, reduces swelling</div>
-        </div>
-        <ul class="exercise-tips">
-          <li>Water temperature should be comfortable</li>
-          <li>Avoid diving</li>
-          <li>Stay hydrated</li>
-          <li>Use the pool's edge for support</li>
-        </ul>
-      </div>
-
-      <div class="exercise-card">
-        <div class="exercise-header">
-          <div class="exercise-title-group">
-            <h3>Pelvic Floor Exercises (Kegels)</h3>
-            <div class="exercise-meta">
-              <span class="exercise-duration">10 minutes</span>
-              <span class="exercise-separator">•</span>
-              <span class="exercise-frequency">Daily</span>
-            </div>
-          </div>
-          <div class="exercise-benefit">Prepares for labor, prevents incontinence</div>
-        </div>
-        <ul class="exercise-tips">
-          <li>Contract for 5 seconds, release for 5</li>
-          <li>Do 10-15 repetitions, 3 times daily</li>
-          <li>Don't hold your breath</li>
-          <li>Can be done anywhere</li>
-        </ul>
-      </div>
-
-      <div class="exercise-card">
-        <div class="exercise-header">
-          <div class="exercise-title-group">
-            <h3>Strength Training</h3>
-            <div class="exercise-meta">
-              <span class="exercise-duration">20-30 minutes</span>
-              <span class="exercise-separator">•</span>
-              <span class="exercise-frequency">2-3 times per week</span>
-            </div>
-          </div>
-          <div class="exercise-benefit">Maintains muscle tone, supports posture</div>
-        </div>
-        <ul class="exercise-tips">
-          <li>Use lighter weights, higher reps</li>
-          <li>Avoid exercises lying on back</li>
-          <li>Focus on proper form</li>
-          <li>Include rest days</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- Weekly Schedule -->
-    <section class="schedule-section">
-      <h2 class="section-title">
-        <span class="title-icon">📅</span>
-        Suggested Weekly Schedule
-      </h2>
-      <p class="section-subtitle">A balanced routine for the week</p>
-
-      <div class="schedule-grid">
-        <div class="day-card">
-          <div class="day-header">Monday</div>
-          <div class="day-activities">
-            <div class="activity-item">30 min Walk</div>
-            <div class="activity-item">Pelvic Floor Exercises</div>
-          </div>
-        </div>
-
-        <div class="day-card">
-          <div class="day-header">Tuesday</div>
-          <div class="day-activities">
-            <div class="activity-item">30 min Prenatal Yoga</div>
-            <div class="activity-item">Light Strength Training</div>
-          </div>
-        </div>
-
-        <div class="day-card">
-          <div class="day-header">Wednesday</div>
-          <div class="day-activities">
-            <div class="activity-item">30 min Swimming</div>
-            <div class="activity-item">Pelvic Floor Exercises</div>
-          </div>
-        </div>
-
-        <div class="day-card">
-          <div class="day-header">Thursday</div>
-          <div class="day-activities">
-            <div class="activity-item">30 min Walk</div>
-            <div class="activity-item">Prenatal Yoga</div>
-          </div>
-        </div>
-
-        <div class="day-card">
-          <div class="day-header">Friday</div>
-          <div class="day-activities">
-            <div class="activity-item">Light Strength Training</div>
-            <div class="activity-item">Pelvic Floor Exercises</div>
-          </div>
-        </div>
-
-        <div class="day-card">
-          <div class="day-header">Saturday</div>
-          <div class="day-activities">
-            <div class="activity-item">30 min Swimming or Walk</div>
-            <div class="activity-item">Gentle Stretching</div>
-          </div>
-        </div>
-
-        <div class="day-card rest-day">
-          <div class="day-header">Sunday</div>
-          <div class="day-activities">
-            <div class="activity-item">Rest Day or Gentle Yoga</div>
-            <div class="activity-item">Pelvic Floor Exercises</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Safety Guidelines -->
-    <section class="safety-section">
-      <h2 class="section-title warning">
-        <span class="title-icon">⚠️</span>
-        Safety Guidelines
-      </h2>
-      <p class="section-subtitle">Important precautions for exercising during pregnancy</p>
-
-      <div class="safety-grid">
-        <div class="safety-item">⚠️ Always warm up before and cool down after exercise</div>
-        <div class="safety-item">⚠️ Stay hydrated - drink water before, during, and after</div>
-        <div class="safety-item">⚠️ Avoid overheating - exercise in cool, well-ventilated areas</div>
-        <div class="safety-item">⚠️ Stop if you experience dizziness, shortness of breath, or pain</div>
-        <div class="safety-item">⚠️ Avoid contact sports and activities with fall risk</div>
-        <div class="safety-item">⚠️ Don't exercise to the point of exhaustion</div>
-        <div class="safety-item">⚠️ Listen to your body and modify as needed</div>
-        <div class="safety-item">⚠️ Consult your healthcare provider before starting any new routine</div>
-      </div>
-    </section>
-
-    <!-- When to Stop -->
-    <section class="emergency-section">
-      <h2 class="section-title emergency">
-        <span class="title-icon">🚨</span>
-        When to Stop Exercising Immediately
-      </h2>
-      <p class="emergency-subtitle">Contact your healthcare provider if you experience any of these symptoms:</p>
-
-      <div class="emergency-list">
-        <div class="emergency-item">• Vaginal bleeding</div>
-        <div class="emergency-item">• Dizziness or feeling faint</div>
-        <div class="emergency-item">• Chest pain</div>
-        <div class="emergency-item">• Headache</div>
-        <div class="emergency-item">• Muscle weakness</div>
-        <div class="emergency-item">• Calf pain or swelling</div>
-        <div class="emergency-item">• Regular painful contractions</div>
-        <div class="emergency-item">• Fluid leaking from vagina</div>
-      </div>
-    </section>
   </div>
 
-  <script src="/js/exerciseplanner.js"></script>
-</body>
-</html>
+  <!-- Page Header -->
+  <header class="page-header">
+    <h1>Personalized Exercise Plan</h1>
+    <p class="subtitle">Safe and effective workouts for week 24</p>
+  </header>
+
+  <!-- Weekly Goal -->
+  <section class="goal-banner">
+    <h2 class="goal-title">💪 Weekly Exercise Goal</h2>
+    <p class="goal-description">Aim for at least <strong>150 minutes</strong> of moderate-intensity aerobic activity per
+      week, spread throughout the week.</p>
+    <p class="goal-benefits">Regular exercise during pregnancy can help reduce back pain, prevent excess weight gain,
+      improve sleep, and prepare your body for labor and delivery.</p>
+  </section>
+
+  <!-- Recommended Exercises -->
+  <section class="exercises-section">
+    <h2 class="section-title">
+      <span class="title-icon">🏃‍♀️</span>
+      Recommended Exercises
+    </h2>
+
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title-group">
+          <h3>Walking</h3>
+          <div class="exercise-meta">
+            <span class="exercise-duration">30 minutes</span>
+            <span class="exercise-separator">•</span>
+            <span class="exercise-frequency">Daily</span>
+          </div>
+        </div>
+        <div class="exercise-benefit">Low-impact cardio, improves circulation</div>
+      </div>
+      <ul class="exercise-tips">
+        <li>Wear supportive shoes</li>
+        <li>Stay on even surfaces</li>
+        <li>Bring water</li>
+        <li>Walk with a partner when possible</li>
+      </ul>
+    </div>
+
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title-group">
+          <h3>Prenatal Yoga</h3>
+          <div class="exercise-meta">
+            <span class="exercise-duration">20-30 minutes</span>
+            <span class="exercise-separator">•</span>
+            <span class="exercise-frequency">3-4 times per week</span>
+          </div>
+        </div>
+        <div class="exercise-benefit">Flexibility, relaxation, reduces back pain</div>
+      </div>
+      <ul class="exercise-tips">
+        <li>Avoid lying flat on back after 20 weeks</li>
+        <li>Use props for support</li>
+        <li>Focus on breathing</li>
+        <li>Skip inversions and deep twists</li>
+      </ul>
+    </div>
+
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title-group">
+          <h3>Swimming</h3>
+          <div class="exercise-meta">
+            <span class="exercise-duration">30 minutes</span>
+            <span class="exercise-separator">•</span>
+            <span class="exercise-frequency">2-3 times per week</span>
+          </div>
+        </div>
+        <div class="exercise-benefit">Full-body workout, reduces swelling</div>
+      </div>
+      <ul class="exercise-tips">
+        <li>Water temperature should be comfortable</li>
+        <li>Avoid diving</li>
+        <li>Stay hydrated</li>
+        <li>Use the pool's edge for support</li>
+      </ul>
+    </div>
+
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title-group">
+          <h3>Pelvic Floor Exercises (Kegels)</h3>
+          <div class="exercise-meta">
+            <span class="exercise-duration">10 minutes</span>
+            <span class="exercise-separator">•</span>
+            <span class="exercise-frequency">Daily</span>
+          </div>
+        </div>
+        <div class="exercise-benefit">Prepares for labor, prevents incontinence</div>
+      </div>
+      <ul class="exercise-tips">
+        <li>Contract for 5 seconds, release for 5</li>
+        <li>Do 10-15 repetitions, 3 times daily</li>
+        <li>Don't hold your breath</li>
+        <li>Can be done anywhere</li>
+      </ul>
+    </div>
+
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title-group">
+          <h3>Strength Training</h3>
+          <div class="exercise-meta">
+            <span class="exercise-duration">20-30 minutes</span>
+            <span class="exercise-separator">•</span>
+            <span class="exercise-frequency">2-3 times per week</span>
+          </div>
+        </div>
+        <div class="exercise-benefit">Maintains muscle tone, supports posture</div>
+      </div>
+      <ul class="exercise-tips">
+        <li>Use lighter weights, higher reps</li>
+        <li>Avoid exercises lying on back</li>
+        <li>Focus on proper form</li>
+        <li>Include rest days</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Weekly Schedule -->
+  <section class="schedule-section">
+    <h2 class="section-title">
+      <span class="title-icon">📅</span>
+      Suggested Weekly Schedule
+    </h2>
+    <p class="section-subtitle">A balanced routine for the week</p>
+
+    <div class="schedule-grid">
+      <div class="day-card">
+        <div class="day-header">Monday</div>
+        <div class="day-activities">
+          <div class="activity-item">30 min Walk</div>
+          <div class="activity-item">Pelvic Floor Exercises</div>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-header">Tuesday</div>
+        <div class="day-activities">
+          <div class="activity-item">30 min Prenatal Yoga</div>
+          <div class="activity-item">Light Strength Training</div>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-header">Wednesday</div>
+        <div class="day-activities">
+          <div class="activity-item">30 min Swimming</div>
+          <div class="activity-item">Pelvic Floor Exercises</div>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-header">Thursday</div>
+        <div class="day-activities">
+          <div class="activity-item">30 min Walk</div>
+          <div class="activity-item">Prenatal Yoga</div>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-header">Friday</div>
+        <div class="day-activities">
+          <div class="activity-item">Light Strength Training</div>
+          <div class="activity-item">Pelvic Floor Exercises</div>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-header">Saturday</div>
+        <div class="day-activities">
+          <div class="activity-item">30 min Swimming or Walk</div>
+          <div class="activity-item">Gentle Stretching</div>
+        </div>
+      </div>
+
+      <div class="day-card rest-day">
+        <div class="day-header">Sunday</div>
+        <div class="day-activities">
+          <div class="activity-item">Rest Day or Gentle Yoga</div>
+          <div class="activity-item">Pelvic Floor Exercises</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Safety Guidelines -->
+  <section class="safety-section">
+    <h2 class="section-title warning">
+      <span class="title-icon">⚠️</span>
+      Safety Guidelines
+    </h2>
+    <p class="section-subtitle">Important precautions for exercising during pregnancy</p>
+
+    <div class="safety-grid">
+      <div class="safety-item">⚠️ Always warm up before and cool down after exercise</div>
+      <div class="safety-item">⚠️ Stay hydrated - drink water before, during, and after</div>
+      <div class="safety-item">⚠️ Avoid overheating - exercise in cool, well-ventilated areas</div>
+      <div class="safety-item">⚠️ Stop if you experience dizziness, shortness of breath, or pain</div>
+      <div class="safety-item">⚠️ Avoid contact sports and activities with fall risk</div>
+      <div class="safety-item">⚠️ Don't exercise to the point of exhaustion</div>
+      <div class="safety-item">⚠️ Listen to your body and modify as needed</div>
+      <div class="safety-item">⚠️ Consult your healthcare provider before starting any new routine</div>
+    </div>
+  </section>
+
+  <!-- When to Stop -->
+  <section class="emergency-section">
+    <h2 class="section-title emergency">
+      <span class="title-icon">🚨</span>
+      When to Stop Exercising Immediately
+    </h2>
+    <p class="emergency-subtitle">Contact your healthcare provider if you experience any of these symptoms:</p>
+
+    <div class="emergency-list">
+      <div class="emergency-item">• Vaginal bleeding</div>
+      <div class="emergency-item">• Dizziness or feeling faint</div>
+      <div class="emergency-item">• Chest pain</div>
+      <div class="emergency-item">• Headache</div>
+      <div class="emergency-item">• Muscle weakness</div>
+      <div class="emergency-item">• Calf pain or swelling</div>
+      <div class="emergency-item">• Regular painful contractions</div>
+      <div class="emergency-item">• Fluid leaking from vagina</div>
+    </div>
+  </section>
+</div>
+
+<script src="/js/exerciseplanner.js"></script>
