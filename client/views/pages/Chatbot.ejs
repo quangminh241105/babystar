@@ -1,96 +1,74 @@
 <link rel="stylesheet" href="/css/chatbot.css">
 
-<!-- Main Chat Container with Sidebar -->
 <div class="chatContainer">
-    <!-- Conversation History Sidebar -->
-    <div class="conversationSidebar" id="conversationSidebar">
+    <!-- Sidebar -->
+    <aside class="conversationSidebar" id="conversationSidebar">
         <div class="sidebarHeader">
             <h3>Conversations</h3>
             <div class="sidebarActions">
-                <button class="newChatBtn" id="newChatBtn" title="Start new conversation">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
+                <button class="newChatBtn" id="newChatBtn" title="New chat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"/>
                     </svg>
                 </button>
-                <button class="collapseSidebarBtn" id="collapseSidebarBtn" title="Collapse sidebar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M15 18l-6-6 6-6" />
+                <button class="collapseSidebarBtn" id="collapseSidebarBtn" title="Toggle sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
                     </svg>
                 </button>
             </div>
         </div>
         <div class="conversationList" id="conversationList">
-            <div class="loadingConversations">Loading conversations...</div>
+            <div class="loadingConversations">Loading...</div>
         </div>
-    </div>
+    </aside>
 
-    <!-- Toggle Sidebar Button (for mobile) -->
+    <!-- Mobile Toggle -->
     <button class="sidebarToggle" id="sidebarToggle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
     </button>
 
-    <!-- Chat Main Area -->
-    <div class="chatMainArea">
-        <!-- Header card -->
+    <!-- Main Chat -->
+    <main class="chatMainArea">
         <div class="featureCard">
             <div class="icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="purple" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 8V4H8" />
-                    <rect width="16" height="12" x="4" y="8" rx="2" />
-                    <path d="M2 14h2" />
-                    <path d="M20 14h2" />
-                    <path d="M15 13v2" />
-                    <path d="M9 13v2" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/>
+                    <path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>
                 </svg>
             </div>
             <div class="feature">
                 <div class="featureName">AI Pregnancy Assistant</div>
-                <div class="featureDescription">Ask me anything about pregnancy, health and wellness</div>
+                <div class="featureDescription">Ask anything about pregnancy, health & wellness</div>
             </div>
         </div>
 
-        <!-- Chat messages container -->
         <div class="chatBox" id="chatBox"></div>
 
-        <!-- User input section - fixed at bottom -->
         <div class="userInput">
-            <div>Quick Questions:</div>
-
+            <div>Quick questions</div>
             <div id="quickQuestions">
-                <div class="question" data-question="What foods should I avoid during pregnancy?">What foods should I
-                    avoid?</div>
-                <div class="question" data-question="Is it safe to exercise during pregnancy?">Is it safe to exercise?
-                </div>
-                <div class="question" data-question="How can I manage morning sickness?">How can I manage morning
-                    sickness?</div>
-                <div class="question" data-question="What are Braxton Hicks contractions?">What are Braxton Hicks?</div>
+                <button class="question" data-question="What foods should I avoid during pregnancy?">Foods to avoid</button>
+                <button class="question" data-question="Is it safe to exercise during pregnancy?">Safe exercises</button>
+                <button class="question" data-question="How can I manage morning sickness?">Morning sickness tips</button>
+                <button class="question" data-question="What are the signs of labor?">Signs of labor</button>
             </div>
-
             <div id="messageForm">
                 <form id="chatForm">
-                    <input type="text" placeholder="Enter your question here" id="messageInput" disabled>
+                    <input type="text" placeholder="Type your question..." id="messageInput" disabled>
                     <button type="submit" class="sendButton" id="sendBtn" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                                d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
-                            <path d="m21.854 2.147-10.94 10.939" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                         </svg>
                     </button>
                 </form>
             </div>
         </div>
-    </div>
+    </main>
 </div>
 
-<!-- Overlay for mobile sidebar -->
 <div class="sidebarOverlay" id="sidebarOverlay"></div>
 
 <script>
@@ -230,8 +208,10 @@
                     stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 8V4H8" />
                     <rect width="16" height="12" x="4" y="8" rx="2" />
-                    <path d="M2 14h2" /><path d="M20 14h2" />
-                    <path d="M15 13v2" /><path d="M9 13v2" />
+                    <path d="M2 14h2" />
+                    <path d="M20 14h2" />
+                    <path d="M15 13v2" />
+                    <path d="M9 13v2" />
                 </svg>
             </div>
             <div class="chat">
