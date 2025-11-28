@@ -131,12 +131,8 @@ const userSchema = new mongoose.Schema({
 		required: true
 	},
 	
-	// [IMPROVED] Google OAuth fields
-	googleId: { 
-		type: String, 
-		unique: true, 
-		sparse: true // Allows multiple null values while enforcing uniqueness for non-null
-	},
+	// OAuth fields
+	googleId: { type: String, unique: true, sparse: true },
 	
 	// ===== PROFILE INFORMATION =====
 	firstName: { 

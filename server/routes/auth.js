@@ -1,8 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/user');
 const { requireAuth, redirectIfLoggedIn } = require('../middleware');
+
+// Google OAuth client
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 // GET /auth - redirect based on login status
 router.get('/', (req, res) => {
@@ -174,6 +179,102 @@ router.post('/login', async (req, res) => {
 
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
+  }
+});
+
+// POST /auth/google - authenticate with Google ID token
+router.post('/google', async (req, res) => {
+  try {
+    const { credential, redirect } = req.body || {};
+    
+    // Check if Google OAuth is configured
+    if (!googleClient) {
+      return res.status(501).json({ success: false, errors: { general: 'Google login not configured' }});
+    }
+    
+    if (!credential) {
+      return res.status(400).json({ success: false, errors: { general: 'Google credential required' }});
+    }
+
+    // Verify the Google ID token
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: GOOGLE_CLIENT_ID
+      });
+      payload = ticket.getPayload();
+    } catch (err) {
+      console.error('Google token verification failed:', err);
+      return res.status(401).json({ success: false, errors: { general: 'Invalid Google credential' }});
+    }
+
+    const { sub: googleId, email, given_name, family_name, picture, email_verified } = payload;
+
+    // Ensure email is verified
+    if (!email_verified) {
+      return res.status(400).json({ success: false, errors: { general: 'Google email not verified' }});
+    }
+
+    // Find existing user by Google ID or email
+    let user = await User.findOne({
+      $or: [
+        { googleId: googleId },
+        { email: email.toLowerCase() }
+      ]
+    });
+
+    if (user) {
+      // Existing user - update Google info if needed
+      if (!user.googleId) {
+        // Link Google account to existing email account
+        user.googleId = googleId;
+        user.authProvider = user.authProvider === 'email' ? 'email' : 'google';
+      }
+      // Update profile image if not set
+      if (!user.profileImageUrl && picture) {
+        user.profileImageUrl = picture;
+      }
+      user.lastLoginAt = new Date();
+      user.lastLoginIP = req.ip;
+      await user.save();
+    } else {
+      // New user - create account
+      user = new User({
+        email: email.toLowerCase(),
+        googleId: googleId,
+        authProvider: 'google',
+        firstName: given_name || '',
+        lastName: family_name || '',
+        profileImageUrl: picture || '',
+        role: 'user',
+        isActive: true,
+        emailVerified: true,
+        termsAcceptedAt: new Date()
+      });
+      await user.save();
+    }
+
+    // Set session
+    req.session.user = {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      profileImageUrl: user.profileImageUrl
+    };
+
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+      const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
+      res.json({ success: true, redirect: safeRedirect });
+    });
+
+  } catch (err) {
+    console.error('Google auth error:', err);
     res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
