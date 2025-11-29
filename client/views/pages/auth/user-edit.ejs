@@ -1,0 +1,80 @@
+<link rel="stylesheet" href="/css/user-edit.css">
+
+<main class="container" role="main">
+    <header>
+      <div class="logo">BS</div>
+      <div class="brand">
+        <div class="title">Account settings — Pregnancy profile</div>
+        <div class="subtitle">Manage details used by BabyStar to personalize tracking & reminders.</div>
+      </div>
+    </header>
+
+    <section class="card" aria-label="Account settings card">
+      <form id="profileForm" novalidate>
+        <div class="field">
+          <label for="fullName">Full name</label>
+          <input id="fullName" name="fullName" type="text" placeholder="Enter your full name" autocomplete="name" required />
+          <div class="helper">Shown on dashboard and reports.</div>
+        </div>
+
+        <div class="row two">
+          <div class="field">
+            <label for="email">Email address</label>
+            <input id="email" name="email" type="email" placeholder="name@example.com" autocomplete="email" />
+            <div class="helper">Reminders and updates are sent here.</div>
+          </div>
+
+          <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" type="tel" placeholder="+1 555 555 5555" autocomplete="tel" />
+            <div class="helper">Optional SMS notifications.</div>
+          </div>
+        </div>
+
+        <div class="row two">
+          <div class="field">
+            <label for="weeksPregnant">How long pregnant (weeks)</label>
+            <input id="weeksPregnant" name="weeksPregnant" type="number" min="0" max="48" placeholder="e.g. 22" />
+            <div class="helper">Gestational age (0–48). Leave blank if unsure.</div>
+          </div>
+
+          <div class="field">
+            <label for="dueDate">Expected due date</label>
+            <input id="dueDate" name="dueDate" type="date" />
+            <div class="helper">App will compute progress from this date if provided.</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary">Save profile</button>
+          <button type="button" id="resetBtn" class="btn-ghost">Reset</button>
+          <div id="message" aria-live="polite" class="msg" hidden></div>
+        </div>
+
+        <div id="formErrors" class="error" aria-live="polite"></div>
+      </form>
+
+      <aside class="status" aria-label="Status and summary">
+        <div class="card-section">
+          <div class="section-head">
+            <strong>Pregnancy progress</strong>
+            <div id="progressText" class="small">Not set</div>
+          </div>
+
+          <div class="progress" aria-hidden="true">
+            <i id="progressBar" style="width:0%"></i>
+          </div>
+          <div class="small" id="progressDetail">Add a due date or gestational age to see progress.</div>
+        </div>
+
+        <div class="card-section">
+          <div style="font-weight:700;margin-bottom:8px">Quick actions</div>
+          <div class="quick-actions">
+            <button type="button" id="generateReminder" class="btn-ghost">Enable weekly reminders</button>
+            <button type="button" id="exportProfile" class="btn-ghost">Export profile (JSON)</button>
+            <button type="button" id="clearProfile" class="btn-ghost danger">Clear saved data</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
