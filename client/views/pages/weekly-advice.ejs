@@ -1,0 +1,127 @@
+<main class="container" role="main" aria-labelledby="pageTitle">
+    <header class="top">
+      <div>
+        <h1 id="pageTitle" class="title">Weekly pregnancy advice</h1>
+        <p class="subtitle">Personalized tips to support you this week — based on logged symptoms and pregnancy progress.</p>
+      </div>
+    </header>
+
+    <section class="advice-grid">
+      <!-- Section 1: Advice for logged symptoms -->
+      <article class="card advice-symptoms" aria-labelledby="symptomTitle">
+        <div class="card-head">
+          <div class="icon" aria-hidden="true">
+            <!-- symptom / heart icon -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 21s-7-4.35-9-7.36C-0.53 8.45 3 4 7.5 4c2.22 0 3.96 1.23 4.5 2.02C12.54 5.23 14.28 4 16.5 4 21 4 24.53 8.45 21 13.64 19 16.65 12 21 12 21z" fill="#FF7AA2"/>
+            </svg>
+          </div>
+          <div class="heading">
+            <h2 id="symptomTitle">Advice for your logged symptoms</h2>
+            <div class="muted">Personalized suggestions based on the latest symptoms you logged</div>
+          </div>
+        </div>
+
+        <div id="symptomList" class="card-body">
+          <!-- Example / placeholder items — JS will populate -->
+          <div class="advice-item">
+            <strong>Nausea</strong>
+            <p>Try smaller, frequent meals and ginger tea. If severe, contact your clinician.</p>
+          </div>
+          <div class="advice-item">
+            <strong>Lower back ache</strong>
+            <p>Light pelvic stretches and a warm compress can help. Avoid heavy lifting.</p>
+          </div>
+        </div>
+
+      </article>
+
+      <!-- Section 2: General week-based advice -->
+      <article class="card advice-week" aria-labelledby="weekTitle">
+        <div class="card-head">
+          <div class="icon" aria-hidden="true">
+            <!-- calendar / week icon -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" stroke="#FFB1C9" stroke-width="1.2" fill="#FFF0F7"/>
+              <path d="M16 3v3M8 3v3" stroke="#FF7AA2" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="heading">
+            <h2 id="weekTitle">This week's guidance</h2>
+            <div class="muted" id="weekLabel">Week — • General developmental & care tips</div>
+          </div>
+        </div>
+
+        <div id="weekAdvice" class="card-body">
+          <div class="advice-item">
+            <strong>Fetal development</strong>
+            <p>The baby is continuing to develop rapidly. Focus on balanced protein, iron and hydration.</p>
+          </div>
+          <div class="advice-item">
+            <strong>Self care</strong>
+            <p>Prioritize short walks and pelvic floor exercises. Rest when needed and maintain good posture.</p>
+          </div>
+        </div>
+
+      </article>
+
+      <!-- Section 3: Focus areas — 4 boxes -->
+      <article class="card advice-focus" aria-labelledby="focusTitle">
+        <div class="card-head">
+          <div class="icon" aria-hidden="true">
+            <!-- target / focus icon -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="#FF7AA2" stroke-width="1.2" fill="transparent"/>
+              <circle cx="12" cy="12" r="4" fill="#FFB1C9"/>
+            </svg>
+          </div>
+          <div class="heading">
+            <h2 id="focusTitle">Recommended focus areas</h2>
+            <div class="muted">Areas to prioritize for health and wellbeing</div>
+          </div>
+        </div>
+
+        <div class="focus-grid" id="focusGrid" aria-live="polite">
+          <!-- Four focus boxes -->
+          <div class="focus-box" data-focus="nutrition">
+            <div class="box-icon">🥗</div>
+            <div class="box-title">Nutrition</div>
+            <div class="box-desc">Focus on iron-rich foods, vitamin D & balanced protein to support baby and mother.</div>
+            <div class="box-actions">
+              <button class="btn tiny">Learn tips</button>
+            </div>
+          </div>
+
+          <div class="focus-box" data-focus="movement">
+            <div class="box-icon">🚶‍♀️</div>
+            <div class="box-title">Gentle activity</div>
+            <div class="box-desc">Short daily walks and pregnancy-safe stretches support circulation & mood.</div>
+            <div class="box-actions">
+              <button class="btn tiny">View exercises</button>
+            </div>
+          </div>
+
+          <div class="focus-box" data-focus="sleep">
+            <div class="box-icon">🛏️</div>
+            <div class="box-title">Rest & sleep</div>
+            <div class="box-desc">Practice bedtime routines; side-sleeping with pillows can be helpful in later weeks.</div>
+            <div class="box-actions">
+              <button class="btn tiny">Sleep tips</button>
+            </div>
+          </div>
+
+          <div class="focus-box" data-focus="mental">
+            <div class="box-icon">🧘‍♀️</div>
+            <div class="box-title">Mental wellbeing</div>
+            <div class="box-desc">Breathing exercises, peer support and pausing for self-care reduce stress and anxiety.</div>
+            <div class="box-actions">
+              <button class="btn tiny">Try a short practice</button>
+            </div>
+          </div>
+        </div>
+
+      </article>
+    </section>
+
+    <footer class="note">Tip: Edit your profile to improve personalization of advice. Data used locally in-app unless you opt-in to sharing.</footer>
+  </main>

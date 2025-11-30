@@ -1,0 +1,315 @@
+/* Weekly Advice — full stylesheet (stacked layout + stronger section contrast)
+   Soft, modern, light-pink theme — three stacked sections that clearly stand out
+*/
+
+:root{
+  /* palette */
+  --bg-1: #fff8fb;
+  --bg-2: #fff2f6;
+  --accent-pink: #ff7aa2;
+  --accent-peach: #ff9e6a;
+  --accent-lav: #a88bff;
+  --muted: #6f6f77;
+  --card-base: #fff;
+  --shadow: rgba(18,12,22,0.06);
+  --big-shadow: rgba(18,12,22,0.10);
+  --radius: 16px;
+  --left-border-width: 8px;
+  --max-width: 1100px;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+  color: #222;
+}
+
+/* Reset / base */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  background:
+    radial-gradient(900px 480px at 10% 8%, rgba(255,122,162,0.06), transparent),
+    linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%);
+  padding:32px 18px; display:flex; justify-content:center; align-items:flex-start; font-size:15px;
+}
+
+/* Container */
+.container{
+  width:100%; max-width:var(--max-width);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+  border-radius:20px; padding:28px; box-shadow:0 22px 54px var(--big-shadow);
+}
+
+/* Header */
+.top{ max-width: 960px;        /* match sections */
+  margin: 0 auto 18px;
+  padding-left: 0px;     /* indent to line up with section content */
+  display:flex;
+  gap:16px;
+  align-items:center;}
+.back{
+  color:var(--accent-pink); text-decoration:none; font-weight:700;
+  padding:8px 12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,122,162,0.07), rgba(255,122,162,0.02));
+  border:1px solid rgba(255,122,162,0.08);
+}
+.title{font-size:24px;
+  margin:0;
+  font-weight:800;
+  letter-spacing:0.3px;
+  display:inline-flex;
+  align-items:center;
+
+
+  /* fancy gradient text */
+  background: linear-gradient(90deg, #ff7aa2 0%, #ffb1c9 45%, #ffb27f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* subtle glow & depth */
+  text-shadow: 0 6px 18px rgba(255,122,162,0.08);   }
+
+.subtitle{
+  margin:6px 0 0;
+  color:var(--muted);
+  font-size:13px;
+  max-width:760px;
+  opacity:0.95;}
+
+/* STACKED layout: one column so sections stack */
+.advice-grid{
+  display:grid; grid-template-columns: 1fr; gap:32px; align-items:start; width:100%; max-width:960px; margin:0 auto;
+}
+
+/* Card base */
+.card{
+  display:flex; flex-direction:column; gap:12px; padding:18px; border-radius:var(--radius);
+  position:relative; border: 1px solid rgba(16,8,12,0.04);
+  background:var(--card-base);
+  box-shadow: 0 12px 32px var(--shadow);
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+
+/* stronger contrast from page bg using left accent and richer tint */
+.advice-symptoms{
+  border-left: var(--left-border-width) solid rgba(255,122,162,0.22);
+  background: linear-gradient(180deg, rgba(255,236,244,0.95), rgba(255,242,247,0.98));
+}
+.advice-week{
+  border-left: var(--left-border-width) solid rgba(255,151,90,0.16);
+  background: linear-gradient(180deg, rgba(255,246,240,0.95), rgba(255,250,247,0.98));
+}
+.advice-focus{
+  border-left: var(--left-border-width) solid rgba(166,139,255,0.18);
+  background: linear-gradient(180deg, rgba(245,243,255,0.96), rgba(250,248,255,0.98));
+}
+
+/* Card head */
+.card-head{display:flex;gap:14px;align-items:center}
+.card-head .icon{
+  flex:0 0 56px; width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+  font-size:20px;
+}
+.advice-symptoms .card-head .icon{ background: linear-gradient(180deg, rgba(255,122,162,0.12), rgba(255,122,162,0.03)); color: #9d1840; }
+.advice-week .card-head .icon{ background: linear-gradient(180deg, rgba(255,150,110,0.10), rgba(255,150,110,0.03)); color: #8a3d20; }
+.advice-focus .card-head .icon{ background: linear-gradient(180deg, rgba(166,139,255,0.10), rgba(166,139,255,0.03)); color: #4a2fb4; }
+
+.card-head .heading h2{margin:0;font-size:16px}
+.muted{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* Body items */
+.card-body{display:flex;flex-direction:column;gap:12px}
+.advice-item{padding:12px;border-radius:12px;background:linear-gradient(180deg, #fff, rgba(255,255,255,0.98)); border: 1px solid rgba(16,8,12,0.035); box-shadow: 0 6px 18px rgba(0,0,0,0.03)}
+.advice-item strong{display:block;margin-bottom:8px;color:#2b2b31}
+.advice-item p{margin:0;color:#444;font-size:14px;line-height:1.4}
+
+/* Card foot / actions */
+.card-foot{display:flex;gap:10px;justify-content:flex-start;align-items:center;flex-wrap:wrap}
+.btn{padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer;border:0;background:linear-gradient(90deg,var(--accent-pink),#ff9dc6);color:white;box-shadow:0 10px 30px rgba(255,122,162,0.12);transition:transform .08s}
+.btn.ghost{background:transparent;border:1px solid rgba(16,8,12,0.06);color:var(--muted);box-shadow:none}
+.btn.small{padding:7px 10px;font-size:13px}
+.btn.tiny{padding:6px 8px;font-size:13px}
+.btn:active{transform:translateY(1px)}
+
+/* Focus grid: 2 cols desktop, 1 col on small devices */
+.focus-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;margin-top:6px}
+.focus-box{padding:14px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff);border:1px solid rgba(16,8,12,0.05);display:flex;flex-direction:column;gap:10px;min-height:120px;transition:transform .12s ease,box-shadow .12s ease}
+.focus-box:hover{transform:translateY(-6px);box-shadow:0 22px 48px rgba(2,6,23,0.06)}
+.box-icon{font-size:20px;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(255,122,162,0.06), rgba(255,122,162,0.02))}
+.box-title{font-weight:700;color:#222}
+.box-desc{font-size:13px;color:var(--muted);line-height:1.35}
+.box-actions{display:flex;gap:8px;margin-top:auto}
+
+/* Visual emphasis & spacing */
+.card + .card{margin-top:2px}
+.card:hover{transform:translateY(-4px);box-shadow:0 24px 64px var(--big-shadow)}
+
+.advice-symptoms .advice-item{border-left:4px solid rgba(255,122,162,0.12)}
+.advice-week .advice-item{border-left:4px solid rgba(255,150,110,0.10)}
+.advice-focus .advice-item{border-left:4px solid rgba(166,139,255,0.10)}
+
+/* subtle inner outline so cards are distinct on very light bg */
+.card::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6); mix-blend-mode: normal; opacity:0.8;
+}
+
+/* Responsive */
+@media (max-width:980px){
+  .container{padding:18px}
+  .focus-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  body{padding:20px 12px}
+  .container{padding:16px}
+  .focus-grid{grid-template-columns:1fr}
+  .card-head .icon{width:48px;height:48px;border-radius:12px}
+  .card{padding:14px}
+}
+
+/* Footer note */
+.note{display:block;margin-top:16px;color:var(--muted);font-size:13px;text-align:center}
+
+/* Weekly Advice — full stylesheet (stacked layout + stronger section contrast)
+   Soft, modern, light-pink theme — three stacked sections that clearly stand out
+*/
+
+:root{
+  /* palette */
+  --bg-1: #fff8fb;
+  --bg-2: #fff2f6;
+  --accent-pink: #ff7aa2;
+  --accent-peach: #ff9e6a;
+  --accent-lav: #a88bff;
+  --muted: #6f6f77;
+  --card-base: #fff;
+  --shadow: rgba(18,12,22,0.06);
+  --big-shadow: rgba(18,12,22,0.10);
+  --radius: 16px;
+  --left-border-width: 8px;
+  --max-width: 1100px;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+  color: #222;
+}
+
+/* Reset / base */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  background:
+    radial-gradient(900px 480px at 10% 8%, rgba(255,122,162,0.06), transparent),
+    linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%);
+  padding:32px 18px; display:flex; justify-content:center; align-items:flex-start; font-size:15px;
+}
+
+/* Container */
+.container{
+  width:100%; max-width:var(--max-width);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+  border-radius:20px; padding:28px; box-shadow:0 22px 54px var(--big-shadow);
+}
+
+/* Header */
+.top{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+.back{
+  color:var(--accent-pink); text-decoration:none; font-weight:700;
+  padding:8px 12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,122,162,0.07), rgba(255,122,162,0.02));
+  border:1px solid rgba(255,122,162,0.08);
+}
+.title{font-size:20px;margin:0;font-weight:700}
+.subtitle{margin:6px 0 0;color:var(--muted);font-size:13px;max-width:760px}
+
+/* STACKED layout: one column so sections stack */
+.advice-grid{
+  display:grid; grid-template-columns: 1fr; gap:22px; align-items:start; width:100%; max-width:960px; margin:0 auto;
+}
+
+/* Card base */
+.card{
+  display:flex; flex-direction:column; gap:12px; padding:18px; border-radius:var(--radius);
+  position:relative; border: 1px solid rgba(16,8,12,0.04);
+  background:var(--card-base);
+  box-shadow: 0 12px 32px var(--shadow);
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+
+/* stronger contrast from page bg using left accent and richer tint */
+.advice-symptoms{
+  border-left: var(--left-border-width) solid rgba(255,122,162,0.22);
+  background: linear-gradient(180deg, rgba(255,236,244,0.95), rgba(255,242,247,0.98));
+}
+.advice-week{
+  border-left: var(--left-border-width) solid rgba(255,151,90,0.16);
+  background: linear-gradient(180deg, rgba(255,246,240,0.95), rgba(255,250,247,0.98));
+}
+.advice-focus{
+  border-left: var(--left-border-width) solid rgba(166,139,255,0.18);
+  background: linear-gradient(180deg, rgba(245,243,255,0.96), rgba(250,248,255,0.98));
+}
+
+/* Card head */
+.card-head{display:flex;gap:14px;align-items:center}
+.card-head .icon{
+  flex:0 0 56px; width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+  font-size:20px;
+}
+.advice-symptoms .card-head .icon{ background: linear-gradient(180deg, rgba(255,122,162,0.12), rgba(255,122,162,0.03)); color: #9d1840; }
+.advice-week .card-head .icon{ background: linear-gradient(180deg, rgba(255,150,110,0.10), rgba(255,150,110,0.03)); color: #8a3d20; }
+.advice-focus .card-head .icon{ background: linear-gradient(180deg, rgba(166,139,255,0.10), rgba(166,139,255,0.03)); color: #4a2fb4; }
+
+.card-head .heading h2{margin:0;font-size:16px}
+.muted{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* Body items */
+.card-body{display:flex;flex-direction:column;gap:12px}
+.advice-item{padding:12px;border-radius:12px;background:linear-gradient(180deg, #fff, rgba(255,255,255,0.98)); border: 1px solid rgba(16,8,12,0.035); box-shadow: 0 6px 18px rgba(0,0,0,0.03)}
+.advice-item strong{display:block;margin-bottom:8px;color:#2b2b31}
+.advice-item p{margin:0;color:#444;font-size:14px;line-height:1.4}
+
+/* Card foot / actions */
+.card-foot{display:flex;gap:10px;justify-content:flex-start;align-items:center;flex-wrap:wrap}
+.btn{padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer;border:0;background:linear-gradient(90deg,var(--accent-pink),#ff9dc6);color:white;box-shadow:0 10px 30px rgba(255,122,162,0.12);transition:transform .08s}
+.btn.ghost{background:transparent;border:1px solid rgba(16,8,12,0.06);color:var(--muted);box-shadow:none}
+.btn.small{padding:7px 10px;font-size:13px}
+.btn.tiny{padding:6px 8px;font-size:13px}
+.btn:active{transform:translateY(1px)}
+
+/* Focus grid: 2 cols desktop, 1 col on small devices */
+.focus-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;margin-top:6px}
+.focus-box{padding:14px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff);border:1px solid rgba(16,8,12,0.05);display:flex;flex-direction:column;gap:10px;min-height:120px;transition:transform .12s ease,box-shadow .12s ease}
+.focus-box:hover{transform:translateY(-6px);box-shadow:0 22px 48px rgba(2,6,23,0.06)}
+.box-icon{font-size:20px;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(255,122,162,0.06), rgba(255,122,162,0.02))}
+.box-title{font-weight:700;color:#222}
+.box-desc{font-size:13px;color:var(--muted);line-height:1.35}
+.box-actions{display:flex;gap:8px;margin-top:auto}
+
+/* Visual emphasis & spacing */
+.card + .card{margin-top:2px}
+.card:hover{transform:translateY(-4px);box-shadow:0 24px 64px var(--big-shadow)}
+
+.advice-symptoms .advice-item{border-left:4px solid rgba(255,122,162,0.12)}
+.advice-week .advice-item{border-left:4px solid rgba(255,150,110,0.10)}
+.advice-focus .advice-item{border-left:4px solid rgba(166,139,255,0.10)}
+
+/* subtle inner outline so cards are distinct on very light bg */
+.card::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6); mix-blend-mode: normal; opacity:0.8;
+}
+
+/* Responsive */
+@media (max-width:980px){
+  .container{padding:18px}
+  .focus-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  body{padding:20px 12px}
+  .container{padding:16px}
+  .focus-grid{grid-template-columns:1fr}
+  .card-head .icon{width:48px;height:48px;border-radius:12px}
+  .card{padding:14px}
+}
+
+/* Footer note */
+.note{display:block;margin-top:16px;color:var(--muted);font-size:13px;text-align:center}
