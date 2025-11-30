@@ -287,4 +287,9 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
   }
 });
 
+// health log page
+router.get('/log-health', requireAuthRedirect, (req, res) => {
+  res.render('pages/health-log', { title: 'Health Log' });
+});
+
 module.exports = router;

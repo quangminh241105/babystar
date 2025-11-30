@@ -1,0 +1,1122 @@
+<link rel="stylesheet" href="/css/user-edit.css">
+<link rel="stylesheet" href="/css/healthlog.css">
+
+<div class="healthlog-bg">
+  <main class="container healthlog-main" role="main">
+    <header class="healthlog-header">
+      <div class="brand">
+        <div class="title">Daily Health Log</div>
+        <div class="subtitle">Quick, optional entries to personalize your AI insights</div>
+      </div>
+    </header>
+
+    <!-- Sticky action bar with tab navigation -->
+    <nav class="card healthlog-actionbar">
+      <button type="button" class="step-label tab-btn active" id="tabBasicsBtn">1. Today’s Basics</button>
+      <button type="button" class="step-label tab-btn" id="tabHealthDetailsBtn">2. Health Details</button>
+      <button type="button" class="step-label tab-btn" id="tabNotesBtn">3. Details & Notes</button>
+      <div class="action-btns">
+        <button type="button" class="btn-ghost" id="saveBtn">Save</button>
+        <button type="button" class="btn-primary" id="saveCompleteBtn">Save & Mark Complete</button>
+      </div>
+    </nav>
+
+    <div class="healthlog-grid">
+      <!-- Main Form -->
+      <form id="healthLogForm" novalidate>
+        <!-- 1. Today’s Basics -->
+        <section class="card healthlog-card tab-section" id="tabBasics" style="display:block;">
+          <h2 class="card-title">Today’s Basics</h2>
+
+          <!-- Vitals Section -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">🩺</span> Vitals
+            </div>
+            <div class="row three">
+              <div class="field">
+                <label for="weightKg">Today's Weight (kg)</label>
+                <input id="weightKg" type="number" step="0.1" min="20" max="300" placeholder="Optional">
+                <div class="helper">Enter exact or leave blank</div>
+              </div>
+              <div class="field">
+                <label for="heartRateBpm">Heart Rate (bpm)</label>
+                <input id="heartRateBpm" type="range" min="50" max="160" step="1">
+                <div style="display:flex;justify-content:space-between;font-size:12px;"><span>50</span><span id="hrVal">—</span><span>160</span></div>
+              </div>
+              <div class="field">
+                <label>Blood Sugar (optional)</label>
+                <div style="display:flex;gap:16px;">
+                  <input id="bloodSugarValue" type="number" step="0.1" min="0" max="500" style="width:100px;" placeholder="Value">
+                  <select id="bloodSugarUnit" style="width:100px;">
+                    <option value="mg/dL">mg/dL</option>
+                    <option value="mmol/L">mmol/L</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:4px;">
+                  <select id="bloodSugarTiming" style="flex:1;">
+                    <option value="">Timing</option>
+                    <option value="fasting">Fasting</option>
+                    <option value="before_meal">Before Meal</option>
+                    <option value="after_meal">After Meal</option>
+                    <option value="bedtime">Bedtime</option>
+                  </select>
+                  <input id="bloodSugarMeasuredAt" type="time" style="width:150px;" placeholder="Time">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mood & Energy Section -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">🙂</span> Mood & Energy
+            </div>
+            <div class="row three">
+              <div class="field">
+                <label>Energy (1–5)</label>
+                <div class="rating" id="energyRating" aria-label="Energy"></div>
+                <input type="hidden" id="energyLevel">
+              </div>
+              <div class="field">
+                <label>Stress (1–5)</label>
+                <div class="rating" id="stressRating" aria-label="Stress"></div>
+                <input type="hidden" id="stressLevel">
+              </div>
+            </div>
+            <div class="field">
+              <label class="moodlog-label">Mood Log <span class="optional">(optional)</span></label>
+              <div class="moodlog-row">
+                <select id="moodLogMood" class="moodlog-select">
+                  <option value="">Mood...</option>
+                  <option value="very_happy">😁 Very Happy</option>
+                  <option value="happy">🙂 Happy</option>
+                  <option value="neutral">😐 Neutral</option>
+                  <option value="anxious">😟 Anxious</option>
+                  <option value="sad">😢 Sad</option>
+                  <option value="stressed">😣 Stressed</option>
+                  <option value="irritable">😠 Irritable</option>
+                  <option value="emotional">😭 Emotional</option>
+                  <option value="overwhelmed">😩 Overwhelmed</option>
+                </select>
+                <input id="moodLogTrigger" class="moodlog-trigger" type="text" placeholder="Trigger (optional)">
+                <button type="button" class="btn-ghost moodlog-add-btn" id="addMoodLogBtn">Add Mood</button>
+              </div>
+              <ul id="moodLogList" class="moodlog-list"></ul>
+            </div>
+          </div>
+
+          <!-- Sleep Section -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">😴</span> Sleep
+            </div>
+            <div class="row three">
+              <div class="field">
+                <label for="sleepHours">Sleep Hours</label>
+                <input id="sleepHours" type="range" min="0" max="12" step="0.5">
+                <div style="display:flex;justify-content:space-between;font-size:12px;"><span>0</span><span id="sleepHoursVal">—</span><span>12</span></div>
+              </div>
+              <div class="field">
+                <label>Sleep Quality (1–5)</label>
+                <div class="rating" id="sleepQualityRating"></div>
+                <input type="hidden" id="sleepQuality">
+              </div>
+            </div>
+            <div class="sleep-details-block">
+              <div class="row three">
+                <div class="field">
+                  <label for="bedTime">Bed Time</label>
+                  <input id="bedTime" type="time">
+                </div>
+                <div class="field">
+                  <label for="wakeTime">Wake Time</label>
+                  <input id="wakeTime" type="time">
+                </div>
+                <div class="field">
+                  <label for="primaryPosition">Sleep Position</label>
+                  <select id="primaryPosition">
+                    <option value="">Select...</option>
+                    <option value="left_side">Left Side</option>
+                    <option value="right_side">Right Side</option>
+                    <option value="back">Back</option>
+                    <option value="varied">Varied</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row two">
+                <div class="field">
+                  <label>Awakening Reasons</label>
+                  <select id="awakeningReasons" multiple>
+                    <option value="bathroom">Bathroom</option>
+                    <option value="discomfort">Discomfort</option>
+                    <option value="baby_movement">Baby Movement</option>
+                    <option value="noise">Noise</option>
+                    <option value="pain">Pain</option>
+                    <option value="nightmare">Nightmare</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label>Naps</label>
+                <div style="display:flex;gap:6px;">
+                  <input id="napStartTime" type="time" placeholder="Start">
+                  <input id="napDuration" type="number" min="0" max="240" placeholder="Duration (min)">
+                  <button type="button" class="btn-ghost" id="addNapBtn">Add Nap</button>
+                </div>
+                <ul id="napList" style="margin-top:10px;"></ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Symptoms Section -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">🤒</span> Symptoms
+            </div>
+            <div class="chip-list" id="symptomChips" style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="chip" data-symptom="nausea">Nausea</button>
+              <button type="button" class="chip" data-symptom="fatigue">Fatigue</button>
+              <button type="button" class="chip" data-symptom="headache">Headache</button>
+              <button type="button" class="chip" data-symptom="back_pain">Back Pain</button>
+              <button type="button" class="chip" data-symptom="spotting">Spotting</button>
+            </div>
+            <div class="row two" style="margin-top:8px;">
+              <div class="field">
+                <label for="symptomSeverity">Severity (1–10)</label>
+                <input id="symptomSeverity" type="range" min="1" max="10" step="1">
+                <div style="display:flex;justify-content:space-between;font-size:12px;"><span>1</span><span id="sevVal">—</span><span>10</span></div>
+              </div>
+              <div class="field">
+                <label for="occurredAt">Occurred At</label>
+                <input id="occurredAt" type="time" placeholder="Optional">
+              </div>
+            </div>
+            <button type="button" class="btn-ghost" id="addSymptomBtn">Add Symptom</button>
+            <ul id="symptomList" style="margin-top:10px;"></ul>
+          </div>
+        </section>
+
+        <!-- 2. Health Details -->
+        <section class="card healthlog-card tab-section" id="tabHealthDetails" style="display:none;">
+          <h2 class="card-title">Health Details</h2>
+
+          <!-- Drinks Section (Hydration & Caffeine grouped) -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">🥤</span> Drinks
+            </div>
+            <div class="row three">
+              <div class="field">
+                <label for="waterLiters">Water (Liters)</label>
+                <input id="waterLiters" type="range" min="0" max="5" step="0.1">
+                <div style="display:flex;justify-content:space-between;font-size:12px;"><span>0</span><span id="waterVal">—</span><span>5</span></div>
+              </div>
+              <div class="field">
+                <label for="otherFluidsLiters">Other Fluids (L)</label>
+                <input id="otherFluidsLiters" type="range" min="0" max="3" step="0.1">
+                <div style="display:flex;justify-content:space-between;font-size:12px;"><span>0</span><span id="fluidsVal">—</span><span>3</span></div>
+              </div>
+              <div class="field">
+                <label for="caffeineIntakeMg">Caffeine (mg)</label>
+                <input id="caffeineIntakeMg" type="range" min="0" max="500" step="10">
+                <div style="display:flex;justify-content:space-between;font-size:12px;"><span>0</span><span id="caffVal">—</span><span>500</span></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:12px;">
+              <select id="drinkType">
+                <option value="">Type...</option>
+                <option value="water">Water</option>
+                <option value="juice">Juice</option>
+                <option value="milk">Milk</option>
+                <option value="tea">Tea</option>
+                <option value="coffee">Coffee</option>
+                <option value="other">Other</option>
+              </select>
+              <input id="drinkAmount" type="number" min="0" max="2000" placeholder="ml">
+              <input id="drinkTime" type="time">
+              <button type="button" class="btn-ghost" id="addDrinkBtn">Add Drink</button>
+            </div>
+            <ul id="drinkList" style="margin-top:10px;"></ul>
+          </div>
+
+          <!-- Exercise Section -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">🏃‍♀️</span> Exercise
+            </div>
+            <div class="row three">
+              <div class="field">
+                <label for="exerciseType">Type</label>
+                <select id="exerciseType">
+                  <option value="">Select...</option>
+                  <option value="walking">Walking</option>
+                  <option value="prenatal_yoga">Prenatal Yoga</option>
+                  <option value="swimming">Swimming</option>
+                  <option value="strength_training">Strength Training</option>
+                  <option value="stretching">Stretching</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="exerciseMinutes">Duration (min)</label>
+                <input id="exerciseMinutes" type="number" min="0" max="300" placeholder="Optional">
+              </div>
+              <div class="field">
+                <label>Intensity</label>
+                <div class="segmented" id="intensitySegmented">
+                  <button type="button" data-val="light">Light</button>
+                  <button type="button" data-val="moderate">Moderate</button>
+                  <button type="button" data-val="vigorous">Vigorous</button>
+                </div>
+                <input type="hidden" id="exerciseIntensity">
+              </div>
+            </div>
+            <div class="row two">
+              <div class="field">
+                <label for="exerciseCalories">Calories Burned</label>
+                <input id="exerciseCalories" type="number" min="0" max="2000" placeholder="kcal">
+              </div>
+              <div class="field">
+                <label for="exerciseFeeling">Feeling</label>
+                <select id="exerciseFeeling">
+                  <option value="">Select...</option>
+                  <option value="great">Great</option>
+                  <option value="good">Good</option>
+                  <option value="okay">Okay</option>
+                  <option value="tired">Tired</option>
+                  <option value="uncomfortable">Uncomfortable</option>
+                  <option value="painful">Painful</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="exerciseTime">Time</label>
+              <input id="exerciseTime" type="time">
+            </div>
+            <div class="field">
+              <label for="exerciseNotes">Notes</label>
+              <input id="exerciseNotes" type="text" placeholder="Notes">
+            </div>
+            <button type="button" class="btn-ghost" id="addExerciseBtn">Add Exercise</button>
+            <ul id="exerciseList" style="margin-top:10px;"></ul>
+          </div>
+
+          <!-- Nutrition Section -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">🥗</span> Nutrition
+            </div>
+            <div class="field">
+              <label>Meal</label>
+              <select id="mealType">
+                <option value="">Select...</option>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
+                <option value="other">Other</option>
+              </select>
+              <input id="mealTime" type="time" placeholder="Time">
+              <input id="mealFoods" type="text" placeholder="Foods (comma separated)">
+              <input id="mealCalories" type="number" min="0" placeholder="Calories">
+              <input id="mealNotes" type="text" placeholder="Notes">
+              <label><input type="checkbox" id="mealSkipped"> Skipped?</label>
+              <input id="mealSkipReason" type="text" placeholder="Reason (if skipped)">
+              <button type="button" class="btn-ghost" id="addMealBtn">Add Meal</button>
+              <ul id="mealList" style="margin-top:10px;"></ul>
+            </div>
+          </div>
+
+          <!-- Fetal Movement Section (only show if week >= 16) -->
+          <div class="section-block" id="fetalMovementSection" style="display:none;">
+            <div class="section-title">
+              <span class="section-icon">🤰</span> Fetal Movement
+            </div>
+            <div class="row three">
+              <div class="field">
+                <label for="fmStartTime">Start Time</label>
+                <input id="fmStartTime" type="time">
+              </div>
+              <div class="field">
+                <label for="fmEndTime">End Time</label>
+                <input id="fmEndTime" type="time">
+              </div>
+              <div class="field">
+                <label for="fmMotherPosition">Mother Position</label>
+                <select id="fmMotherPosition">
+                  <option value="">Select...</option>
+                  <option value="lying_left">Lying Left</option>
+                  <option value="lying_right">Lying Right</option>
+                  <option value="sitting">Sitting</option>
+                  <option value="standing">Standing</option>
+                </select>
+              </div>
+            </div>
+            <div class="row two">
+              <div class="field">
+                <label for="fmTimeSinceMeal">Time Since Meal</label>
+                <select id="fmTimeSinceMeal">
+                  <option value="">Select...</option>
+                  <option value="just_ate">Just Ate</option>
+                  <option value="1_hour">1 hour</option>
+                  <option value="2_hours">2 hours</option>
+                  <option value="3_plus_hours">3+ hours</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="fmNotes">Notes</label>
+                <input id="fmNotes" type="text" placeholder="Notes">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Details & Notes -->
+        <section class="card healthlog-card tab-section" id="tabNotes" style="display:none;">
+          <h2 class="card-title">Details & Notes</h2>
+
+          <!-- Doctor Visit -->
+          <div class="row two">
+            <div class="field checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" id="visitedDoctor" />
+                <span>Visited Doctor Today</span>
+              </label>
+            </div>
+            <div class="field">
+              <label for="visitType">Visit Type</label>
+              <select id="visitType">
+                <option value="">Select...</option>
+                <option value="routine">Routine</option>
+                <option value="ultrasound">Ultrasound</option>
+                <option value="lab_work">Lab Work</option>
+                <option value="specialist">Specialist</option>
+                <option value="emergency">Emergency</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="doctorVisitNotes">Doctor Visit Notes</label>
+            <input id="doctorVisitNotes" type="text" placeholder="Notes">
+          </div>
+          <div class="field">
+            <label for="nextAppointment">Next Appointment</label>
+            <input id="nextAppointment" type="date">
+          </div>
+          <!-- Notes -->
+          <div class="field">
+            <label for="notes">Notes (optional)</label>
+            <textarea id="notes" rows="4" placeholder="Anything notable about today..."></textarea>
+          </div>
+        </section>
+        <div id="message" class="msg" hidden></div>
+      </form>
+
+      <!-- Sidebar -->
+      <aside class="status-sidebar healthlog-sidebar">
+        <div class="card status-card">
+          <div class="section-head">
+            <strong>Log Status</strong>
+            <div id="logStatusText" class="progress-label">Draft</div>
+          </div>
+          <div class="progress-bar-container"><div class="progress-bar" id="logProgress"></div></div>
+          <div class="small" id="logDetail">Complete more sections to improve insights.</div>
+          <div class="stats-grid">
+            <div class="stat-item"><div class="stat-value" id="statSections">0/3</div><div class="stat-label">Sections</div></div>
+            <div class="stat-item"><div class="stat-value" id="statTrimester">-</div><div class="stat-label">Trimester</div></div>
+            <div class="stat-item"><div class="stat-value" id="statWeek">-</div><div class="stat-label">Week</div></div>
+            <div class="stat-item"><div class="stat-value" id="statEnergy">-</div><div class="stat-label">Energy</div></div>
+            <div class="stat-item"><div class="stat-value" id="statSleep">-</div><div class="stat-label">Sleep Hours</div></div>
+            <div class="stat-item"><div class="stat-value" id="statWater">-</div><div class="stat-label">Water (L)</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <strong>Quick Actions</strong>
+          <div class="quick-actions">
+            <button type="button" class="btn-ghost" id="saveSidebarBtn">Save</button>
+            <button type="button" class="btn-ghost" id="completeSidebarBtn">Mark Complete</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<script>
+(function() {
+  // Tab switching logic for 3 tabs
+  const tabBasicsBtn = document.getElementById('tabBasicsBtn');
+  const tabHealthDetailsBtn = document.getElementById('tabHealthDetailsBtn');
+  const tabNotesBtn = document.getElementById('tabNotesBtn');
+  const tabBasics = document.getElementById('tabBasics');
+  const tabHealthDetails = document.getElementById('tabHealthDetails');
+  const tabNotes = document.getElementById('tabNotes');
+  function showTab(tab) {
+    tabBasics.style.display = tab === 'basics' ? 'block' : 'none';
+    tabHealthDetails.style.display = tab === 'health' ? 'block' : 'none';
+    tabNotes.style.display = tab === 'notes' ? 'block' : 'none';
+    tabBasicsBtn.classList.toggle('active', tab === 'basics');
+    tabHealthDetailsBtn.classList.toggle('active', tab === 'health');
+    tabNotesBtn.classList.toggle('active', tab === 'notes');
+  }
+  tabBasicsBtn.addEventListener('click', () => showTab('basics'));
+  tabHealthDetailsBtn.addEventListener('click', () => showTab('health'));
+  tabNotesBtn.addEventListener('click', () => showTab('notes'));
+
+  // Show fetal movement only if week >= 16
+  const fetalMovementSection = document.getElementById('fetalMovementSection');
+  const currentWeek = window.currentPregnancyWeek || 0; // Set this from backend if possible
+  if (fetalMovementSection && currentWeek >= 16) {
+    fetalMovementSection.style.display = '';
+  }
+
+  // live labels for ranges
+  const bindRange = (id, labelId, format = (v)=>v) => {
+    const el = document.getElementById(id); const lab = document.getElementById(labelId);
+    if (!el || !lab) return;
+    const update = ()=> lab.textContent = format(el.value);
+    el.addEventListener('input', update); update();
+  };
+  bindRange('heartRateBpm','hrVal');
+  bindRange('temperatureC','tempVal', v=>Number(v).toFixed(1));
+  bindRange('sleepHours','sleepHoursVal');
+  bindRange('waterLiters','waterVal');
+  bindRange('otherFluidsLiters','fluidsVal');
+  bindRange('caffeineIntakeMg','caffVal');
+  bindRange('symptomSeverity','sevVal');
+
+  // segmented select
+  const makeSegmented = (containerId, hiddenId) => {
+    const c = document.getElementById(containerId); const h = document.getElementById(hiddenId);
+    if (!c || !h) return;
+    c.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        c.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active'); h.value = btn.dataset.val;
+      });
+    });
+  };
+  makeSegmented('moodSegmented','mood');
+  makeSegmented('intensitySegmented','exerciseIntensity');
+
+  // rating (1–5) stars
+  const makeRating = (containerId, hiddenId) => {
+    const c = document.getElementById(containerId); const h = document.getElementById(hiddenId);
+    if (!c || !h) return;
+    c.innerHTML = '';
+    for (let i=1;i<=5;i++){
+      const b=document.createElement('button'); b.type='button'; b.textContent='★'; b.dataset.val=i;
+      b.style.fontSize='20px'; b.style.color='#C88DA8'; b.style.background='transparent'; b.style.border='none'; b.style.cursor='pointer'; b.style.marginRight='4px';
+      b.addEventListener('click', ()=>{
+        h.value = i;
+        [...c.children].forEach((ch,idx)=> ch.style.color = idx < i ? '#D91E8F' : '#C88DA8');
+      });
+      c.appendChild(b);
+    }
+  };
+  makeRating('energyRating','energyLevel');
+  makeRating('stressRating','stressLevel');
+  makeRating('sleepQualityRating','sleepQuality');
+
+  // symptoms
+  const symptoms = [];
+  document.getElementById('addSymptomBtn').addEventListener('click', () => {
+    const name = document.querySelector('.chip.active')?.dataset?.symptom;
+    const sev = parseInt(document.getElementById('symptomSeverity').value || '0', 10) || null;
+    const occurredAt = document.getElementById('occurredAt').value || null;
+    if (!name) return;
+    symptoms.push({ symptom: name, severity: sev, occurredAt });
+    renderSymptomList();
+  });
+  document.getElementById('symptomChips').addEventListener('click', (e)=>{
+    if (e.target.classList.contains('chip')) {
+      [...document.querySelectorAll('.chip')].forEach(c=>c.classList.remove('active'));
+      e.target.classList.add('active');
+    }
+  });
+  function renderSymptomList(){
+    const ul = document.getElementById('symptomList');
+    ul.innerHTML = symptoms.map(s => `<li>${s.symptom} (sev ${s.severity ?? '-'}) ${s.occurredAt ? 'at '+s.occurredAt : ''}</li>`).join('');
+  }
+
+  // exercises
+  const exercises = [];
+  document.getElementById('addExerciseBtn').addEventListener('click', ()=>{
+    const type = document.getElementById('exerciseType').value || null;
+    const durationMinutes = document.getElementById('exerciseMinutes').value ? Number(document.getElementById('exerciseMinutes').value) : null;
+    const intensity = document.getElementById('exerciseIntensity').value || null;
+    if (!type && durationMinutes==null && !intensity) return;
+    exercises.push({ type, durationMinutes, intensity });
+    renderExerciseList();
+  });
+  function renderExerciseList(){
+    const ul = document.getElementById('exerciseList');
+    ul.innerHTML = exercises.map(ex => `<li>${ex.type || '—'} • ${ex.durationMinutes ?? '-'} min • ${ex.intensity || '—'}</li>`).join('');
+  }
+
+  // Mood Log logic
+  const moodLog = [];
+  document.getElementById('addMoodLogBtn').addEventListener('click', () => {
+    const mood = document.getElementById('moodLogMood').value;
+    const time = document.getElementById('moodLogTime') ? document.getElementById('moodLogTime').value : '';
+    const trigger = document.getElementById('moodLogTrigger').value;
+    if (!mood) return;
+    moodLog.push({ mood, time, trigger });
+    renderMoodLogList();
+    // Optionally clear fields after add
+    document.getElementById('moodLogMood').value = '';
+    if (document.getElementById('moodLogTime')) document.getElementById('moodLogTime').value = '';
+    document.getElementById('moodLogTrigger').value = '';
+  });
+  function renderMoodLogList() {
+    const ul = document.getElementById('moodLogList');
+    ul.innerHTML = moodLog.map(
+      m => `<li>${m.mood} ${m.time ? 'at ' + m.time : ''}${m.trigger ? ' (trigger: ' + m.trigger + ')' : ''}</li>`
+    ).join('');
+  }
+
+  // Naps logic
+  const naps = [];
+  document.getElementById('addNapBtn').addEventListener('click', () => {
+    const startTime = document.getElementById('napStartTime').value;
+    const duration = document.getElementById('napDuration').value;
+    if (!startTime || !duration) return;
+    naps.push({ startTime, duration });
+    renderNapList();
+    document.getElementById('napStartTime').value = '';
+    document.getElementById('napDuration').value = '';
+  });
+  function renderNapList() {
+    const ul = document.getElementById('napList');
+    ul.innerHTML = naps.map(
+      n => `<li>${n.startTime} (${n.duration} min)</li>`
+    ).join('');
+  }
+
+  // Drinks logic (already present, just grouped visually now)
+  const drinks = [];
+  document.getElementById('addDrinkBtn').addEventListener('click', () => {
+    const type = document.getElementById('drinkType').value;
+    const amount = document.getElementById('drinkAmount').value;
+    const time = document.getElementById('drinkTime').value;
+    if (!type && !amount && !time) return;
+    drinks.push({ type, amount, time });
+    renderDrinkList();
+    document.getElementById('drinkType').value = '';
+    document.getElementById('drinkAmount').value = '';
+    document.getElementById('drinkTime').value = '';
+  });
+  function renderDrinkList() {
+    const ul = document.getElementById('drinkList');
+    ul.innerHTML = drinks.map(
+      d => `<li>${d.type || '—'} • ${d.amount || '-'} ml${d.time ? ' at ' + d.time : ''}</li>`
+    ).join('');
+  }
+
+  // Nutrition logic: Add Meal button
+  const meals = [];
+  document.getElementById('addMealBtn').addEventListener('click', () => {
+    const type = document.getElementById('mealType').value;
+    const time = document.getElementById('mealTime').value;
+    const foods = document.getElementById('mealFoods').value;
+    const calories = document.getElementById('mealCalories').value;
+    const notes = document.getElementById('mealNotes').value;
+    const skipped = document.getElementById('mealSkipped').checked;
+    const skipReason = document.getElementById('mealSkipReason').value;
+    // Only add if at least one field is filled (including skipped)
+    if (!type && !time && !foods && !calories && !notes && !skipped && !skipReason) return;
+    meals.push({ type, time, foods, calories, notes, skipped, skipReason });
+    renderMealList();
+    // Clear fields after add
+    document.getElementById('mealType').value = '';
+    document.getElementById('mealTime').value = '';
+    document.getElementById('mealFoods').value = '';
+    document.getElementById('mealCalories').value = '';
+    document.getElementById('mealNotes').value = '';
+    document.getElementById('mealSkipped').checked = false;
+    document.getElementById('mealSkipReason').value = '';
+  });
+  function renderMealList() {
+    const ul = document.getElementById('mealList');
+    ul.innerHTML = meals.map(
+      m => `<li>${m.type || '—'}${m.time ? ' at ' + m.time : ''}${m.foods ? ' • ' + m.foods : ''}${m.calories ? ' • ' + m.calories + ' kcal' : ''}${m.skipped ? ' (skipped' + (m.skipReason ? ': ' + m.skipReason : '') + ')' : ''}${m.notes ? ' • ' + m.notes : ''}</li>`
+    ).join('');
+  }
+
+  // --- Log Status Interactivity ---
+  // Helper: get pregnancy week/trimester from window or fallback
+  function getPregnancyWeek() {
+    // Try to get from backend if available
+    if (window.currentPregnancyWeek && typeof window.currentPregnancyWeek === 'number') {
+      return window.currentPregnancyWeek;
+    }
+    // Try to estimate from LMP in localStorage or form (if available)
+    const lmp = null;
+    // Optionally, you can fetch from user profile if available
+    return null;
+  }
+  function getTrimester(week) {
+    if (!week) return '-';
+    if (week <= 12) return 1;
+    if (week <= 27) return 2;
+    return 3;
+  }
+
+  // Section completion logic
+  function isSection1Filled() {
+    // Vitals, Mood/Energy, Sleep, Symptoms (at least one field)
+    return !!(
+      document.getElementById('weightKg').value ||
+      document.getElementById('heartRateBpm').value ||
+      document.getElementById('energyLevel').value ||
+      document.getElementById('stressLevel').value ||
+      document.getElementById('sleepHours').value ||
+      document.getElementById('sleepQuality').value ||
+      document.getElementById('bedTime').value ||
+      document.getElementById('wakeTime').value ||
+      document.getElementById('primaryPosition').value ||
+      document.getElementById('napList').children.length > 0 ||
+      document.getElementById('symptomList').children.length > 0
+    );
+  }
+  function isSection2Filled() {
+    // Drinks, Exercise, Nutrition, Fetal Movement (at least one field)
+    return !!(
+      document.getElementById('waterLiters').value > 0 ||
+      document.getElementById('otherFluidsLiters').value > 0 ||
+      document.getElementById('caffeineIntakeMg').value > 0 ||
+      document.getElementById('drinkList').children.length > 0 ||
+      document.getElementById('exerciseList').children.length > 0 ||
+      document.getElementById('mealList').children.length > 0
+    );
+  }
+  function isSection3Filled() {
+    // Doctor visit, notes, attachments (at least one field)
+    return !!(
+      document.getElementById('visitedDoctor').checked ||
+      document.getElementById('visitType').value ||
+      document.getElementById('doctorVisitNotes').value ||
+      document.getElementById('nextAppointment').value ||
+      document.getElementById('notes').value
+      // Attachments can be added if you implement attachmentList
+    );
+  }
+
+  function updateLogStatus() {
+    // Section completion
+    let filled = 0;
+    if (isSection1Filled()) filled++;
+    if (isSection2Filled()) filled++;
+    if (isSection3Filled()) filled++;
+    document.getElementById('statSections').textContent = `${filled}/3`;
+
+    // Progress bar and status
+    const progress = filled / 3;
+    document.getElementById('logProgress').style.width = (progress * 100) + '%';
+    document.getElementById('logStatusText').textContent = filled === 3 ? 'Complete' : (filled > 0 ? 'In Progress' : 'Draft');
+    document.getElementById('logDetail').textContent = filled === 3
+      ? 'All sections complete! You can mark as complete.'
+      : 'Complete more sections to improve insights.';
+
+    // Pregnancy week/trimester
+    let week = window.currentPregnancyWeek || null;
+    if (!week && window.currentWeek) week = window.currentWeek;
+    if (!week && window.userProfile && window.userProfile.currentPregnancyWeek) week = window.userProfile.currentPregnancyWeek;
+    document.getElementById('statWeek').textContent = week ? week : '-';
+    document.getElementById('statTrimester').textContent = week ? getTrimester(week) : '-';
+
+    // Energy, Sleep, Water
+    document.getElementById('statEnergy').textContent = document.getElementById('energyLevel').value || '-';
+    document.getElementById('statSleep').textContent = document.getElementById('sleepHours').value || '-';
+    document.getElementById('statWater').textContent = document.getElementById('waterLiters').value || '-';
+  }
+
+  // Listen to all relevant inputs for status update
+  [
+    'weightKg', 'heartRateBpm', 'energyLevel', 'stressLevel', 'sleepHours', 'sleepQuality',
+    'bedTime', 'wakeTime', 'primaryPosition', 'visitedDoctor', 'visitType', 'doctorVisitNotes',
+    'nextAppointment', 'notes', 'waterLiters', 'otherFluidsLiters', 'caffeineIntakeMg'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateLogStatus);
+    if (el && el.type === 'checkbox') el.addEventListener('change', updateLogStatus);
+  });
+
+  // Also update when lists change (naps, symptoms, drinks, meals, exercises)
+  ['napList', 'symptomList', 'drinkList', 'mealList', 'exerciseList'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const observer = new MutationObserver(updateLogStatus);
+      observer.observe(el, { childList: true, subtree: false });
+    }
+  });
+
+  // Initial update
+  updateLogStatus();
+
+  // Save
+  const messageEl = document.getElementById('message');
+  function showMsg(text, type = 'success') {
+    messageEl.textContent = text; messageEl.className = `msg ${type}`; messageEl.hidden = false; setTimeout(()=> messageEl.hidden=true, 3000);
+  }
+  async function saveLog(markComplete=false){
+    const payload = {
+      weightKg: valNum('weightKg'),
+      heartRateBpm: valNum('heartRateBpm'),
+      temperatureC: valNum('temperatureC'),
+      mood: valStr('mood'),
+      energyLevel: valNum('energyLevel'),
+      stressLevel: valNum('stressLevel'),
+      sleep: {
+        totalHours: valNum('sleepHours'),
+        quality: valNum('sleepQuality'),
+        timesAwakened: valNum('timesAwakened')
+      },
+      hydration: {
+        waterLiters: valNum('waterLiters'),
+        otherFluidsLiters: valNum('otherFluidsLiters')
+      },
+      caffeineIntakeMg: valNum('caffeineIntakeMg'),
+      symptoms,
+      exercises,
+      fetalMovement: {
+        count: valNum('kickCount'),
+        minutesTo10Kicks: valNum('minutesTo10'),
+        movementTypes: Array.from(document.getElementById('movementTypes').selectedOptions).map(o=>o.value)
+      },
+      doctorVisit: {
+        visited: document.getElementById('visitedDoctor').checked || false,
+        type: valStr('visitType')
+      },
+      notes: valStr('notes'),
+      isComplete: markComplete || false
+    };
+    try {
+      const r = await fetch('/api/health-log', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(payload) });
+      const res = await r.json();
+      if (res.success) showMsg(markComplete ? 'Saved & marked complete' : 'Saved', 'success'); else showMsg(res.error || 'Error', 'error');
+    } catch { showMsg('Network error', 'error'); }
+  }
+  document.getElementById('saveBtn').addEventListener('click', ()=> saveLog(false));
+  document.getElementById('saveCompleteBtn').addEventListener('click', ()=> saveLog(true));
+
+  function valNum(id){ const el = document.getElementById(id); if (!el) return null; const v = (el.type==='range' ? el.value : el.value).trim(); return v === '' ? null : Number(v); }
+  function valStr(id){ const v = document.getElementById(id)?.value?.trim(); return v ? v : null; }
+})();
+</script>
+
+<style>
+/* filepath: /Users/uyenpersonalmac/VisualStudioCode/Pregnancy_Application/client/public/css/healthlog.css */
+.healthlog-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fff5f9 0%, #ffe3f0 100%);
+  padding: 0;
+}
+.healthlog-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 0 48px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.healthlog-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.healthlog-header .logo {
+  background: #ed7eaf;
+  color: #fff;
+  font-weight: 700;
+  font-size: 2rem;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.healthlog-header .brand .title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #8a0e52;
+}
+.healthlog-header .brand .subtitle {
+  color: #b84b7a;
+  font-size: 1.1rem;
+  margin-top: 2px;
+}
+.healthlog-actionbar {
+  margin-bottom: 24px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(217,30,143,0.06);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.step-label {
+  color: #d91e8f;
+  font-weight: 600;
+  font-size: 1.1rem;
+  background: #ffe3f0;
+  border-radius: 12px;
+  padding: 6px 18px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 0;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #8a0e52;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.tab-btn.active {
+  color: #d91e8f;
+  background: #ffe3f0;
+  border-radius: 12px;
+}
+.action-btns {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+.healthlog-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+  align-items: flex-start;
+}
+.healthlog-card {
+  margin-bottom: 28px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(217,30,143,0.07);
+  padding: 32px 32px 24px 32px;
+  flex: 1;
+}
+.tab-section {
+  display: none;
+}
+.tab-section#tabBasics {
+  display: block;
+}
+.status-sidebar.healthlog-sidebar {
+  margin-top: 0;
+}
+.status-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(217,30,143,0.06);
+  margin-bottom: 18px;
+  padding: 24px 20px;
+}
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.btn-ghost, .btn-primary {
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 10px 24px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-ghost {
+  background: #fff;
+  color: #d91e8f;
+  border: 2px solid #ed7eaf;
+}
+.btn-ghost:hover {
+  background: #ffe3f0;
+  border-color: #d91e8f;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #e00072 0%, #d91e8f 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(217,30,143,0.18);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #ff1a85 0%, #e83da1 100%);
+}
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #8a0e52;
+  margin-bottom: 18px;
+}
+.field label {
+  font-weight: 500;
+  color: #8a0e52;
+}
+input, select, textarea {
+  border-radius: 12px;
+  border: 2px solid #ed7eaf;
+  padding: 10px 14px;
+  font-size: 1rem;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  width: 100%;
+  background: #fff;
+  transition: border-color 0.18s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #d91e8f;
+  outline: none;
+}
+.row.three, .row.two {
+  display: flex;
+  gap: 18px;
+}
+.row.three > .field, .row.two > .field {
+  flex: 1;
+}
+.moodlog-label {
+  color: #8a0e52;
+  font-weight: 600;
+  font-size: 1.08rem;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.moodlog-label .optional {
+  color: #b84b7a;
+  font-size: 0.95em;
+  font-weight: 400;
+}
+.moodlog-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.moodlog-select {
+  flex: 2 1 180px;
+  min-width: 120px;
+  border-radius: 12px;
+  border: 2px solid #ed7eaf;
+  padding: 10px 14px;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color 0.18s;
+}
+.moodlog-select:focus {
+  border-color: #d91e8f;
+  outline: none;
+}
+.moodlog-trigger {
+  flex: 2 1 160px;
+  min-width: 120px;
+  border-radius: 12px;
+  border: 2px solid #ed7eaf;
+  padding: 10px 14px;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color 0.18s;
+}
+.moodlog-trigger:focus {
+  border-color: #d91e8f;
+  outline: none;
+}
+.moodlog-add-btn {
+  flex: 1 1 120px;
+  min-width: 110px;
+  padding: 10px 0;
+  font-size: 1.05rem;
+  border-radius: 24px;
+  border: 2px solid #ed7eaf;
+  background: #fff;
+  color: #d91e8f;
+  font-weight: 600;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  margin-left: 0;
+}
+.moodlog-add-btn:hover {
+  background: #ffe3f0;
+  border-color: #d91e8f;
+}
+.moodlog-list {
+  margin: 10px 0 0 0;
+  padding-left: 18px;
+  list-style: disc;
+  color: #222;
+  font-size: 1.08rem;
+}
+.moodlog-list li {
+  margin-bottom: 2px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.01em;
+}
+.section-block {
+  background: #fff8fc;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(217,30,143,0.04);
+  padding: 24px 24px 18px 24px;
+  margin-bottom: 28px;
+  border: 1.5px solid #ffe3f0;
+  transition: box-shadow 0.18s;
+}
+.section-block:last-child {
+  margin-bottom: 0;
+}
+.section-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #d91e8f;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.01em;
+}
+.section-icon {
+  font-size: 1.5rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+.sleep-details-block {
+  margin-top: 18px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px dashed #ed7eaf;
+  padding: 16px 14px 10px 14px;
+  margin-bottom: 0;
+}
+@media (max-width: 1100px) {
+  .healthlog-main { max-width: 100vw; }
+  .healthlog-grid { grid-template-columns: 1fr; }
+  .status-sidebar.healthlog-sidebar { margin-top: 32px; }
+}
+@media (max-width: 700px) {
+  .healthlog-header .brand .title { font-size: 1.3rem; }
+  .healthlog-card { padding: 18px 8px; }
+  .status-card { padding: 14px 8px; }
+  .moodlog-row {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .moodlog-add-btn {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+  }
+}
+</style>
