@@ -31,7 +31,7 @@ router.get('/register', redirectIfLoggedIn, (req, res) => {
 // POST /auth/register - create new account
 router.post('/register', async (req, res) => {
   try {
-    const { fullname, email, password, password2 } = req.body || {};
+    const { fullname, email, phoneNumber, password, password2 } = req.body || {};
     const errors = {};
 
     // Validate fullname
@@ -41,11 +41,17 @@ router.post('/register', async (req, res) => {
       errors.fullname = 'Name must be at least 2 characters';
     }
     
-    // Validate email
-    if (!email?.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = 'Please enter a valid email';
+    // Validate email or phone - at least one required
+    if (!email && !phoneNumber) {
+      errors.emailOrPhone = 'Email or phone number is required';
+    }
+    
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.emailOrPhone = 'Please enter a valid email';
+    }
+    
+    if (phoneNumber && !/^\+?[0-9]{8,15}$/.test(phoneNumber.replace(/[\s\-\(\)\.]/g, ''))) {
+      errors.emailOrPhone = 'Please enter a valid phone number';
     }
     
     // Validate password
@@ -66,11 +72,22 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, errors });
     }
 
-    // Check for existing user
-    const normalizedEmail = email.toLowerCase().trim();
-    const existing = await User.findOne({ email: normalizedEmail });
+    // Check for existing user by email or phone
+    const normalizedEmail = email?.toLowerCase().trim() || null;
+    const normalizedPhone = phoneNumber?.replace(/[\s\-\(\)\.]/g, '') || null;
+    
+    const existingQuery = [];
+    if (normalizedEmail) existingQuery.push({ email: normalizedEmail });
+    if (normalizedPhone) existingQuery.push({ phoneNumber: normalizedPhone });
+    
+    const existing = await User.findOne({ $or: existingQuery });
     if (existing) {
-      return res.status(400).json({ success: false, errors: { email: 'Email already in use' }});
+      if (existing.email === normalizedEmail) {
+        return res.status(400).json({ success: false, errors: { emailOrPhone: 'Email already in use' }});
+      }
+      if (existing.phoneNumber === normalizedPhone) {
+        return res.status(400).json({ success: false, errors: { emailOrPhone: 'Phone number already in use' }});
+      }
     }
 
     // Parse name
@@ -78,21 +95,41 @@ router.post('/register', async (req, res) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
-    // Create user
+    // Create user - email can be null if only phone provided
     const newUser = new User({
       email: normalizedEmail,
+      phoneNumber: normalizedPhone,
       passwordHash: await bcrypt.hash(password, 12),
       authProvider: 'email',
-      firstName,
-      lastName,
+      googleId: null,
       role: 'user',
       isActive: true,
-      termsAcceptedAt: new Date()
+      isEmailVerified: false,
+      firstName,
+      lastName,
+      dateOfBirth: null,
+      currentWeightKg: null,
+      profileImageUrl: null,
+      pregnancyProfile: {
+        lastMenstrualPeriod: null, dueDate: null, deliveryDate: null,
+        heightCm: null, prePregnancyWeightKg: null, bloodType: null,
+        allergies: [], medicalConditions: [], isHighRisk: false,
+        gravida: 1, para: 0, primaryPhysician: null, hospitalName: null, status: 'active'
+      },
+      associatedUsers: [],
+      notificationPreferences: {
+        email: true, push: true, sms: false, dailyReminders: true,
+        weeklyReportReady: true, appointmentReminders: true,
+        partnerUpdates: true, healthAlerts: true, tipsAndArticles: false
+      },
+      preferredLanguage: 'en', language: 'en', timezone: 'UTC',
+      loginAttempts: 0, termsAcceptedAt: new Date()
     });
 
+    newUser.markModified('pregnancyProfile');
+    newUser.markModified('notificationPreferences');
     await newUser.save();
 
-    // Set session
     req.session.user = { 
       id: newUser._id, 
       firstName: newUser.firstName,
@@ -110,30 +147,35 @@ router.post('/register', async (req, res) => {
   } catch (err) {
     console.error('Register error:', err);
     if (err.code === 11000) {
-      return res.status(400).json({ success: false, errors: { email: 'Email already in use' }});
+      return res.status(400).json({ success: false, errors: { emailOrPhone: 'Account already exists' }});
     }
-    res.status(500).json({ success: false, errors: { general: 'Server error' }});
+    res.status(500).json({ success: false, errors: { general: 'Server error: ' + err.message }});
   }
 });
 
 // POST /auth/login - authenticate user
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, redirect } = req.body || {};
+    const { emailOrPhone, password, redirect } = req.body || {};
     
-    // Validate inputs are strings
-    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
-      return res.status(400).json({ success: false, errors: { general: 'Email and password required' }});
+    if (!emailOrPhone || typeof emailOrPhone !== 'string' || !password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, errors: { general: 'Email/phone and password required' }});
     }
 
-    // Find user with password hash
-    const user = await User.findOne({ 
-      email: email.toLowerCase().trim(),
-      authProvider: 'email'
-    }).select('+passwordHash');
+    const input = emailOrPhone.trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
+    const cleanedPhone = input.replace(/[\s\-\(\)\.]/g, '');
+    
+    // Find user by email or phone
+    let user;
+    if (isEmail) {
+      user = await User.findOne({ email: input.toLowerCase(), authProvider: 'email' }).select('+passwordHash');
+    } else {
+      user = await User.findOne({ phoneNumber: cleanedPhone, authProvider: 'email' }).select('+passwordHash');
+    }
     
     if (!user) {
-      return res.status(400).json({ success: false, errors: { general: 'Invalid email or password' }});
+      return res.status(400).json({ success: false, errors: { general: 'Invalid credentials' }});
     }
 
     // Check account status
@@ -146,11 +188,15 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ success: false, errors: { general: 'Account is deactivated' }});
     }
 
+    if (!user.passwordHash) {
+      return res.status(400).json({ success: false, errors: { general: 'Please login with Google or set a password first' }});
+    }
+
     // Verify password
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
       await user.incLoginAttempts();
-      return res.status(400).json({ success: false, errors: { general: 'Invalid email or password' }});
+      return res.status(400).json({ success: false, errors: { general: 'Invalid credentials' }});
     }
 
     // Reset attempts and update login info
@@ -172,7 +218,6 @@ router.post('/login', async (req, res) => {
 
     req.session.save((err) => {
       if (err) return res.status(500).json({ success: false, errors: { general: 'Session error' }});
-      // Return the redirect URL (sanitize to prevent open redirect)
       const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
       res.json({ success: true, redirect: safeRedirect });
     });
@@ -212,47 +257,117 @@ router.post('/google', async (req, res) => {
 
     const { sub: googleId, email, given_name, family_name, picture, email_verified } = payload;
 
-    // Ensure email is verified
     if (!email_verified) {
       return res.status(400).json({ success: false, errors: { general: 'Google email not verified' }});
     }
 
-    // Find existing user by Google ID or email
     let user = await User.findOne({
-      $or: [
-        { googleId: googleId },
-        { email: email.toLowerCase() }
-      ]
+      $or: [{ googleId: googleId }, { email: email.toLowerCase() }]
     });
 
     if (user) {
-      // Existing user - update Google info if needed
+      // Existing user - update and ensure all fields exist
       if (!user.googleId) {
-        // Link Google account to existing email account
         user.googleId = googleId;
-        user.authProvider = user.authProvider === 'email' ? 'email' : 'google';
       }
-      // Update profile image if not set
       if (!user.profileImageUrl && picture) {
         user.profileImageUrl = picture;
       }
+      
+      // ENSURE pregnancyProfile exists with all fields
+      if (!user.pregnancyProfile || Object.keys(user.pregnancyProfile).length === 0) {
+        user.pregnancyProfile = {
+          lastMenstrualPeriod: null,
+          dueDate: null,
+          deliveryDate: null,
+          heightCm: null,
+          prePregnancyWeightKg: null,
+          bloodType: null,
+          allergies: [],
+          medicalConditions: [],
+          isHighRisk: false,
+          gravida: 1,
+          para: 0,
+          primaryPhysician: null,
+          hospitalName: null,
+          status: 'active'
+        };
+        user.markModified('pregnancyProfile');
+      }
+      
+      // Ensure personal info fields exist
+      if (user.phoneNumber === undefined) user.phoneNumber = null;
+      if (user.dateOfBirth === undefined) user.dateOfBirth = null;
+      if (user.currentWeightKg === undefined) user.currentWeightKg = null;
+      
       user.lastLoginAt = new Date();
       user.lastLoginIP = req.ip;
       await user.save();
     } else {
-      // New user - create account
+      // New user - create with ALL fields
       user = new User({
         email: email.toLowerCase(),
         googleId: googleId,
         authProvider: 'google',
-        firstName: given_name || '',
-        lastName: family_name || '',
-        profileImageUrl: picture || '',
         role: 'user',
         isActive: true,
-        emailVerified: true,
-        termsAcceptedAt: new Date()
+        isEmailVerified: true,
+        
+        // Personal Info
+        firstName: given_name || '',
+        lastName: family_name || '',
+        phoneNumber: null,
+        profileImageUrl: picture || null,
+        dateOfBirth: null,
+        currentWeightKg: null,
+        
+        // Pregnancy Profile - FULLY POPULATED
+        pregnancyProfile: {
+          lastMenstrualPeriod: null,
+          dueDate: null,
+          deliveryDate: null,
+          heightCm: null,
+          prePregnancyWeightKg: null,
+          bloodType: null,
+          allergies: [],
+          medicalConditions: [],
+          isHighRisk: false,
+          gravida: 1,
+          para: 0,
+          primaryPhysician: null,
+          hospitalName: null,
+          status: 'active'
+        },
+        
+        associatedUsers: [],
+        
+        notificationPreferences: {
+          email: true,
+          push: true,
+          sms: false,
+          dailyReminders: true,
+          weeklyReportReady: true,
+          appointmentReminders: true,
+          partnerUpdates: true,
+          healthAlerts: true,
+          tipsAndArticles: false
+        },
+        
+        preferredLanguage: 'en',
+        language: 'en',
+        timezone: 'UTC',
+        invitationCode: null,
+        lastLoginAt: new Date(),
+        lastLoginIP: req.ip,
+        loginAttempts: 0,
+        lockUntil: null,
+        termsAcceptedAt: new Date(),
+        privacyPolicyAcceptedAt: null,
+        deletedAt: null
       });
+      
+      user.markModified('pregnancyProfile');
+      user.markModified('notificationPreferences');
       await user.save();
     }
 
@@ -300,6 +415,299 @@ router.get('/me', async (req, res) => {
     }
     res.json({ success: true, user: user.toPublic() });
   } catch (err) {
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
+  }
+});
+
+// GET /auth/user-edit
+router.get('/user-edit', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('-passwordHash');
+    if (!user) return res.redirect('/auth/login');
+    res.render('pages/auth/user-edit', { title: 'Edit Profile', user });
+  } catch (err) {
+    res.redirect('/');
+  }
+});
+
+// PUT /auth/user-edit - update user profile and pregnancy data
+router.put('/user-edit', requireAuth, async (req, res) => {
+  try {
+    const {
+      // Personal Info
+      fullName,
+      email,
+      phoneNumber,
+      dateOfBirth,
+      currentWeightKg,
+      // Pregnancy Profile (nested)
+      pregnancyProfile,
+      // Preferences
+      preferredLanguage,
+      timezone,
+      // Notifications
+      notificationPreferences
+    } = req.body || {};
+
+    const errors = {};
+
+    // Validation
+    if (fullName !== undefined && fullName.trim() && fullName.trim().length < 2) {
+      errors.fullName = 'Name must be at least 2 characters';
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = 'Please enter a valid email';
+    }
+
+    if (Object.keys(errors).length) {
+      return res.status(400).json({ success: false, errors });
+    }
+
+    const user = await User.findById(req.session.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, errors: { general: 'User not found' }});
+    }
+
+    // ===== UPDATE PERSONAL INFO =====
+    if (fullName?.trim()) {
+      const nameParts = fullName.trim().split(/\s+/);
+      user.firstName = nameParts[0] || '';
+      user.lastName = nameParts.slice(1).join(' ') || '';
+    }
+
+    if (email && email.toLowerCase().trim() !== user.email) {
+      const normalizedEmail = email.toLowerCase().trim();
+      const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: user._id } });
+      if (existing) {
+        return res.status(400).json({ success: false, errors: { email: 'Email already in use' }});
+      }
+      user.email = normalizedEmail;
+    }
+
+    if (phoneNumber !== undefined) {
+      user.phoneNumber = phoneNumber.trim() || null;
+    }
+    if (dateOfBirth !== undefined) {
+      user.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+    }
+    if (currentWeightKg !== undefined) {
+      user.currentWeightKg = currentWeightKg ? parseFloat(currentWeightKg) : null;
+    }
+    if (preferredLanguage !== undefined) {
+      user.preferredLanguage = preferredLanguage;
+    }
+    if (timezone !== undefined) {
+      user.timezone = timezone;
+    }
+
+    // ===== UPDATE PREGNANCY PROFILE =====
+    if (pregnancyProfile && typeof pregnancyProfile === 'object') {
+      if (!user.pregnancyProfile) {
+        user.pregnancyProfile = {};
+      }
+
+      const pp = pregnancyProfile;
+
+      // Dates
+      if (pp.lastMenstrualPeriod !== undefined) {
+        user.pregnancyProfile.lastMenstrualPeriod = pp.lastMenstrualPeriod ? new Date(pp.lastMenstrualPeriod) : undefined;
+      }
+      if (pp.dueDate !== undefined) {
+        user.pregnancyProfile.dueDate = pp.dueDate ? new Date(pp.dueDate) : undefined;
+      }
+      if (pp.deliveryDate !== undefined) {
+        user.pregnancyProfile.deliveryDate = pp.deliveryDate ? new Date(pp.deliveryDate) : undefined;
+      }
+
+      // Physical measurements
+      if (pp.heightCm !== undefined) {
+        user.pregnancyProfile.heightCm = pp.heightCm ? parseFloat(pp.heightCm) : undefined;
+      }
+      if (pp.prePregnancyWeightKg !== undefined) {
+        user.pregnancyProfile.prePregnancyWeightKg = pp.prePregnancyWeightKg ? parseFloat(pp.prePregnancyWeightKg) : undefined;
+      }
+
+      // Medical info
+      if (pp.bloodType !== undefined) {
+        user.pregnancyProfile.bloodType = pp.bloodType || null;
+      }
+      if (pp.allergies !== undefined) {
+        user.pregnancyProfile.allergies = Array.isArray(pp.allergies) 
+          ? pp.allergies.filter(a => a?.trim()) 
+          : (typeof pp.allergies === 'string' ? pp.allergies.split(',').map(a => a.trim()).filter(Boolean) : []);
+      }
+      if (pp.medicalConditions !== undefined) {
+        user.pregnancyProfile.medicalConditions = Array.isArray(pp.medicalConditions)
+          ? pp.medicalConditions.filter(m => m?.trim())
+          : (typeof pp.medicalConditions === 'string' ? pp.medicalConditions.split(',').map(m => m.trim()).filter(Boolean) : []);
+      }
+      if (pp.isHighRisk !== undefined) {
+        user.pregnancyProfile.isHighRisk = pp.isHighRisk === true || pp.isHighRisk === 'true';
+      }
+
+      // Pregnancy history
+      if (pp.gravida !== undefined) {
+        user.pregnancyProfile.gravida = pp.gravida ? parseInt(pp.gravida, 10) : 1;
+      }
+      if (pp.para !== undefined) {
+        user.pregnancyProfile.para = pp.para ? parseInt(pp.para, 10) : 0;
+      }
+
+      // Healthcare provider
+      if (pp.primaryPhysician !== undefined) {
+        user.pregnancyProfile.primaryPhysician = pp.primaryPhysician?.trim() || undefined;
+      }
+      if (pp.hospitalName !== undefined) {
+        user.pregnancyProfile.hospitalName = pp.hospitalName?.trim() || undefined;
+      }
+
+      // Status
+      if (pp.status !== undefined) {
+        user.pregnancyProfile.status = pp.status || 'active';
+      }
+
+      user.markModified('pregnancyProfile');
+    }
+
+    // ===== UPDATE NOTIFICATION PREFERENCES =====
+    if (notificationPreferences && typeof notificationPreferences === 'object') {
+      if (!user.notificationPreferences) {
+        user.notificationPreferences = {};
+      }
+      const validKeys = ['email', 'push', 'sms', 'dailyReminders', 'weeklyReportReady', 
+                         'appointmentReminders', 'partnerUpdates', 'healthAlerts', 'tipsAndArticles'];
+      validKeys.forEach(key => {
+        if (notificationPreferences[key] !== undefined) {
+          user.notificationPreferences[key] = notificationPreferences[key] === true || notificationPreferences[key] === 'true';
+        }
+      });
+      user.markModified('notificationPreferences');
+    }
+
+    await user.save();
+
+    // Update session
+    req.session.user.firstName = user.firstName;
+    req.session.user.lastName = user.lastName;
+    req.session.user.fullName = user.fullName;
+    req.session.user.email = user.email;
+
+    res.json({ success: true, user: user.toPublic(), message: 'Profile updated successfully' });
+
+  } catch (err) {
+    console.error('User edit error:', err);
+    res.status(500).json({ success: false, errors: { general: 'Server error: ' + err.message }});
+  }
+});
+
+// GET /auth/user-edit/data - get current user data for form
+router.get('/user-edit/data', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({ success: false, errors: { general: 'User not found' }});
+    }
+
+    const formatDate = (date) => date ? new Date(date).toISOString().split('T')[0] : '';
+
+    res.json({
+      success: true,
+      data: {
+        // Personal Info
+        fullName: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        email: user.email,
+        phoneNumber: user.phoneNumber || '',
+        dateOfBirth: formatDate(user.dateOfBirth),
+        currentWeightKg: user.currentWeightKg || '',
+        profileImageUrl: user.profileImageUrl || '',
+        
+        // Pregnancy Profile (as nested object)
+        pregnancyProfile: {
+          lastMenstrualPeriod: formatDate(user.pregnancyProfile?.lastMenstrualPeriod),
+          dueDate: formatDate(user.pregnancyProfile?.dueDate),
+          deliveryDate: formatDate(user.pregnancyProfile?.deliveryDate),
+          heightCm: user.pregnancyProfile?.heightCm || '',
+          prePregnancyWeightKg: user.pregnancyProfile?.prePregnancyWeightKg || '',
+          bloodType: user.pregnancyProfile?.bloodType || '',
+          allergies: user.pregnancyProfile?.allergies || [],
+          medicalConditions: user.pregnancyProfile?.medicalConditions || [],
+          isHighRisk: user.pregnancyProfile?.isHighRisk || false,
+          gravida: user.pregnancyProfile?.gravida || 1,
+          para: user.pregnancyProfile?.para || 0,
+          primaryPhysician: user.pregnancyProfile?.primaryPhysician || '',
+          hospitalName: user.pregnancyProfile?.hospitalName || '',
+          status: user.pregnancyProfile?.status || 'active'
+        },
+        
+        // Notification Preferences
+        notificationPreferences: user.notificationPreferences || {},
+        
+        // Preferences
+        preferredLanguage: user.preferredLanguage || 'en',
+        timezone: user.timezone || 'UTC',
+        
+        // Computed fields
+        currentWeek: user.currentPregnancyWeek,
+        trimester: user.currentTrimester,
+        daysUntilDue: user.daysUntilDueDate,
+        age: user.age
+      }
+    });
+  } catch (err) {
+    console.error('Get user data error:', err);
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
+  }
+});
+
+// DELETE /auth/user-edit/pregnancy - clear pregnancy data
+router.delete('/user-edit/pregnancy', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, errors: { general: 'User not found' }});
+    }
+
+    // Clear pregnancy profile
+    user.pregnancyProfile = {};
+    await user.save();
+
+    res.json({ success: true, message: 'Pregnancy data cleared' });
+
+  } catch (err) {
+    console.error('Clear pregnancy data error:', err);
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
+  }
+});
+
+// GET /auth/user-edit/export - export user profile as JSON
+router.get('/user-edit/export', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({ success: false, errors: { general: 'User not found' }});
+    }
+
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      profile: {
+        name: user.fullName,
+        email: user.email,
+        phone: user.phoneNumber
+      },
+      pregnancy: user.pregnancyProfile || {},
+      preferences: {
+        language: user.preferredLanguage,
+        timezone: user.timezone,
+        notifications: user.notificationPreferences
+      }
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="babystar-profile-${Date.now()}.json"`);
+    res.json(exportData);
+
+  } catch (err) {
+    console.error('Export profile error:', err);
     res.status(500).json({ success: false, errors: { general: 'Server error' }});
   }
 });
@@ -406,6 +814,79 @@ router.post('/reset-password', async (req, res) => {
     res.json({ success: true, message: 'Password reset successful.' });
   } catch (err) {
     res.status(500).json({ success: false, errors: { general: 'Server error' }});
+  }
+});
+
+// PUT /auth/change-password - change or set password
+router.put('/change-password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword, newPassword2 } = req.body || {};
+    const errors = {};
+
+    // Get user with password
+    const user = await User.findById(req.session.user.id).select('+passwordHash');
+    if (!user) {
+      return res.status(404).json({ success: false, errors: { general: 'User not found' }});
+    }
+
+    // If user has a password (not Google-only), require current password
+    if (user.passwordHash) {
+      if (!currentPassword) {
+        errors.currentPassword = 'Current password is required';
+      } else {
+        const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+        if (!isValid) {
+          errors.currentPassword = 'Current password is incorrect';
+        }
+      }
+    }
+
+    // Validate new password
+    if (!newPassword) {
+      errors.newPassword = 'New password is required';
+    } else if (newPassword.length < 6) {
+      errors.newPassword = 'Password must be at least 6 characters';
+    }
+
+    if (!newPassword2) {
+      errors.newPassword2 = 'Please confirm new password';
+    } else if (newPassword !== newPassword2) {
+      errors.newPassword2 = 'Passwords do not match';
+    }
+
+    if (Object.keys(errors).length) {
+      return res.status(400).json({ success: false, errors });
+    }
+
+    // Update password
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    
+    // If user was Google-only, now they can also login with email/password
+    if (user.authProvider === 'google' && !user.email) {
+      // They need an email to use password login
+      return res.status(400).json({ success: false, errors: { general: 'Please add an email first to use password login' }});
+    }
+
+    await user.save();
+
+    res.json({ success: true, message: user.authProvider === 'google' ? 'Password set successfully! You can now also login with email/password.' : 'Password changed successfully' });
+
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ success: false, errors: { general: 'Server error' }});
+  }
+});
+
+// GET /auth/has-password - check if user has a password set
+router.get('/has-password', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select('+passwordHash');
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    res.json({ success: true, hasPassword: !!user.passwordHash, authProvider: user.authProvider });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 

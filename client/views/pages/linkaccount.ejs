@@ -1,76 +1,339 @@
 <link rel="stylesheet" href="/css/linkaccount.css">
 
-<div class="link-account-content">
-    <div id="linkCodeSection">
-        <h4><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="#007E6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-link-icon lucide-link">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-            </svg>
-            <span>Your link code</span>
-        </h4>
-        <p>Share this code with your friend or family members</p>
+<main class="link-container">
+    <div class="link-card">
+        <h1>Link Your Account</h1>
+        <p class="subtitle">Share your invitation code with your partner, family, or healthcare provider to let them
+            connect with your pregnancy journey.</p>
 
-        <div id="linkCodeDisplay">
-            <p>Link Code</p>
-            <h1 id="linkCode">USER-1</h1>
-
-            <div id="copyCode">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-user-plus-icon lucide-user-plus">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <line x1="19" x2="19" y1="8" y2="14" />
-                    <line x1="22" x2="16" y1="11" y2="11" />
-                </svg>
-                Copy Code
-            </div>
-        </div>
-
-        <p>When your partner or family member creates an account, they can enter this code to link to your pregnancy
-            journey. They'll be able to view your progress and receive tips on how to support you.</p>
-    </div>
-
-    <div id="linkAccountSection">
-        <h4>Linked Accounts</h4>
-        <p>People connected to this pregnancy journey</p>
-
-        <div class="linkedAccount">
-            <div class="userInfo">
-                <div class="userIcon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-                        stroke="#007E6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="lucide lucide-user-icon lucide-user">
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
+        <!-- Your Invitation Code Section -->
+        <section class="code-section">
+            <h2>Your Invitation Code</h2>
+            <div class="code-display">
+                <span class="code" id="invitationCode"><%= invitationCode %></span>
+                <button class="copy-btn" id="copyBtn" title="Copy code">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
-                </div>
-
-                <div class="userDetails">
-                    <div class="username">John Johnson</div>
-                    <div class="email">john@gmail.com</div>
-                    <div class="dateLinked">Linked since 01/11/2025</div>
-                </div>
+                </button>
             </div>
-
-            <div class="actions">
-                <button class="removeButton">Remove</button>
+            <div class="code-timer">
+                <span>Expires in: </span>
+                <span id="timerDisplay">--:--</span>
+                <button class="refresh-btn" id="refreshBtn" title="Generate new code">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M23 4v6h-6M1 20v-6h6" />
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
+                    Refresh
+                </button>
             </div>
-        </div>
-    </div>
+            <p class="code-note">Share this code with someone you trust. The code expires every 5 minutes for security.
+            </p>
+        </section>
 
-    <div id="permissionSection">
-        <h3>Privacy & Permissions</h3>
-        <p>When you link accounts, the following information is shared:</p>
-        <ul>
-            <li>Pregnancy week and due date</li>
-            <li>Health logs and symptom tracking</li>
-            <li>Progress reports and charts</li>
-            <li>Appointment information (if added)</li>
-        </ul>
-        <p>You can remove linked accounts at any time. Linked users will not have access to edit your information - they
-            can only view what you've logged.</p>
+        <!-- Connect to Someone Section -->
+        <section class="connect-section">
+            <h2>Connect to Someone</h2>
+            <p>Enter an invitation code from another user to connect with them.</p>
+            <form id="connectForm">
+                <div class="form-row">
+                    <input type="text" id="connectCode" placeholder="Enter invitation code" maxlength="8" required>
+                    <select id="relationship" required>
+                        <option value="">Select relationship</option>
+                        <option value="partner">Partner</option>
+                        <option value="family_member">Family Member</option>
+                    </select>
+                </div>
+                <button type="submit" class="connect-btn" id="connectBtn">Connect</button>
+            </form>
+            <div id="connectMessage" class="message" hidden></div>
+        </section>
+
+        <!-- People Who Used Your Code (You are the SENDER/Owner) -->
+        <section class="linked-section">
+            <h2>People Connected to You</h2>
+            <p class="section-desc">People who used your invitation code to connect with you.</p>
+            <div id="linkedAccounts" class="linked-list">
+                <% if (linkedAccounts && linkedAccounts.length > 0) { %>
+                    <% linkedAccounts.forEach(function(account) { %>
+                        <div class="linked-item" data-id="<%= account._id %>" data-status="<%= account.status %>">
+                            <div class="linked-main">
+                                <% if (account.userId && account.userId.profileImageUrl) { %>
+                                    <img src="<%= account.userId.profileImageUrl %>" alt="" class="linked-avatar">
+                                <% } else { %>
+                                    <div class="linked-avatar placeholder"><%= account.userId?.firstName?.charAt(0) || '?' %></div>
+                                <% } %>
+                                <div class="linked-details">
+                                    <span class="linked-name">
+                                        <%= account.userId?.firstName || '' %> <%= account.userId?.lastName || '' %>
+                                        <% if (!account.userId?.firstName && !account.userId?.lastName) { %>
+                                            <%= account.userId?.email || 'Unknown User' %>
+                                        <% } %>
+                                    </span>
+                                    <span class="linked-relationship"><%= account.relationship.replace('_', ' ') %></span>
+                                    <% if (account.customLabel) { %>
+                                        <span class="linked-label">(<%= account.customLabel %>)</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="linked-status-actions">
+                                <span class="status-badge <%= account.status %>"><%= account.status %></span>
+                                <div class="linked-actions">
+                                    <% if (account.status === 'pending') { %>
+                                        <button class="action-btn accept" onclick="handleAction('accept', '<%= account._id %>')">Accept</button>
+                                        <button class="action-btn reject" onclick="handleAction('reject', '<%= account._id %>')">Reject</button>
+                                    <% } else if (account.status === 'accepted') { %>
+                                        <button class="action-btn revoke" onclick="handleAction('revoke', '<%= account._id %>')">Revoke</button>
+                                    <% } else { %>
+                                        <button class="action-btn remove" onclick="handleAction('remove', '<%= account._id %>')">Remove</button>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="no-links">No one has connected to you yet. Share your invitation code above!</p>
+                <% } %>
+            </div>
+        </section>
+
+        <!-- Your Connections (You are the RECEIVER) -->
+        <section class="linked-section">
+            <h2>Your Connections</h2>
+            <p class="section-desc">Accounts you've connected to using their invitation codes.</p>
+            <div id="receivedInvitations" class="linked-list">
+                <% if (receivedInvitations && receivedInvitations.length > 0) { %>
+                    <% receivedInvitations.forEach(function(inv) { %>
+                        <div class="linked-item received" data-owner="<%= inv.ownerId %>" data-status="<%= inv.status %>">
+                            <div class="linked-main">
+                                <% if (inv.ownerImage) { %>
+                                    <img src="<%= inv.ownerImage %>" alt="" class="linked-avatar">
+                                <% } else { %>
+                                    <div class="linked-avatar placeholder"><%= inv.ownerName?.charAt(0) || '?' %></div>
+                                <% } %>
+                                <div class="linked-details">
+                                    <span class="linked-name"><%= inv.ownerName || inv.ownerEmail %></span>
+                                    <span class="linked-relationship">You are their: <%= inv.relationship?.replace('_', ' ') || 'N/A' %></span>
+                                </div>
+                            </div>
+                            <div class="linked-status-actions">
+                                <span class="status-badge <%= inv.status %>"><%= inv.status %></span>
+                                <div class="linked-actions">
+                                    <% if (inv.status === 'pending') { %>
+                                        <button class="action-btn cancel" onclick="handleReceiverAction('cancel', '<%= inv.ownerId %>')">Cancel Request</button>
+                                    <% } else if (inv.status === 'accepted') { %>
+                                        <button class="action-btn leave" onclick="handleReceiverAction('leave', '<%= inv.ownerId %>')">Leave</button>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="no-links">You haven't connected to anyone yet. Enter an invitation code above!</p>
+                <% } %>
+            </div>
+        </section>
+
+        <!-- Status Legend -->
+        <section class="legend-section">
+            <h3>Status Guide</h3>
+            <div class="legend-grid">
+                <div class="legend-item"><span class="status-badge pending">pending</span> Waiting for approval</div>
+                <div class="legend-item"><span class="status-badge accepted">accepted</span> Active connection</div>
+                <div class="legend-item"><span class="status-badge rejected">rejected</span> Request was denied</div>
+                <div class="legend-item"><span class="status-badge revoked">revoked</span> Connection ended</div>
+                <div class="legend-item"><span class="status-badge expired">expired</span> Request timed out (7 days)</div>
+            </div>
+        </section>
     </div>
-</div>
+</main>
+
+<script>
+    (function () {
+        const codeEl = document.getElementById('invitationCode');
+        const copyBtn = document.getElementById('copyBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const connectForm = document.getElementById('connectForm');
+        const connectMessage = document.getElementById('connectMessage');
+
+        let expiresAt = new Date('<%= expiresAt %>');
+        let timerInterval;
+
+        // Update countdown timer
+        function updateTimer() {
+            const now = new Date();
+            const diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
+            const mins = Math.floor(diff / 60);
+            const secs = diff % 60;
+            timerDisplay.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+            if (diff <= 0) {
+                refreshCode();
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        startTimer();
+
+        // Copy code
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(codeEl.textContent.trim());
+                copyBtn.classList.add('copied');
+                setTimeout(() => copyBtn.classList.remove('copied'), 2000);
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = codeEl.textContent.trim();
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                copyBtn.classList.add('copied');
+                setTimeout(() => copyBtn.classList.remove('copied'), 2000);
+            }
+        });
+
+        // Refresh code
+        async function refreshCode() {
+            refreshBtn.disabled = true;
+            try {
+                const resp = await fetch('/link-account/refresh', { method: 'POST', credentials: 'include' });
+                const data = await resp.json();
+                if (data.success) {
+                    codeEl.textContent = data.invitationCode;
+                    expiresAt = new Date(data.expiresAt);
+                    startTimer();
+                }
+            } catch (err) {
+                console.error('Failed to refresh code:', err);
+            } finally {
+                refreshBtn.disabled = false;
+            }
+        }
+        refreshBtn.addEventListener('click', refreshCode);
+
+        // Connect form
+        connectForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('connectCode').value.trim().toUpperCase();
+            const relationship = document.getElementById('relationship').value;
+            if (!code || !relationship) return;
+
+            document.getElementById('connectBtn').disabled = true;
+            connectMessage.hidden = true;
+
+            try {
+                const resp = await fetch('/link-account/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ code, relationship })
+                });
+                const data = await resp.json();
+
+                connectMessage.hidden = false;
+                if (data.success) {
+                    connectMessage.className = 'message success';
+                    connectMessage.textContent = 'Link request sent successfully!';
+                    connectForm.reset();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    connectMessage.className = 'message error';
+                    connectMessage.textContent = data.error || 'Failed to connect';
+                }
+            } catch (err) {
+                connectMessage.hidden = false;
+                connectMessage.className = 'message error';
+                connectMessage.textContent = 'An error occurred';
+            } finally {
+                document.getElementById('connectBtn').disabled = false;
+            }
+        });
+
+        document.getElementById('connectCode').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Sender actions (accept, reject, revoke, remove)
+        window.handleAction = async function(action, associationId) {
+            const confirmMessages = {
+                accept: 'Accept this connection request?',
+                reject: 'Reject this connection request?',
+                revoke: 'Revoke this connection? They will lose access.',
+                remove: 'Remove this entry completely?'
+            };
+            
+            if (!confirm(confirmMessages[action])) return;
+
+            try {
+                let url, method;
+                if (action === 'remove') {
+                    url = `/link-account/remove/${associationId}`;
+                    method = 'DELETE';
+                } else {
+                    url = `/link-account/${action}/${associationId}`;
+                    method = 'POST';
+                }
+
+                const resp = await fetch(url, { method, credentials: 'include' });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showToast(data.message || 'Action completed', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error || 'Action failed', 'error');
+                }
+            } catch (err) {
+                showToast('An error occurred', 'error');
+            }
+        };
+
+        // Receiver actions (cancel, leave)
+        window.handleReceiverAction = async function(action, ownerId) {
+            const confirmMessages = {
+                cancel: 'Cancel your connection request?',
+                leave: 'Leave this connection? You will lose access.'
+            };
+            
+            if (!confirm(confirmMessages[action])) return;
+
+            try {
+                const resp = await fetch(`/link-account/${action}/${ownerId}`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showToast(data.message || 'Action completed', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error || 'Action failed', 'error');
+                }
+            } catch (err) {
+                showToast('An error occurred', 'error');
+            }
+        };
+
+        // Toast notification
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    })();
+</script>

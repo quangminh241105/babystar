@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const clearErrors = () => {
-    ['email', 'password', 'general'].forEach(field => setError(field, ''));
+    ['emailOrPhone', 'password', 'general'].forEach(field => setError(field, ''));
   };
 
   // Google Sign In button
@@ -30,11 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     
     // Get form values - ensure they're strings
-    const emailEl = document.getElementById('email');
+    const emailOrPhoneEl = document.getElementById('emailOrPhone');
     const passwordEl = document.getElementById('password');
     const redirectEl = document.getElementById('redirect');
     
-    const email = emailEl?.value?.trim() || '';
+    const emailOrPhone = emailOrPhoneEl?.value?.trim() || '';
     const password = passwordEl?.value || '';
     const redirect = redirectEl?.value || '/';
     
@@ -42,9 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
     
     // Basic validation
-    if (!email || !password) {
+    if (!emailOrPhone || !password) {
       const errorEl = document.getElementById('general-error');
-      if (errorEl) errorEl.textContent = 'Email and password required';
+      if (errorEl) errorEl.textContent = 'Email/Phone and password required';
       return;
     }
     
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const resp = await fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, redirect })
+        body: JSON.stringify({ emailOrPhone, password, redirect })
       });
       
       const data = await resp.json();
@@ -65,9 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const el = document.getElementById('general-error');
           if (el) el.textContent = data.errors.general;
         }
-        if (data.errors?.email) {
-          const el = document.getElementById('email-error');
-          if (el) el.textContent = data.errors.email;
+        if (data.errors?.emailOrPhone) {
+          const el = document.getElementById('emailOrPhone-error');
+          if (el) el.textContent = data.errors.emailOrPhone;
         }
         if (data.errors?.password) {
           const el = document.getElementById('password-error');

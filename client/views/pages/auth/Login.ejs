@@ -65,21 +65,21 @@
       </div>
 
       <div class="divider">
-        <span>or continue with email</span>
+        <span>or continue with email/phone</span>
       </div>
 
       <form id="loginForm" novalidate>
         <input type="hidden" id="redirect" name="redirect" value="<%= typeof redirect !== 'undefined' ? redirect : '/' %>">
         
         <div class="registration">
-          <label for="email">Email</label>
-          <input type="text" id="email" name="email" />
-          <div id="email-error" class="field-error"></div>
+          <label for="emailOrPhone">Email or Phone Number</label>
+          <input type="text" id="emailOrPhone" name="emailOrPhone" placeholder="Enter email or phone" />
+          <div id="emailOrPhone-error" class="field-error"></div>
         </div>
 
         <div class="registration">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" />
+          <input type="password" id="password" name="password" placeholder="Enter password" />
           <div id="password-error" class="field-error"></div>
         </div>
 
@@ -145,13 +145,4 @@ async function handleGoogleSignIn(response) {
     }
   } catch (err) {
     console.error('Google login error:', err);
-    if (errorEl) errorEl.textContent = 'Network error. Please try again.';
-    if (btn) {
-      btn.disabled = false;
-      btn.querySelector('span').textContent = 'Continue with Google';
-    }
-  }
-}
-</script>
-
-<script src="/js/auth/login.js"></script>
+    if

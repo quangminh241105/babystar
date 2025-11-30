@@ -1,122 +1,176 @@
-<style>
-  .profile-container { max-width:600px; margin:32px auto; padding:0 16px; font-family:system-ui,-apple-system,"Segoe UI",Roboto; }
-  .profile-header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
-  .profile-avatar { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#eee; }
-  .profile-header h2 { margin:0; color:#333; }
-  .form-group { margin-bottom:16px; }
-  .form-group label { display:block; margin-bottom:4px; font-weight:600; color:#333; font-size:0.95rem; }
-  .form-group input, .form-group textarea { width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:0.95rem; font-family:inherit; }
-  .form-group textarea { resize:vertical; min-height:80px; }
-  .btn { padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.95rem; }
-  .btn-primary { background:#6c4bd1; color:#fff; }
-  .btn-danger { background:#d9534f; color:#fff; margin-left:8px; }
-  .error-msg { color:#d9534f; font-size:0.9rem; margin-top:8px; }
-  .success-msg { color:#5cb85c; font-size:0.9rem; margin-top:8px; }
-</style>
+<link rel="stylesheet" href="/css/profile.css">
 
-<div class="profile-container">
-  <div class="profile-header">
-    <img id="avatarPreview" class="profile-avatar" src="<%= user.profileImage || '/images/default-avatar.png' %>" alt="Profile picture">
-    <div>
-      <h2><%= user.name %></h2>
-      <p style="margin:0; color:#666; font-size:0.9rem;"><%= user.email %></p>
+<main class="profile-container">
+  <header class="profile-header">
+    <div class="profile-avatar">
+      <img id="profileImage" src="/images/default-avatar.png" alt="Profile">
     </div>
+    <div class="profile-info">
+      <h1 id="userName">Loading...</h1>
+      <p id="userEmail" class="text-muted"></p>
+      <a href="/auth/user-edit" class="btn-primary">Edit Profile</a>
+    </div>
+  </header>
+
+  <div class="profile-grid">
+    <!-- Personal Info Card -->
+    <section class="card">
+      <h2 class="card-title">Personal Information</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Full Name</span>
+          <span class="info-value" id="infoName">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <span class="info-value" id="infoEmail">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Phone</span>
+          <span class="info-value" id="infoPhone">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Date of Birth</span>
+          <span class="info-value" id="infoDOB">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Age</span>
+          <span class="info-value" id="infoAge">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Current Weight</span>
+          <span class="info-value" id="infoWeight">-</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pregnancy Info Card -->
+    <section class="card">
+      <h2 class="card-title">Pregnancy Information</h2>
+      <div class="pregnancy-progress">
+        <div class="progress-header">
+          <span class="week-display" id="weekDisplay">Week -</span>
+          <span class="trimester-badge" id="trimesterBadge">Trimester -</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="days-left" id="daysLeft">- days until due date</div>
+      </div>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">LMP</span>
+          <span class="info-value" id="infoLMP">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Due Date</span>
+          <span class="info-value" id="infoDueDate">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Blood Type</span>
+          <span class="info-value" id="infoBloodType">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Height</span>
+          <span class="info-value" id="infoHeight">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Pre-Pregnancy Weight</span>
+          <span class="info-value" id="infoPreWeight">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">High Risk</span>
+          <span class="info-value" id="infoHighRisk">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Gravida / Para</span>
+          <span class="info-value" id="infoGravidaPara">-</span>
+        </div>
+      </div>
+      <div class="info-section" id="allergiesSection" style="display:none">
+        <span class="info-label">Allergies</span>
+        <div class="tags" id="allergiesTags"></div>
+      </div>
+      <div class="info-section" id="conditionsSection" style="display:none">
+        <span class="info-label">Medical Conditions</span>
+        <div class="tags" id="conditionsTags"></div>
+      </div>
+    </section>
+
+    <!-- Healthcare Provider Card -->
+    <section class="card">
+      <h2 class="card-title">Healthcare Provider</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Physician / Midwife</span>
+          <span class="info-value" id="infoPhysician">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Hospital / Birth Center</span>
+          <span class="info-value" id="infoHospital">-</span>
+        </div>
+      </div>
+    </section>
   </div>
-
-  <form id="profileForm" novalidate>
-    <div class="form-group">
-      <label for="name">Full Name</label>
-      <input type="text" id="name" name="name" value="<%= user.name %>" required>
-    </div>
-
-    <div class="form-group">
-      <label for="profileImage">Profile Image URL</label>
-      <input type="text" id="profileImage" name="profileImage" value="<%= user.profileImage || '' %>" placeholder="https://example.com/image.jpg">
-      <small style="color:#666; font-size:0.85rem;">Paste an image URL or upload (future feature)</small>
-    </div>
-
-    <div class="form-group">
-      <label for="bio">Bio</label>
-      <textarea id="bio" name="bio" maxlength="300" placeholder="Tell us about yourself"><%= user.bio || '' %></textarea>
-    </div>
-
-    <div class="form-group">
-      <label for="phone">Phone</label>
-      <input type="tel" id="phone" name="phone" value="<%= user.phone || '' %>" placeholder="+1234567890">
-    </div>
-
-    <div class="form-group">
-      <label for="dueDate">Due Date (optional)</label>
-      <input type="date" id="dueDate" name="dueDate" value="<%= user.dueDate ? new Date(user.dueDate).toISOString().split('T')[0] : '' %>">
-    </div>
-
-    <div id="formMessage"></div>
-
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-    <button type="button" class="btn btn-danger" id="deleteBtn">Delete Account</button>
-  </form>
-</div>
+</main>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('profileForm');
-  const msg = document.getElementById('formMessage');
-  const avatarPreview = document.getElementById('avatarPreview');
-  const profileImageInput = document.getElementById('profileImage');
+(async function() {
+  try {
+    const resp = await fetch('/auth/user-edit/data', { credentials: 'include' });
+    const { success, data } = await resp.json();
+    if (!success) return;
 
-  // Preview image on URL change
-  profileImageInput.addEventListener('input', () => {
-    const url = profileImageInput.value.trim();
-    if (url) avatarPreview.src = url;
-  });
+    const fmt = (d) => d ? new Date(d).toLocaleDateString() : '-';
+    const pp = data.pregnancyProfile || {};
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    msg.textContent = '';
-    const data = {
-      name: document.getElementById('name').value,
-      profileImage: profileImageInput.value,
-      bio: document.getElementById('bio').value,
-      phone: document.getElementById('phone').value,
-      dueDate: document.getElementById('dueDate').value
-    };
+    // Header
+    document.getElementById('profileImage').src = data.profileImageUrl || '/images/default-avatar.png';
+    document.getElementById('userName').textContent = data.fullName || 'User';
+    document.getElementById('userEmail').textContent = data.email;
 
-    try {
-      const resp = await fetch('/auth/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      const result = await resp.json();
-      if (resp.ok && result.success) {
-        msg.innerHTML = '<div class="success-msg">Profile updated successfully!</div>';
-        // refresh page after short delay so navbar updates
-        setTimeout(() => window.location.reload(), 800);
-      } else {
-        const errMsg = result.errors?.general || 'Update failed';
-        msg.innerHTML = `<div class="error-msg">${errMsg}</div>`;
-      }
-    } catch (err) {
-      console.error(err);
-      msg.innerHTML = '<div class="error-msg">Network error</div>';
+    // Personal Info
+    document.getElementById('infoName').textContent = data.fullName || '-';
+    document.getElementById('infoEmail').textContent = data.email || '-';
+    document.getElementById('infoPhone').textContent = data.phoneNumber || '-';
+    document.getElementById('infoDOB').textContent = fmt(data.dateOfBirth);
+    document.getElementById('infoAge').textContent = data.age ? `${data.age} years` : '-';
+    document.getElementById('infoWeight').textContent = data.currentWeightKg ? `${data.currentWeightKg} kg` : '-';
+
+    // Pregnancy Info
+    if (data.currentWeek) {
+      document.getElementById('weekDisplay').textContent = `Week ${data.currentWeek.weeks}`;
+      document.getElementById('progressBar').style.width = `${Math.min(100, (data.currentWeek.weeks / 40) * 100)}%`;
     }
-  });
+    document.getElementById('trimesterBadge').textContent = data.trimester ? `Trimester ${data.trimester}` : '-';
+    document.getElementById('daysLeft').textContent = data.daysUntilDue != null ? `${data.daysUntilDue} days until due date` : '-';
+    
+    document.getElementById('infoLMP').textContent = fmt(pp.lastMenstrualPeriod);
+    document.getElementById('infoDueDate').textContent = fmt(pp.dueDate);
+    document.getElementById('infoBloodType').textContent = pp.bloodType || '-';
+    document.getElementById('infoHeight').textContent = pp.heightCm ? `${pp.heightCm} cm` : '-';
+    document.getElementById('infoPreWeight').textContent = pp.prePregnancyWeightKg ? `${pp.prePregnancyWeightKg} kg` : '-';
+    document.getElementById('infoHighRisk').textContent = pp.isHighRisk ? 'Yes' : 'No';
+    document.getElementById('infoGravidaPara').textContent = `G${pp.gravida || 1} P${pp.para || 0}`;
 
-  document.getElementById('deleteBtn').addEventListener('click', async () => {
-    if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
-    try {
-      const resp = await fetch('/auth/profile', { method: 'DELETE' });
-      const result = await resp.json();
-      if (resp.ok && result.success) {
-        alert('Account deleted');
-        window.location.href = '/';
-      } else {
-        alert('Delete failed: ' + (result.errors?.general || 'unknown error'));
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Network error');
+    // Allergies
+    if (pp.allergies?.length) {
+      document.getElementById('allergiesSection').style.display = 'block';
+      document.getElementById('allergiesTags').innerHTML = pp.allergies.map(a => `<span class="tag">${a}</span>`).join('');
     }
-  });
-});
+
+    // Conditions
+    if (pp.medicalConditions?.length) {
+      document.getElementById('conditionsSection').style.display = 'block';
+      document.getElementById('conditionsTags').innerHTML = pp.medicalConditions.map(c => `<span class="tag">${c}</span>`).join('');
+    }
+
+    // Healthcare
+    document.getElementById('infoPhysician').textContent = pp.primaryPhysician || '-';
+    document.getElementById('infoHospital').textContent = pp.hospitalName || '-';
+
+  } catch (err) {
+    console.error('Error loading profile:', err);
+  }
+})();
 </script>

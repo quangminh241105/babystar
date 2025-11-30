@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const clearErrors = () => {
-    ['fullname', 'email', 'password', 'password2', 'general'].forEach(field => setError(field, ''));
+    ['fullname', 'emailOrPhone', 'password', 'password2', 'general'].forEach(field => setError(field, ''));
   };
 
   // Google Sign Up button
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Collect form values
     const fullname = (document.getElementById('fullname') || {}).value || '';
-    const email = (document.getElementById('email') || {}).value || '';
+    const emailOrPhone = (document.getElementById('emailOrPhone') || {}).value || '';
     const password = (document.getElementById('password') || {}).value || '';
     const password2 = (document.getElementById('password2') || {}).value || '';
 
@@ -49,11 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
       hasErrors = true;
     }
     
-    if (!email.trim()) { 
-      setError('email', 'Email is required'); 
+    if (!emailOrPhone.trim()) { 
+      setError('emailOrPhone', 'Email or phone number is required'); 
       hasErrors = true; 
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('email', 'Please enter a valid email');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone) && !/^\+?[0-9]{8,15}$/.test(emailOrPhone.replace(/[\s\-\(\)\.]/g, ''))) {
+      setError('emailOrPhone', 'Please enter a valid email or phone number');
       hasErrors = true;
     }
     
@@ -75,6 +75,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hasErrors) return;
 
+    // Determine if email or phone
+    let email = null;
+    let phoneNumber = null;
+    
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone)) {
+      email = emailOrPhone;
+    } else {
+      phoneNumber = emailOrPhone.replace(/[\s\-\(\)\.]/g, '');
+    }
+    
     // Disable submit button during request
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) {
@@ -86,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const resp = await fetch('/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullname, email, password, password2 })
+        body: JSON.stringify({ fullname, email, phoneNumber, password, password2 })
       });
       const data = await resp.json();
       

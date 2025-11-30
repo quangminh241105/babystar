@@ -13,13 +13,13 @@ const messageSchema = new mongoose.Schema({
 	content: { 
 		type: String, 
 		required: [true, 'Message content is required'],
-		maxlength: [10000, 'Message cannot exceed 10000 characters']
+		maxlength: [50000, 'Message cannot exceed 50000 characters']
 	},
 	
 	// [IMPROVED] Rich content support
 	contentType: {
 		type: String,
-		enum: ['text', 'markdown', 'html'],
+		enum: ['text', 'image', 'file'],
 		default: 'text'
 	},
 	
@@ -87,7 +87,8 @@ const messageSchema = new mongoose.Schema({
 	
 }, { 
 	timestamps: true,
-	_id: true
+	_id: true,
+	minimize: false
 });
 
 // ============================================================================
@@ -121,7 +122,7 @@ const conversationSchema = new mongoose.Schema({
 	title: { 
 		type: String, 
 		trim: true,
-		maxlength: [100, 'Title cannot exceed 100 characters'],
+		maxlength: [200, 'Title cannot exceed 200 characters'],
 		default: 'New Conversation'
 	},
 	
@@ -147,15 +148,15 @@ const conversationSchema = new mongoose.Schema({
 	},
 	
 	// Messages array
-	messages: [messageSchema],
+	messages: { type: [messageSchema], default: [] },
 	
 	// [IMPROVED] Suggested follow-up questions
 	suggestedQuestions: [suggestedQuestionSchema],
 	
 	// [IMPROVED] Conversation context snapshot (pregnancy info at conversation start)
 	contextSnapshot: {
-		pregnancyWeek: { type: Number },
-		trimester: { type: Number },
+		pregnancyWeek: { type: Number, default: null },
+		trimester: { type: Number, default: null },
 		dueDate: { type: Date },
 		isHighRisk: { type: Boolean },
 		allergies: [{ type: String }],
@@ -211,9 +212,9 @@ const conversationSchema = new mongoose.Schema({
 	}],
 	
 	// [IMPROVED] Last activity tracking
-	lastMessageAt: { type: Date },
-	lastUserMessageAt: { type: Date },
-	lastAssistantMessageAt: { type: Date },
+	lastMessageAt: { type: Date, default: null },
+	lastUserMessageAt: { type: Date, default: null },
+	lastAssistantMessageAt: { type: Date, default: null },
 	
 	// [IMPROVED] Export tracking
 	exportedAt: { type: Date },
@@ -224,24 +225,13 @@ const conversationSchema = new mongoose.Schema({
 	
 }, {
 	timestamps: true,
-	toJSON: { virtuals: true },
-	toObject: { virtuals: true }
+	minimize: false
 });
 
-// ============================================================================
-// INDEXES
-// ============================================================================
-conversationSchema.index({ userId: 1, createdAt: -1 });
+// Indexes
 conversationSchema.index({ userId: 1, status: 1 });
-conversationSchema.index({ userId: 1, topic: 1 });
-conversationSchema.index({ userId: 1, isBookmarked: 1 });
-conversationSchema.index({ userId: 1, isPinned: 1 });
-conversationSchema.index({ sharedWith: 1 });
-conversationSchema.index({ lastMessageAt: -1 });
-conversationSchema.index({ tags: 1 });
+conversationSchema.index({ userId: 1, lastMessageAt: -1 });
 conversationSchema.index({ deletedAt: 1 });
-// [IMPROVED] Text index for searching conversations
-conversationSchema.index({ title: 'text', 'messages.content': 'text', tags: 'text' });
 
 // ============================================================================
 // VIRTUALS

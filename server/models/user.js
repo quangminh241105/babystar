@@ -4,49 +4,67 @@ const crypto = require('crypto');
 
 // ============================================================================
 // PREGNANCY PROFILE SUB-SCHEMA
-// Embedded document for pregnancy-specific information
+// All pregnancy-related information grouped together
 // ============================================================================
 const pregnancyProfileSchema = new mongoose.Schema({
-	lastMenstrualPeriod: { type: Date },
-	conceptionDate: { type: Date },
-	dueDate: { type: Date },
+	// Dates - use null as explicit default
+	lastMenstrualPeriod: { type: Date, default: null },
+	dueDate: { type: Date, default: null },
+	deliveryDate: { type: Date, default: null },
 	
-	// [IMPROVED] Added enum validation for blood type
+	// Physical measurements
+	heightCm: { type: Number, min: 50, max: 300, default: null },
+	prePregnancyWeightKg: { type: Number, min: 20, max: 500, default: null },
+	
+	// Medical info
 	bloodType: { 
 		type: String, 
 		enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', null],
 		default: null
 	},
-	heightCm: { type: Number, min: 50, max: 300 },
-	prePregnancyWeightKg: { type: Number, min: 20, max: 500 },
-	
-	// [IMPROVED] Arrays with trimmed strings
-	allergies: [{ type: String, trim: true }],
-	medicalConditions: [{ type: String, trim: true }],
-	
+	allergies: { type: [String], default: [] },
+	medicalConditions: { type: [String], default: [] },
 	isHighRisk: { type: Boolean, default: false },
 	
-	// [IMPROVED] Added additional useful pregnancy fields
-	gravida: { type: Number, default: 1, min: 1 }, // Total pregnancies including current
-	para: { type: Number, default: 0, min: 0 },    // Number of births after 20 weeks
+	// Pregnancy history
+	gravida: { type: Number, default: 1, min: 1 },
+	para: { type: Number, default: 0, min: 0 },
 	
-	// [IMPROVED] Healthcare provider information
-	primaryPhysician: { type: String, trim: true },
-	hospitalName: { type: String, trim: true },
+	// Healthcare provider
+	primaryPhysician: { type: String, trim: true, default: null },
+	hospitalName: { type: String, trim: true, default: null },
 	
-	// [IMPROVED] Pregnancy status tracking
+	// Status
 	status: {
 		type: String,
 		enum: ['active', 'completed', 'loss', 'terminated'],
 		default: 'active'
-	},
-	deliveryDate: { type: Date }, // Actual delivery date when pregnancy completes
-	
-}, { _id: false }); // No separate _id for embedded document
+	}
+}, { 
+	_id: false,
+	minimize: false // IMPORTANT: This prevents Mongoose from removing empty objects
+});
+
+// ============================================================================
+// NOTIFICATION PREFERENCES SUB-SCHEMA
+// ============================================================================
+const notificationPreferencesSchema = new mongoose.Schema({
+	email: { type: Boolean, default: true },
+	push: { type: Boolean, default: true },
+	sms: { type: Boolean, default: false },
+	dailyReminders: { type: Boolean, default: true },
+	weeklyReportReady: { type: Boolean, default: true },
+	appointmentReminders: { type: Boolean, default: true },
+	partnerUpdates: { type: Boolean, default: true },
+	healthAlerts: { type: Boolean, default: true },
+	tipsAndArticles: { type: Boolean, default: false }
+}, { 
+	_id: false,
+	minimize: false
+});
 
 // ============================================================================
 // ASSOCIATED USER SUB-SCHEMA
-// [IMPROVED] Separated into proper sub-schema with relationship tracking
 // ============================================================================
 const associatedUserSchema = new mongoose.Schema({
 	userId: { 
@@ -56,15 +74,20 @@ const associatedUserSchema = new mongoose.Schema({
 	},
 	relationship: { 
 		type: String, 
-		enum: ['partner', 'family_member', 'doctor', 'midwife', 'doula', 'other'],
+		enum: ['partner', 'family_member'],
 		required: true
 	},
+	// STATUS OPTIONS:
+	// - 'pending': Initial state when invitation is sent, waiting for receiver to accept
+	// - 'accepted': Receiver accepted the invitation, link is active
+	// - 'rejected': Receiver rejected the invitation
+	// - 'revoked': Sender cancelled/removed the link after it was established
+	// - 'expired': Invitation expired before receiver responded (7 days default)
 	status: {
 		type: String,
-		enum: ['pending', 'accepted', 'rejected', 'revoked'],
+		enum: ['pending', 'accepted', 'rejected', 'revoked', 'expired'],
 		default: 'pending'
 	},
-	// [IMPROVED] Granular permission control
 	permissions: {
 		viewHealthLogs: { type: Boolean, default: true },
 		viewWeeklyReports: { type: Boolean, default: true },
@@ -73,38 +96,21 @@ const associatedUserSchema = new mongoose.Schema({
 		addNotes: { type: Boolean, default: false }
 	},
 	invitedAt: { type: Date, default: Date.now },
-	respondedAt: { type: Date },
-	// [IMPROVED] Invitation expiry for security
+	respondedAt: { type: Date, default: null },
 	expiresAt: { 
 		type: Date, 
-		default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+		default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 	},
-	customLabel: { type: String, trim: true, maxlength: 50 } // e.g., "Mom", "Dr. Smith"
-}, { _id: true });
-
-// ============================================================================
-// NOTIFICATION PREFERENCES SUB-SCHEMA
-// [IMPROVED] Added notification preferences for better UX
-// ============================================================================
-const notificationPreferencesSchema = new mongoose.Schema({
-	email: { type: Boolean, default: true },
-	push: { type: Boolean, default: true },
-	sms: { type: Boolean, default: false },
-	
-	// Specific notification types
-	dailyReminders: { type: Boolean, default: true },
-	weeklyReportReady: { type: Boolean, default: true },
-	appointmentReminders: { type: Boolean, default: true },
-	partnerUpdates: { type: Boolean, default: true },
-	healthAlerts: { type: Boolean, default: true },
-	tipsAndArticles: { type: Boolean, default: false }
-}, { _id: false });
+	customLabel: { type: String, trim: true, maxlength: 50, default: null }
+}, { _id: true, minimize: false });
 
 // ============================================================================
 // MAIN USER SCHEMA
 // ============================================================================
 const userSchema = new mongoose.Schema({
-	// ===== AUTHENTICATION FIELDS =====
+	// =========================================================================
+	// AUTHENTICATION & ACCOUNT
+	// =========================================================================
 	email: { 
 		type: String, 
 		required: [true, 'Email is required'],
@@ -113,115 +119,112 @@ const userSchema = new mongoose.Schema({
 		unique: true,
 		match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
 	},
-	
-	// [IMPROVED] Password only required for email auth provider
 	passwordHash: { 
 		type: String,
-		required: function() { 
-			return this.authProvider === 'email'; 
-		},
-		select: false // Don't include in queries by default
+		select: false,
+		default: null
 	},
-	
-	// [IMPROVED] Auth provider for Google OAuth support
 	authProvider: { 
 		type: String, 
 		enum: ['email', 'google'],
 		default: 'email',
 		required: true
 	},
-	
-	// OAuth fields
-	googleId: { type: String, unique: true, sparse: true },
-	
-	// ===== PROFILE INFORMATION =====
-	firstName: { 
-		type: String, 
-		trim: true, 
-		maxlength: [50, 'First name cannot exceed 50 characters']
-	},
-	lastName: { 
-		type: String, 
-		trim: true, 
-		maxlength: [50, 'Last name cannot exceed 50 characters']
-	},
-	phoneNumber: { 
-		type: String, 
-		trim: true,
-		match: [/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, 'Please enter a valid phone number']
-	},
-	profileImageUrl: { type: String, trim: true },
-	dateOfBirth: { type: Date },
-	
-	// ===== ROLE & STATUS =====
+	googleId: { type: String, unique: true, sparse: true, default: null },
 	role: { 
 		type: String, 
-		enum: {
-			values: ['user', 'partner', 'admin'],
-			message: '{VALUE} is not a valid role'
-		},
+		enum: { values: ['user', 'partner', 'admin'], message: '{VALUE} is not a valid role' },
 		default: 'user',
 		required: true
 	},
 	isActive: { type: Boolean, default: true },
-	
-	// [IMPROVED] Email verification for security
 	isEmailVerified: { type: Boolean, default: false },
-	emailVerificationToken: { type: String, select: false },
-	emailVerificationExpires: { type: Date, select: false },
+	emailVerificationToken: { type: String, select: false, default: null },
+	emailVerificationExpires: { type: Date, select: false, default: null },
+	passwordResetToken: { type: String, select: false, default: null },
+	passwordResetExpires: { type: Date, select: false, default: null },
 	
-	// [IMPROVED] Password reset functionality
-	passwordResetToken: { type: String, select: false },
-	passwordResetExpires: { type: Date, select: false },
+	// =========================================================================
+	// PERSONAL INFO - ALL WITH EXPLICIT DEFAULTS
+	// =========================================================================
+	firstName: { type: String, trim: true, maxlength: 50, default: '' },
+	lastName: { type: String, trim: true, maxlength: 50, default: '' },
+	phoneNumber: { type: String, trim: true, default: null },
+	profileImageUrl: { type: String, trim: true, default: null },
+	dateOfBirth: { type: Date, default: null },
+	currentWeightKg: { type: Number, min: 20, max: 500, default: null },
 	
-	// ===== PHYSICAL MEASUREMENTS =====
-	currentWeightKg: { type: Number, min: 20, max: 500 },
-	
-	// ===== PREGNANCY PROFILE (Embedded) =====
-	pregnancyProfile: { type: pregnancyProfileSchema, default: () => ({}) },
-	
-	// ===== ASSOCIATED USERS (Partners, Doctors, etc.) =====
-	associatedUsers: [associatedUserSchema],
-	
-	// ===== INVITATION SYSTEM =====
-	// [IMPROVED] Unique shareable invitation code
-	invitationCode: { 
-		type: String, 
-		unique: true, 
-		sparse: true
+	// =========================================================================
+	// PREGNANCY PROFILE (embedded object) - WITH EXPLICIT DEFAULT OBJECT
+	// =========================================================================
+	pregnancyProfile: { 
+		type: pregnancyProfileSchema, 
+		default: () => ({
+			lastMenstrualPeriod: null,
+			dueDate: null,
+			deliveryDate: null,
+			heightCm: null,
+			prePregnancyWeightKg: null,
+			bloodType: null,
+			allergies: [],
+			medicalConditions: [],
+			isHighRisk: false,
+			gravida: 1,
+			para: 0,
+			primaryPhysician: null,
+			hospitalName: null,
+			status: 'active'
+		})
 	},
 	
-	// ===== NOTIFICATION PREFERENCES =====
+	// =========================================================================
+	// ASSOCIATED USERS (array)
+	// =========================================================================
+	associatedUsers: { type: [associatedUserSchema], default: [] },
+	
+	// =========================================================================
+	// NOTIFICATION PREFERENCES (embedded object)
+	// =========================================================================
 	notificationPreferences: { 
 		type: notificationPreferencesSchema, 
-		default: () => ({}) 
+		default: () => ({
+			email: true,
+			push: true,
+			sms: false,
+			dailyReminders: true,
+			weeklyReportReady: true,
+			appointmentReminders: true,
+			partnerUpdates: true,
+			healthAlerts: true,
+			tipsAndArticles: false
+		})
 	},
 	
-	// ===== SECURITY & AUDIT =====
-	// [IMPROVED] Login tracking for security
-	lastLoginAt: { type: Date },
-	lastLoginIP: { type: String },
-	loginAttempts: { type: Number, default: 0 },
-	lockUntil: { type: Date },
-	
-	// [IMPROVED] User preferences
+	// =========================================================================
+	// USER PREFERENCES & SETTINGS
+	// =========================================================================
 	preferredLanguage: { type: String, default: 'en', enum: ['en', 'vi', 'es', 'fr', 'de', 'zh'] },
+	language: { type: String, enum: ['en', 'vi'], default: 'en' },
 	timezone: { type: String, default: 'UTC' },
+	invitationCode: { type: String, unique: true, sparse: true, default: null },
+	invitationCodeExpiresAt: { type: Date, default: null },
 	
-	// [IMPROVED] Terms acceptance tracking
-	termsAcceptedAt: { type: Date },
-	privacyPolicyAcceptedAt: { type: Date },
-	
-	// [IMPROVED] Soft delete support
-	deletedAt: { type: Date, default: null },
-	
-	// ===== LANGUAGE PREFERENCE =====
-	language: { type: String, enum: ['en', 'vi'], default: 'en' } // add language preference
+	// =========================================================================
+	// SECURITY & AUDIT
+	// =========================================================================
+	lastLoginAt: { type: Date, default: null },
+	lastLoginIP: { type: String, default: null },
+	loginAttempts: { type: Number, default: 0 },
+	lockUntil: { type: Date, default: null },
+	termsAcceptedAt: { type: Date, default: null },
+	privacyPolicyAcceptedAt: { type: Date, default: null },
+	deletedAt: { type: Date, default: null }
 	
 }, {
-	timestamps: true, // Adds createdAt and updatedAt
+	timestamps: true,
 	toJSON: { virtuals: true },
-	toObject: { virtuals: true }
+	toObject: { virtuals: true },
+	minimize: false // CRITICAL: Prevents Mongoose from removing empty objects/null values
 });
 
 // ============================================================================
@@ -234,14 +237,12 @@ userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ 'associatedUsers.userId': 1 });
 userSchema.index({ 'associatedUsers.status': 1 });
-// [IMPROVED] Compound index for efficient user lookups
 userSchema.index({ email: 1, authProvider: 1 });
 userSchema.index({ deletedAt: 1, isActive: 1 });
 
 // ============================================================================
 // VIRTUALS
 // ============================================================================
-// [IMPROVED] Full name virtual
 userSchema.virtual('fullName').get(function() {
 	if (this.firstName && this.lastName) {
 		return `${this.firstName} ${this.lastName}`;
@@ -249,7 +250,6 @@ userSchema.virtual('fullName').get(function() {
 	return this.firstName || this.lastName || '';
 });
 
-// [IMPROVED] Current pregnancy week calculation
 userSchema.virtual('currentPregnancyWeek').get(function() {
 	if (this.pregnancyProfile?.lastMenstrualPeriod) {
 		const lmp = new Date(this.pregnancyProfile.lastMenstrualPeriod);
@@ -258,7 +258,6 @@ userSchema.virtual('currentPregnancyWeek').get(function() {
 		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 		const weeks = Math.floor(diffDays / 7);
 		const days = diffDays % 7;
-		
 		if (weeks >= 0 && weeks <= 42) {
 			return { weeks, days, totalDays: diffDays };
 		}
@@ -266,17 +265,14 @@ userSchema.virtual('currentPregnancyWeek').get(function() {
 	return null;
 });
 
-// [IMPROVED] Trimester calculation
 userSchema.virtual('currentTrimester').get(function() {
 	const weekInfo = this.currentPregnancyWeek;
 	if (!weekInfo) return null;
-	
 	if (weekInfo.weeks <= 12) return 1;
 	if (weekInfo.weeks <= 27) return 2;
 	return 3;
 });
 
-// [IMPROVED] Days until due date
 userSchema.virtual('daysUntilDueDate').get(function() {
 	if (this.pregnancyProfile?.dueDate) {
 		const dueDate = new Date(this.pregnancyProfile.dueDate);
@@ -287,12 +283,10 @@ userSchema.virtual('daysUntilDueDate').get(function() {
 	return null;
 });
 
-// [IMPROVED] Check if account is locked
 userSchema.virtual('isLocked').get(function() {
 	return !!(this.lockUntil && this.lockUntil > Date.now());
 });
 
-// [IMPROVED] Age calculation
 userSchema.virtual('age').get(function() {
 	if (!this.dateOfBirth) return null;
 	const today = new Date();
@@ -305,10 +299,15 @@ userSchema.virtual('age').get(function() {
 	return age;
 });
 
+// Check if invitation code is expired (5 minutes = 300000ms)
+userSchema.virtual('isInvitationCodeExpired').get(function() {
+	if (!this.invitationCodeExpiresAt) return true;
+	return new Date() > new Date(this.invitationCodeExpiresAt);
+});
+
 // ============================================================================
 // INSTANCE METHODS
 // ============================================================================
-// Return public representation without sensitive fields
 userSchema.methods.toPublic = function() {
 	const obj = this.toObject();
 	delete obj.passwordHash;
@@ -322,145 +321,192 @@ userSchema.methods.toPublic = function() {
 	return obj;
 };
 
-// Compare password for authentication
 userSchema.methods.comparePassword = async function(candidatePassword) {
 	if (!this.passwordHash) return false;
 	return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-// [IMPROVED] Generate password reset token
 userSchema.methods.generatePasswordResetToken = function() {
 	const resetToken = crypto.randomBytes(32).toString('hex');
-	this.passwordResetToken = crypto
-		.createHash('sha256')
-		.update(resetToken)
-		.digest('hex');
-	this.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+	this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+	this.passwordResetExpires = Date.now() + 60 * 60 * 1000;
 	return resetToken;
 };
 
-// [IMPROVED] Generate email verification token
 userSchema.methods.generateEmailVerificationToken = function() {
 	const verifyToken = crypto.randomBytes(32).toString('hex');
-	this.emailVerificationToken = crypto
-		.createHash('sha256')
-		.update(verifyToken)
-		.digest('hex');
-	this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+	this.emailVerificationToken = crypto.createHash('sha256').update(verifyToken).digest('hex');
+	this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
 	return verifyToken;
 };
 
-// [IMPROVED] Generate unique invitation code
+// Generate invitation code with 5-minute expiration
 userSchema.methods.generateInvitationCode = function() {
 	this.invitationCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+	this.invitationCodeExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 	return this.invitationCode;
 };
 
-// [IMPROVED] Increment login attempts
-userSchema.methods.incLoginAttempts = async function() {
-	// Reset if lock has expired
-	if (this.lockUntil && this.lockUntil < Date.now()) {
-		return this.updateOne({
-			$set: { loginAttempts: 1 },
-			$unset: { lockUntil: 1 }
-		});
+// Get valid invitation code (regenerate if expired)
+userSchema.methods.getValidInvitationCode = async function() {
+	if (this.isInvitationCodeExpired) {
+		this.generateInvitationCode();
+		await this.save();
 	}
-	
+	return this.invitationCode;
+};
+
+userSchema.methods.incLoginAttempts = async function() {
+	if (this.lockUntil && this.lockUntil < Date.now()) {
+		return this.updateOne({ $set: { loginAttempts: 1 }, $unset: { lockUntil: 1 } });
+	}
 	const updates = { $inc: { loginAttempts: 1 } };
-	
-	// Lock account after 5 failed attempts for 2 hours
 	if (this.loginAttempts + 1 >= 5) {
 		updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 };
 	}
-	
 	return this.updateOne(updates);
 };
 
-// [IMPROVED] Reset login attempts on successful login
 userSchema.methods.resetLoginAttempts = function() {
-	return this.updateOne({
-		$set: { loginAttempts: 0, lastLoginAt: new Date() },
-		$unset: { lockUntil: 1 }
-	});
+	return this.updateOne({ $set: { loginAttempts: 0, lastLoginAt: new Date() }, $unset: { lockUntil: 1 } });
 };
 
-// [IMPROVED] Add associated user
+// Add associated user (when someone enters your invitation code)
 userSchema.methods.addAssociatedUser = function(userId, relationship, customLabel = '') {
-	// Check if already associated
-	const existing = this.associatedUsers.find(
-		au => au.userId.toString() === userId.toString()
-	);
-	
+	const existing = this.associatedUsers.find(au => au.userId.toString() === userId.toString());
 	if (existing) {
+		if (existing.status === 'rejected' || existing.status === 'revoked' || existing.status === 'expired') {
+			// Allow re-invitation if previously rejected/revoked/expired
+			existing.status = 'pending';
+			existing.relationship = relationship;
+			existing.customLabel = customLabel;
+			existing.invitedAt = new Date();
+			existing.respondedAt = null;
+			existing.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+			return this.save();
+		}
 		throw new Error('User is already associated');
 	}
-	
-	this.associatedUsers.push({
-		userId,
-		relationship,
-		customLabel,
-		invitedAt: new Date(),
-		status: 'pending'
+	this.associatedUsers.push({ 
+		userId, 
+		relationship, 
+		customLabel, 
+		invitedAt: new Date(), 
+		status: 'pending',
+		expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 	});
+	return this.save();
+};
+
+// SENDER: Accept a pending association request (approve the person who used your code)
+userSchema.methods.acceptAssociation = function(associationId) {
+	const association = this.associatedUsers.id(associationId);
+	if (!association) throw new Error('Association not found');
+	if (association.status !== 'pending') throw new Error('Association is not pending');
+	
+	association.status = 'accepted';
+	association.respondedAt = new Date();
+	return this.save();
+};
+
+// SENDER: Reject a pending association request
+userSchema.methods.rejectAssociation = function(associationId) {
+	const association = this.associatedUsers.id(associationId);
+	if (!association) throw new Error('Association not found');
+	if (association.status !== 'pending') throw new Error('Association is not pending');
+	
+	association.status = 'rejected';
+	association.respondedAt = new Date();
+	return this.save();
+};
+
+// SENDER: Revoke an accepted association (remove linked user)
+userSchema.methods.revokeAssociation = function(associationId) {
+	const association = this.associatedUsers.id(associationId);
+	if (!association) throw new Error('Association not found');
+	
+	association.status = 'revoked';
+	association.respondedAt = new Date();
+	return this.save();
+};
+
+// SENDER: Remove association completely from array
+userSchema.methods.removeAssociation = function(associationId) {
+	const association = this.associatedUsers.id(associationId);
+	if (!association) throw new Error('Association not found');
+	
+	association.deleteOne();
+	return this.save();
+};
+
+// SENDER: Update association permissions
+userSchema.methods.updateAssociationPermissions = function(associationId, permissions) {
+	const association = this.associatedUsers.id(associationId);
+	if (!association) throw new Error('Association not found');
+	
+	if (permissions.viewHealthLogs !== undefined) association.permissions.viewHealthLogs = permissions.viewHealthLogs;
+	if (permissions.viewWeeklyReports !== undefined) association.permissions.viewWeeklyReports = permissions.viewWeeklyReports;
+	if (permissions.viewMedicalInfo !== undefined) association.permissions.viewMedicalInfo = permissions.viewMedicalInfo;
+	if (permissions.receiveAlerts !== undefined) association.permissions.receiveAlerts = permissions.receiveAlerts;
+	if (permissions.addNotes !== undefined) association.permissions.addNotes = permissions.addNotes;
 	
 	return this.save();
 };
 
-// [IMPROVED] Accept/reject association request
-userSchema.methods.updateAssociationStatus = function(associationId, status) {
-	const association = this.associatedUsers.id(associationId);
+// Get pending associations (people waiting for approval)
+userSchema.methods.getPendingAssociations = function() {
+	return this.associatedUsers.filter(au => au.status === 'pending');
+};
+
+// Get accepted associations (active links)
+userSchema.methods.getAcceptedAssociations = function() {
+	return this.associatedUsers.filter(au => au.status === 'accepted');
+};
+
+// Check and expire old pending associations
+userSchema.methods.expirePendingAssociations = async function() {
+	const now = new Date();
+	let changed = false;
 	
-	if (!association) {
-		throw new Error('Association not found');
+	this.associatedUsers.forEach(au => {
+		if (au.status === 'pending' && au.expiresAt && au.expiresAt < now) {
+			au.status = 'expired';
+			au.respondedAt = now;
+			changed = true;
+		}
+	});
+	
+	if (changed) {
+		await this.save();
 	}
-	
-	association.status = status;
-	association.respondedAt = new Date();
-	
-	return this.save();
+	return this;
 };
 
 // ============================================================================
 // STATIC METHODS
 // ============================================================================
-// [IMPROVED] Find or create user from Google OAuth
 userSchema.statics.findOrCreateGoogleUser = async function(profile) {
-	// First, try to find by googleId
 	let user = await this.findOne({ googleId: profile.id });
-	
 	if (user) {
-		// Update profile image if changed
 		if (profile.photos?.[0]?.value && user.profileImageUrl !== profile.photos[0].value) {
 			user.profileImageUrl = profile.photos[0].value;
 			await user.save();
 		}
 		return user;
 	}
-	
-	// Check if email already exists (user registered with email first)
 	const email = profile.emails?.[0]?.value;
 	if (email) {
 		user = await this.findOne({ email: email.toLowerCase() });
-		
 		if (user) {
-			// Link Google account to existing user
 			user.googleId = profile.id;
 			user.isEmailVerified = true;
-			if (!user.profileImageUrl && profile.photos?.[0]?.value) {
-				user.profileImageUrl = profile.photos[0].value;
-			}
-			if (!user.firstName && profile.name?.givenName) {
-				user.firstName = profile.name.givenName;
-			}
-			if (!user.lastName && profile.name?.familyName) {
-				user.lastName = profile.name.familyName;
-			}
+			if (!user.profileImageUrl && profile.photos?.[0]?.value) user.profileImageUrl = profile.photos[0].value;
+			if (!user.firstName && profile.name?.givenName) user.firstName = profile.name.givenName;
+			if (!user.lastName && profile.name?.familyName) user.lastName = profile.name.familyName;
 			await user.save();
 			return user;
 		}
 	}
-	
-	// Create new user
 	user = await this.create({
 		googleId: profile.id,
 		email: email?.toLowerCase(),
@@ -469,55 +515,64 @@ userSchema.statics.findOrCreateGoogleUser = async function(profile) {
 		profileImageUrl: profile.photos?.[0]?.value || '',
 		authProvider: 'google',
 		isEmailVerified: true,
-		role: 'expectant_mother'
+		role: 'user'
 	});
-	
-	// Generate invitation code for new user
 	user.generateInvitationCode();
 	await user.save();
-	
 	return user;
 };
 
-// [IMPROVED] Find user by invitation code
 userSchema.statics.findByInvitationCode = function(code) {
 	return this.findOne({ 
-		invitationCode: code.toUpperCase(),
-		isActive: true,
-		deletedAt: null
+		invitationCode: code.toUpperCase(), 
+		invitationCodeExpiresAt: { $gt: new Date() }, // Must not be expired
+		isActive: true, 
+		deletedAt: null 
 	});
 };
 
-// [IMPROVED] Find active users by role
 userSchema.statics.findActiveByRole = function(role) {
-	return this.find({ 
-		role, 
+	return this.find({ role, isActive: true, deletedAt: null });
+};
+
+// Find users where current user is in their associatedUsers array (as receiver)
+userSchema.statics.findAssociationsForUser = function(userId) {
+	return this.find({
+		'associatedUsers.userId': userId,
 		isActive: true,
 		deletedAt: null
-	});
+	}).select('firstName lastName email profileImageUrl associatedUsers');
+};
+
+// Find users where current user has pending invitations (as receiver)
+userSchema.statics.findPendingInvitationsForUser = function(userId) {
+	return this.find({
+		'associatedUsers.userId': userId,
+		'associatedUsers.status': 'pending',
+		isActive: true,
+		deletedAt: null
+	}).select('firstName lastName email profileImageUrl associatedUsers');
 };
 
 // ============================================================================
 // PRE-SAVE MIDDLEWARE
 // ============================================================================
 userSchema.pre('save', async function(next) {
-	// Hash password if modified and not already hashed
-	if (this.isModified('passwordHash') && this.passwordHash) {
-		// Check if already hashed (bcrypt hashes start with $2)
-		if (!this.passwordHash.startsWith('$2')) {
-			this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
+	if (this.isModified('passwordHash') && this.passwordHash && !this.passwordHash.startsWith('$2')) {
+		this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
+	}
+	if (this.isModified('pregnancyProfile') || this.isModified('pregnancyProfile.lastMenstrualPeriod')) {
+		if (this.pregnancyProfile?.lastMenstrualPeriod && !this.pregnancyProfile.dueDate) {
+			const lmp = new Date(this.pregnancyProfile.lastMenstrualPeriod);
+			this.pregnancyProfile.dueDate = new Date(lmp.getTime() + (280 * 24 * 60 * 60 * 1000));
 		}
 	}
-	
-	// Calculate due date from LMP if not set (280 days from LMP)
-	if (this.pregnancyProfile?.lastMenstrualPeriod && !this.pregnancyProfile.dueDate) {
-		const lmp = new Date(this.pregnancyProfile.lastMenstrualPeriod);
-		this.pregnancyProfile.dueDate = new Date(lmp.getTime() + (280 * 24 * 60 * 60 * 1000));
-	}
-	
-	// Generate invitation code if not exists (for expectant mothers)
-	if (!this.invitationCode && this.role === 'expectant_mother') {
-		this.invitationCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+	// Generate invitation code with expiration if not exists or expired
+	if (!this.invitationCode || !this.invitationCodeExpiresAt || new Date() > this.invitationCodeExpiresAt) {
+		if (this.role === 'user') {
+			this.invitationCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+			this.invitationCodeExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+		}
 	}
 	
 	next();
@@ -526,9 +581,7 @@ userSchema.pre('save', async function(next) {
 // ============================================================================
 // QUERY MIDDLEWARE
 // ============================================================================
-// [IMPROVED] Exclude soft-deleted users by default
 userSchema.pre(/^find/, function(next) {
-	// Only apply if not explicitly querying for deleted users
 	if (!this.getQuery().deletedAt) {
 		this.where({ deletedAt: null });
 	}
