@@ -130,6 +130,7 @@ router.post('/register', async (req, res) => {
     newUser.markModified('notificationPreferences');
     await newUser.save();
 
+    // Set session
     req.session.user = { 
       id: newUser._id, 
       firstName: newUser.firstName,
@@ -139,9 +140,14 @@ router.post('/register', async (req, res) => {
       role: newUser.role
     };
 
+    // Save session BEFORE sending response
     req.session.save((err) => {
-      if (err) return res.status(500).json({ success: false, errors: { general: 'Session error' }});
-      res.json({ success: true, redirect: '/' });
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+      }
+      // Redirect new users to profile page with welcome flag
+      return res.json({ success: true, redirect: '/auth/profile?welcome=true' });
     });
     
   } catch (err) {
@@ -792,7 +798,7 @@ router.post('/reset-password', async (req, res) => {
 
     if (Object.keys(errors).length) return res.status(400).json({ success: false, errors });
 
-    // Find user by hashed token
+    // Find user with valid token
     const crypto = require('crypto');
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
