@@ -279,6 +279,10 @@ router.get('/past-health-records', requireAuthRedirect, (req, res) => {
   res.render('pages/pasthealthrecords', { title: 'Past Health Records' });
 });
 
+router.get('/weekly-advice', requireAuthRedirect, (req, res) => {
+  res.render('pages/weekly-advice', { title: 'Weekly Advice' });
+});
+
 router.get('/learning-quizzes', requireAuthRedirect, (req, res) => {
   res.render('pages/learningquizzes', { title: 'Learning Quizzes' });
 });

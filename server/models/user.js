@@ -130,7 +130,12 @@ const userSchema = new mongoose.Schema({
 		default: 'email',
 		required: true
 	},
-	googleId: { type: String, unique: true, sparse: true },  // No default - field won't exist for email users
+	googleId: { 
+		type: String, 
+		unique: true, 
+		sparse: true,
+		default: undefined // <-- Ensure field is not set to null by default
+	},
 	role: { 
 		type: String, 
 		enum: { values: ['user', 'partner', 'admin'], message: '{VALUE} is not a valid role' },
@@ -573,6 +578,11 @@ userSchema.pre('save', async function(next) {
 			this.invitationCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 			this.invitationCodeExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 		}
+	}
+	
+	// Fix: Remove googleId if not set (prevents null in DB)
+	if (!this.googleId) {
+		this.googleId = undefined;
 	}
 	
 	next();
