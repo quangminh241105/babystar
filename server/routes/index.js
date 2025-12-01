@@ -124,34 +124,6 @@ router.post('/link-account/connect', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/diet-plan', requireAuthRedirect, (req, res) => {
-  res.render('pages/dietplanner', { title: 'Diet Planner' });
-});
-
-router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
-  res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
-});
-
-router.get('/share-records', requireAuthRedirect, (req, res) => {
-  res.render('pages/sharerecords', { title: 'Share Records' });
-});
-
-router.get('/reminder', requireAuthRedirect, (req, res) => {
-  res.render('pages/reminder', { title: 'Reminder' });
-});
-
-router.get('/past-health-records', requireAuthRedirect, (req, res) => {
-  res.render('pages/pasthealthrecords', { title: 'Past Health Records' });
-});
-
-router.get('/learning-quizzes', requireAuthRedirect, (req, res) => {
-  res.render('pages/learningquizzes', { title: 'Learning Quizzes' });
-});
-
-router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
-  res.render('pages/nearbyhealthcare', { title: 'Nearby Healthcare' });
-});
-
 // POST /link-account/accept/:associationId - SENDER accepts a pending request
 router.post('/link-account/accept/:associationId', requireAuth, async (req, res) => {
   try {
@@ -287,7 +259,34 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
   }
 });
 
-// health log page
+router.get('/diet-plan', requireAuthRedirect, (req, res) => {
+  res.render('pages/dietplanner', { title: 'Diet Planner' });
+});
+
+router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
+  res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
+});
+
+router.get('/share-records', requireAuthRedirect, (req, res) => {
+  res.render('pages/sharerecords', { title: 'Share Records' });
+});
+
+router.get('/reminder', requireAuthRedirect, (req, res) => {
+  res.render('pages/reminder', { title: 'Reminder' });
+});
+
+router.get('/past-health-records', requireAuthRedirect, (req, res) => {
+  res.render('pages/pasthealthrecords', { title: 'Past Health Records' });
+});
+
+router.get('/learning-quizzes', requireAuthRedirect, (req, res) => {
+  res.render('pages/learningquizzes', { title: 'Learning Quizzes' });
+});
+
+router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
+  res.render('pages/nearbyhealthcare', { title: 'Nearby Healthcare' });
+});
+
 router.get('/log-health', requireAuthRedirect, (req, res) => {
   res.render('pages/health-log', { title: 'Health Log' });
 });

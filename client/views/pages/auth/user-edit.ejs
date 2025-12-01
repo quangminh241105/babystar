@@ -13,7 +13,7 @@
     <!-- Personal Information -->
     <section class="card">
       <h2 class="card-title">Personal Information</h2>
-      
+
       <div class="field">
         <label for="fullName">Full Name</label>
         <input id="fullName" name="fullName" type="text" placeholder="Enter your full name" />
@@ -66,10 +66,14 @@
           <label for="pp_bloodType">Blood Type</label>
           <select id="pp_bloodType" name="pregnancyProfile.bloodType">
             <option value="">Select...</option>
-            <option value="A+">A+</option><option value="A-">A-</option>
-            <option value="B+">B+</option><option value="B-">B-</option>
-            <option value="AB+">AB+</option><option value="AB-">AB-</option>
-            <option value="O+">O+</option><option value="O-">O-</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
           </select>
         </div>
         <div class="field">
@@ -91,18 +95,21 @@
         </div>
         <div class="field">
           <label for="pp_prePregnancyWeightKg">Pre-Pregnancy Weight (kg)</label>
-          <input id="pp_prePregnancyWeightKg" name="pregnancyProfile.prePregnancyWeightKg" type="number" step="0.1" min="20" max="500" />
+          <input id="pp_prePregnancyWeightKg" name="pregnancyProfile.prePregnancyWeightKg" type="number" step="0.1"
+            min="20" max="500" />
         </div>
       </div>
 
       <div class="field">
         <label for="pp_allergies">Allergies</label>
-        <input id="pp_allergies" name="pregnancyProfile.allergies" type="text" placeholder="Peanuts, Shellfish (comma separated)" />
+        <input id="pp_allergies" name="pregnancyProfile.allergies" type="text"
+          placeholder="Peanuts, Shellfish (comma separated)" />
       </div>
 
       <div class="field">
         <label for="pp_medicalConditions">Medical Conditions</label>
-        <input id="pp_medicalConditions" name="pregnancyProfile.medicalConditions" type="text" placeholder="Gestational diabetes (comma separated)" />
+        <input id="pp_medicalConditions" name="pregnancyProfile.medicalConditions" type="text"
+          placeholder="Gestational diabetes (comma separated)" />
       </div>
 
       <div class="field checkbox-field">
@@ -159,10 +166,14 @@
         <div class="checkbox-grid">
           <label class="checkbox-label"><input type="checkbox" id="notif_email" /><span>Email</span></label>
           <label class="checkbox-label"><input type="checkbox" id="notif_push" /><span>Push</span></label>
-          <label class="checkbox-label"><input type="checkbox" id="notif_dailyReminders" /><span>Daily Reminders</span></label>
-          <label class="checkbox-label"><input type="checkbox" id="notif_weeklyReportReady" /><span>Weekly Reports</span></label>
-          <label class="checkbox-label"><input type="checkbox" id="notif_appointmentReminders" /><span>Appointments</span></label>
-          <label class="checkbox-label"><input type="checkbox" id="notif_healthAlerts" /><span>Health Alerts</span></label>
+          <label class="checkbox-label"><input type="checkbox" id="notif_dailyReminders" /><span>Daily
+              Reminders</span></label>
+          <label class="checkbox-label"><input type="checkbox" id="notif_weeklyReportReady" /><span>Weekly
+              Reports</span></label>
+          <label class="checkbox-label"><input type="checkbox"
+              id="notif_appointmentReminders" /><span>Appointments</span></label>
+          <label class="checkbox-label"><input type="checkbox" id="notif_healthAlerts" /><span>Health
+              Alerts</span></label>
         </div>
       </div>
     </section>
@@ -171,26 +182,26 @@
     <section class="card" id="passwordSection">
       <h2 class="card-title">Password</h2>
       <div id="passwordInfo"></div>
-      
-      <div id="passwordForm" style="display:none;">
+
+      <div id="passwordForm">
         <div class="field" id="currentPasswordField">
           <label for="currentPassword">Current Password</label>
           <input id="currentPassword" type="password" placeholder="Enter current password" />
           <div class="field-error" id="currentPasswordError"></div>
         </div>
-        
+
         <div class="field">
           <label for="newPassword">New Password</label>
           <input id="newPassword" type="password" placeholder="At least 6 characters" />
           <div class="field-error" id="newPasswordError"></div>
         </div>
-        
+
         <div class="field">
           <label for="newPassword2">Confirm New Password</label>
           <input id="newPassword2" type="password" placeholder="Confirm new password" />
           <div class="field-error" id="newPassword2Error"></div>
         </div>
-        
+
         <button type="button" id="changePasswordBtn" class="btn-primary">
           <span id="changePasswordBtnText">Change Password</span>
         </button>
@@ -212,13 +223,27 @@
         <strong>Pregnancy Progress</strong>
         <div id="progressText" class="progress-label">Not set</div>
       </div>
-      <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
       <div class="small" id="progressDetail">Add LMP or due date to see progress.</div>
       <div class="stats-grid">
-        <div class="stat-item"><div class="stat-value" id="statTrimester">-</div><div class="stat-label">Trimester</div></div>
-        <div class="stat-item"><div class="stat-value" id="statDaysLeft">-</div><div class="stat-label">Days to Due</div></div>
-        <div class="stat-item"><div class="stat-value" id="statAge">-</div><div class="stat-label">Your Age</div></div>
-        <div class="stat-item"><div class="stat-value" id="statBMI">-</div><div class="stat-label">Pre-Preg BMI</div></div>
+        <div class="stat-item">
+          <div class="stat-value" id="statTrimester">-</div>
+          <div class="stat-label">Trimester</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statDaysLeft">-</div>
+          <div class="stat-label">Days to Due</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statAge">-</div>
+          <div class="stat-label">Your Age</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statBMI">-</div>
+          <div class="stat-label">Pre-Preg BMI</div>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -232,253 +257,253 @@
 </main>
 
 <script>
-(function() {
-  const form = document.getElementById('profileForm');
-  const saveBtn = document.getElementById('saveBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const messageEl = document.getElementById('message');
-  let originalData = {};
+  (function () {
+    const form = document.getElementById('profileForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const messageEl = document.getElementById('message');
+    let originalData = {};
 
-  async function loadUserData() {
-    try {
-      const resp = await fetch('/auth/user-edit/data', { credentials: 'include' });
-      const result = await resp.json();
-      if (result.success) {
-        originalData = JSON.parse(JSON.stringify(result.data));
-        populateForm(result.data);
-        updateStatus(result.data);
+    async function loadUserData() {
+      try {
+        const resp = await fetch('/auth/user-edit/data', { credentials: 'include' });
+        const result = await resp.json();
+        if (result.success) {
+          originalData = JSON.parse(JSON.stringify(result.data));
+          populateForm(result.data);
+          updateStatus(result.data);
+        }
+      } catch (err) {
+        showMessage('Failed to load profile', 'error');
       }
-    } catch (err) {
-      showMessage('Failed to load profile', 'error');
     }
-  }
 
-  function populateForm(data) {
-    // Personal Info
-    document.getElementById('fullName').value = data.fullName || '';
-    document.getElementById('email').value = data.email || '';
-    document.getElementById('phoneNumber').value = data.phoneNumber || '';
-    document.getElementById('dateOfBirth').value = data.dateOfBirth || '';
-    document.getElementById('currentWeightKg').value = data.currentWeightKg || '';
+    function populateForm(data) {
+      // Personal Info
+      document.getElementById('fullName').value = data.fullName || '';
+      document.getElementById('email').value = data.email || '';
+      document.getElementById('phoneNumber').value = data.phoneNumber || '';
+      document.getElementById('dateOfBirth').value = data.dateOfBirth || '';
+      document.getElementById('currentWeightKg').value = data.currentWeightKg || '';
 
-    // Pregnancy Profile
-    const pp = data.pregnancyProfile || {};
-    document.getElementById('pp_lastMenstrualPeriod').value = pp.lastMenstrualPeriod || '';
-    document.getElementById('pp_dueDate').value = pp.dueDate || '';
-    document.getElementById('pp_bloodType').value = pp.bloodType || '';
-    document.getElementById('pp_gravida').value = pp.gravida || 1;
-    document.getElementById('pp_para').value = pp.para || 0;
-    document.getElementById('pp_heightCm').value = pp.heightCm || '';
-    document.getElementById('pp_prePregnancyWeightKg').value = pp.prePregnancyWeightKg || '';
-    document.getElementById('pp_allergies').value = Array.isArray(pp.allergies) ? pp.allergies.join(', ') : '';
-    document.getElementById('pp_medicalConditions').value = Array.isArray(pp.medicalConditions) ? pp.medicalConditions.join(', ') : '';
-    document.getElementById('pp_isHighRisk').checked = pp.isHighRisk || false;
-    document.getElementById('pp_primaryPhysician').value = pp.primaryPhysician || '';
-    document.getElementById('pp_hospitalName').value = pp.hospitalName || '';
+      // Pregnancy Profile
+      const pp = data.pregnancyProfile || {};
+      document.getElementById('pp_lastMenstrualPeriod').value = pp.lastMenstrualPeriod || '';
+      document.getElementById('pp_dueDate').value = pp.dueDate || '';
+      document.getElementById('pp_bloodType').value = pp.bloodType || '';
+      document.getElementById('pp_gravida').value = pp.gravida || 1;
+      document.getElementById('pp_para').value = pp.para || 0;
+      document.getElementById('pp_heightCm').value = pp.heightCm || '';
+      document.getElementById('pp_prePregnancyWeightKg').value = pp.prePregnancyWeightKg || '';
+      document.getElementById('pp_allergies').value = Array.isArray(pp.allergies) ? pp.allergies.join(', ') : '';
+      document.getElementById('pp_medicalConditions').value = Array.isArray(pp.medicalConditions) ? pp.medicalConditions.join(', ') : '';
+      document.getElementById('pp_isHighRisk').checked = pp.isHighRisk || false;
+      document.getElementById('pp_primaryPhysician').value = pp.primaryPhysician || '';
+      document.getElementById('pp_hospitalName').value = pp.hospitalName || '';
 
-    // Preferences
-    document.getElementById('preferredLanguage').value = data.preferredLanguage || 'en';
-    document.getElementById('timezone').value = data.timezone || 'UTC';
+      // Preferences
+      document.getElementById('preferredLanguage').value = data.preferredLanguage || 'en';
+      document.getElementById('timezone').value = data.timezone || 'UTC';
 
-    // Notifications
-    const notif = data.notificationPreferences || {};
-    document.getElementById('notif_email').checked = notif.email !== false;
-    document.getElementById('notif_push').checked = notif.push !== false;
-    document.getElementById('notif_dailyReminders').checked = notif.dailyReminders !== false;
-    document.getElementById('notif_weeklyReportReady').checked = notif.weeklyReportReady !== false;
-    document.getElementById('notif_appointmentReminders').checked = notif.appointmentReminders !== false;
-    document.getElementById('notif_healthAlerts').checked = notif.healthAlerts !== false;
-  }
-
-  function updateStatus(data) {
-    const cw = data.currentWeek;
-    if (cw) {
-      document.getElementById('progressText').textContent = `Week ${cw.weeks}${cw.days > 0 ? ` + ${cw.days}d` : ''}`;
-      document.getElementById('progressBar').style.width = `${Math.min(100, Math.round((cw.weeks / 40) * 100))}%`;
-      document.getElementById('progressDetail').textContent = data.daysUntilDue > 0 ? `${data.daysUntilDue} days until due` : '';
+      // Notifications
+      const notif = data.notificationPreferences || {};
+      document.getElementById('notif_email').checked = notif.email !== false;
+      document.getElementById('notif_push').checked = notif.push !== false;
+      document.getElementById('notif_dailyReminders').checked = notif.dailyReminders !== false;
+      document.getElementById('notif_weeklyReportReady').checked = notif.weeklyReportReady !== false;
+      document.getElementById('notif_appointmentReminders').checked = notif.appointmentReminders !== false;
+      document.getElementById('notif_healthAlerts').checked = notif.healthAlerts !== false;
     }
-    document.getElementById('statTrimester').textContent = data.trimester || '-';
-    document.getElementById('statDaysLeft').textContent = data.daysUntilDue ?? '-';
-    document.getElementById('statAge').textContent = data.age ?? '-';
-    
-    const pp = data.pregnancyProfile || {};
-    if (pp.heightCm && pp.prePregnancyWeightKg) {
-      const bmi = (pp.prePregnancyWeightKg / Math.pow(pp.heightCm / 100, 2)).toFixed(1);
-      document.getElementById('statBMI').textContent = bmi;
-    }
-  }
 
-  function showMessage(text, type = 'success') {
-    messageEl.textContent = text;
-    messageEl.className = `msg ${type}`;
-    messageEl.hidden = false;
-    setTimeout(() => messageEl.hidden = true, 4000);
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-
-    const formData = {
-      fullName: document.getElementById('fullName').value,
-      email: document.getElementById('email').value,
-      phoneNumber: document.getElementById('phoneNumber').value,
-      dateOfBirth: document.getElementById('dateOfBirth').value,
-      currentWeightKg: document.getElementById('currentWeightKg').value,
-      pregnancyProfile: {
-        lastMenstrualPeriod: document.getElementById('pp_lastMenstrualPeriod').value,
-        dueDate: document.getElementById('pp_dueDate').value,
-        bloodType: document.getElementById('pp_bloodType').value,
-        gravida: document.getElementById('pp_gravida').value,
-        para: document.getElementById('pp_para').value,
-        heightCm: document.getElementById('pp_heightCm').value,
-        prePregnancyWeightKg: document.getElementById('pp_prePregnancyWeightKg').value,
-        allergies: document.getElementById('pp_allergies').value,
-        medicalConditions: document.getElementById('pp_medicalConditions').value,
-        isHighRisk: document.getElementById('pp_isHighRisk').checked,
-        primaryPhysician: document.getElementById('pp_primaryPhysician').value,
-        hospitalName: document.getElementById('pp_hospitalName').value
-      },
-      preferredLanguage: document.getElementById('preferredLanguage').value,
-      timezone: document.getElementById('timezone').value,
-      notificationPreferences: {
-        email: document.getElementById('notif_email').checked,
-        push: document.getElementById('notif_push').checked,
-        dailyReminders: document.getElementById('notif_dailyReminders').checked,
-        weeklyReportReady: document.getElementById('notif_weeklyReportReady').checked,
-        appointmentReminders: document.getElementById('notif_appointmentReminders').checked,
-        healthAlerts: document.getElementById('notif_healthAlerts').checked
+    function updateStatus(data) {
+      const cw = data.currentWeek;
+      if (cw) {
+        document.getElementById('progressText').textContent = `Week ${cw.weeks}${cw.days > 0 ? ` + ${cw.days}d` : ''}`;
+        document.getElementById('progressBar').style.width = `${Math.min(100, Math.round((cw.weeks / 40) * 100))}%`;
+        document.getElementById('progressDetail').textContent = data.daysUntilDue > 0 ? `${data.daysUntilDue} days until due` : '';
       }
-    };
+      document.getElementById('statTrimester').textContent = data.trimester || '-';
+      document.getElementById('statDaysLeft').textContent = data.daysUntilDue ?? '-';
+      document.getElementById('statAge').textContent = data.age ?? '-';
 
-    try {
-      const resp = await fetch('/auth/user-edit', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-      });
-      const result = await resp.json();
-      if (result.success) {
-        showMessage('Profile saved!', 'success');
-        await loadUserData();
-      } else {
-        showMessage(result.errors?.general || 'Error saving', 'error');
+      const pp = data.pregnancyProfile || {};
+      if (pp.heightCm && pp.prePregnancyWeightKg) {
+        const bmi = (pp.prePregnancyWeightKg / Math.pow(pp.heightCm / 100, 2)).toFixed(1);
+        document.getElementById('statBMI').textContent = bmi;
       }
-    } catch (err) {
-      showMessage('Failed to save', 'error');
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Changes';
     }
-  });
 
-  resetBtn.addEventListener('click', () => { populateForm(originalData); showMessage('Form reset', 'success'); });
-  document.getElementById('exportProfile').addEventListener('click', () => { window.location.href = '/auth/user-edit/export'; });
-  document.getElementById('clearPregnancy').addEventListener('click', async () => {
-    if (!confirm('Clear all pregnancy data?')) return;
-    await fetch('/auth/user-edit/pregnancy', { method: 'DELETE', credentials: 'include' });
-    await loadUserData();
-    showMessage('Pregnancy data cleared', 'success');
-  });
+    function showMessage(text, type = 'success') {
+      messageEl.textContent = text;
+      messageEl.className = `msg ${type}`;
+      messageEl.hidden = false;
+      setTimeout(() => messageEl.hidden = true, 4000);
+    }
 
-  // Password section
-  async function loadPasswordInfo() {
-    try {
-      const resp = await fetch('/auth/has-password', { credentials: 'include' });
-      const data = await resp.json();
-      
-      const passwordInfo = document.getElementById('passwordInfo');
-      const passwordForm = document.getElementById('passwordForm');
-      const currentPasswordField = document.getElementById('currentPasswordField');
-      const changePasswordBtnText = document.getElementById('changePasswordBtnText');
-      
-      if (data.success) {
-        if (data.hasPassword) {
-          passwordInfo.innerHTML = '<p class="info-text">You have a password set. You can change it below.</p>';
-          currentPasswordField.style.display = 'block';
-          changePasswordBtnText.textContent = 'Change Password';
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      const formData = {
+        fullName: document.getElementById('fullName').value,
+        email: document.getElementById('email').value,
+        phoneNumber: document.getElementById('phoneNumber').value,
+        dateOfBirth: document.getElementById('dateOfBirth').value,
+        currentWeightKg: document.getElementById('currentWeightKg').value,
+        pregnancyProfile: {
+          lastMenstrualPeriod: document.getElementById('pp_lastMenstrualPeriod').value,
+          dueDate: document.getElementById('pp_dueDate').value,
+          bloodType: document.getElementById('pp_bloodType').value,
+          gravida: document.getElementById('pp_gravida').value,
+          para: document.getElementById('pp_para').value,
+          heightCm: document.getElementById('pp_heightCm').value,
+          prePregnancyWeightKg: document.getElementById('pp_prePregnancyWeightKg').value,
+          allergies: document.getElementById('pp_allergies').value,
+          medicalConditions: document.getElementById('pp_medicalConditions').value,
+          isHighRisk: document.getElementById('pp_isHighRisk').checked,
+          primaryPhysician: document.getElementById('pp_primaryPhysician').value,
+          hospitalName: document.getElementById('pp_hospitalName').value
+        },
+        preferredLanguage: document.getElementById('preferredLanguage').value,
+        timezone: document.getElementById('timezone').value,
+        notificationPreferences: {
+          email: document.getElementById('notif_email').checked,
+          push: document.getElementById('notif_push').checked,
+          dailyReminders: document.getElementById('notif_dailyReminders').checked,
+          weeklyReportReady: document.getElementById('notif_weeklyReportReady').checked,
+          appointmentReminders: document.getElementById('notif_appointmentReminders').checked,
+          healthAlerts: document.getElementById('notif_healthAlerts').checked
+        }
+      };
+
+      try {
+        const resp = await fetch('/auth/user-edit', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(formData)
+        });
+        const result = await resp.json();
+        if (result.success) {
+          showMessage('Profile saved!', 'success');
+          await loadUserData();
         } else {
-          passwordInfo.innerHTML = `<p class="info-text">You signed up with ${data.authProvider === 'google' ? 'Google' : 'another method'}. Set a password to also login with email/phone.</p>`;
-          currentPasswordField.style.display = 'none';
-          changePasswordBtnText.textContent = 'Set Password';
+          showMessage(result.errors?.general || 'Error saving', 'error');
         }
-        passwordForm.style.display = 'block';
+      } catch (err) {
+        showMessage('Failed to save', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
       }
-    } catch (err) {
-      console.error('Failed to load password info:', err);
-    }
-  }
+    });
 
-  document.getElementById('changePasswordBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('changePasswordBtn');
-    const msgEl = document.getElementById('passwordMessage');
-    
-    // Clear errors
-    document.querySelectorAll('#passwordForm .field-error').forEach(el => el.textContent = '');
-    msgEl.hidden = true;
-    
-    const data = {
-      currentPassword: document.getElementById('currentPassword').value,
-      newPassword: document.getElementById('newPassword').value,
-      newPassword2: document.getElementById('newPassword2').value
-    };
-    
-    btn.disabled = true;
-    
-    try {
-      const resp = await fetch('/auth/change-password', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
-      
-      const result = await resp.json();
-      
-      if (result.success) {
-        msgEl.className = 'msg success';
-        msgEl.textContent = result.message;
-        msgEl.hidden = false;
-        // Clear form
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('newPassword2').value = '';
-        // Reload password info
-        await loadPasswordInfo();
-      } else {
-        if (result.errors) {
-          Object.entries(result.errors).forEach(([field, msg]) => {
-            const el = document.getElementById(field + 'Error');
-            if (el) el.textContent = msg;
-          });
+    resetBtn.addEventListener('click', () => { populateForm(originalData); showMessage('Form reset', 'success'); });
+    document.getElementById('exportProfile').addEventListener('click', () => { window.location.href = '/auth/user-edit/export'; });
+    document.getElementById('clearPregnancy').addEventListener('click', async () => {
+      if (!confirm('Clear all pregnancy data?')) return;
+      await fetch('/auth/user-edit/pregnancy', { method: 'DELETE', credentials: 'include' });
+      await loadUserData();
+      showMessage('Pregnancy data cleared', 'success');
+    });
+
+    // Password section
+    async function loadPasswordInfo() {
+      try {
+        const resp = await fetch('/auth/has-password', { credentials: 'include' });
+        const data = await resp.json();
+
+        const passwordInfo = document.getElementById('passwordInfo');
+        const passwordForm = document.getElementById('passwordForm');
+        const currentPasswordField = document.getElementById('currentPasswordField');
+        const changePasswordBtnText = document.getElementById('changePasswordBtnText');
+
+        if (data.success) {
+          if (data.hasPassword) {
+            passwordInfo.innerHTML = '<p class="info-text">You have a password set. You can change it below.</p>';
+            currentPasswordField.style.display = 'block';
+            changePasswordBtnText.textContent = 'Change Password';
+          } else {
+            passwordInfo.innerHTML = `<p class="info-text">You signed up with ${data.authProvider === 'google' ? 'Google' : 'another method'}. Set a password to also login with email/phone.</p>`;
+            currentPasswordField.style.display = 'none';
+            changePasswordBtnText.textContent = 'Set Password';
+          }
+          passwordForm.style.display = 'block';
         }
+      } catch (err) {
+        console.error('Failed to load password info:', err);
+      }
+    }
+
+    document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('changePasswordBtn');
+      const msgEl = document.getElementById('passwordMessage');
+
+      // Clear errors
+      document.querySelectorAll('#passwordForm .field-error').forEach(el => el.textContent = '');
+      msgEl.hidden = true;
+
+      const data = {
+        currentPassword: document.getElementById('currentPassword').value,
+        newPassword: document.getElementById('newPassword').value,
+        newPassword2: document.getElementById('newPassword2').value
+      };
+
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch('/auth/change-password', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+
+        const result = await resp.json();
+
+        if (result.success) {
+          msgEl.className = 'msg success';
+          msgEl.textContent = result.message;
+          msgEl.hidden = false;
+          // Clear form
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('newPassword2').value = '';
+          // Reload password info
+          await loadPasswordInfo();
+        } else {
+          if (result.errors) {
+            Object.entries(result.errors).forEach(([field, msg]) => {
+              const el = document.getElementById(field + 'Error');
+              if (el) el.textContent = msg;
+            });
+          }
+          msgEl.className = 'msg error';
+          msgEl.textContent = result.errors?.general || 'Failed to change password';
+          msgEl.hidden = false;
+        }
+      } catch (err) {
         msgEl.className = 'msg error';
-        msgEl.textContent = result.errors?.general || 'Failed to change password';
+        msgEl.textContent = 'An error occurred';
         msgEl.hidden = false;
+      } finally {
+        btn.disabled = false;
       }
-    } catch (err) {
-      msgEl.className = 'msg error';
-      msgEl.textContent = 'An error occurred';
-      msgEl.hidden = false;
-    } finally {
-      btn.disabled = false;
-    }
-  });
+    });
 
-  // Load password info on page load
-  loadPasswordInfo();
+    // Load password info on page load
+    loadPasswordInfo();
 
-  // Auto-calculate due date
-  document.getElementById('pp_lastMenstrualPeriod').addEventListener('change', (e) => {
-    if (e.target.value && !document.getElementById('pp_dueDate').value) {
-      const lmp = new Date(e.target.value);
-      const due = new Date(lmp.getTime() + 280 * 24 * 60 * 60 * 1000);
-      document.getElementById('pp_dueDate').value = due.toISOString().split('T')[0];
-    }
-  });
+    // Auto-calculate due date
+    document.getElementById('pp_lastMenstrualPeriod').addEventListener('change', (e) => {
+      if (e.target.value && !document.getElementById('pp_dueDate').value) {
+        const lmp = new Date(e.target.value);
+        const due = new Date(lmp.getTime() + 280 * 24 * 60 * 60 * 1000);
+        document.getElementById('pp_dueDate').value = due.toISOString().split('T')[0];
+      }
+    });
 
-  loadUserData();
-})();
+    loadUserData();
+  })();
 </script>

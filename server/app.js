@@ -228,8 +228,19 @@ mongoose.connect(MONGO_URI, {
 	tlsAllowInvalidCertificates: true,
 	useUnifiedTopology: true,
 })
-.then(() => {
+.then(async () => {
 	console.log(`✅ Connected to MongoDB (${MONGO_URI.startsWith('mongodb+srv://') ? 'Atlas' : 'local/custom host'})`);
+	
+	// Sync indexes to prevent duplicate key errors on optional unique fields
+	// This ensures sparse indexes are properly created/updated
+	try {
+		const User = require('./models/user');
+		await User.syncIndexes();
+		console.log('✅ Database indexes synchronized');
+	} catch (indexErr) {
+		console.warn('⚠️ Index sync warning:', indexErr.message);
+	}
+	
 	startServer();
 })
 .catch(err => {

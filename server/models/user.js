@@ -130,7 +130,7 @@ const userSchema = new mongoose.Schema({
 		default: 'email',
 		required: true
 	},
-	googleId: { type: String, unique: true, sparse: true, default: null },
+	googleId: { type: String, unique: true, sparse: true },  // No default - field won't exist for email users
 	role: { 
 		type: String, 
 		enum: { values: ['user', 'partner', 'admin'], message: '{VALUE} is not a valid role' },
@@ -206,8 +206,8 @@ const userSchema = new mongoose.Schema({
 	preferredLanguage: { type: String, default: 'en', enum: ['en', 'vi', 'es', 'fr', 'de', 'zh'] },
 	language: { type: String, enum: ['en', 'vi'], default: 'en' },
 	timezone: { type: String, default: 'UTC' },
-	invitationCode: { type: String, unique: true, sparse: true, default: null },
-	invitationCodeExpiresAt: { type: Date, default: null },
+	invitationCode: { type: String, unique: true, sparse: true },  // No default - generated on first access
+	invitationCodeExpiresAt: { type: Date },  // No default - set when code is generated
 	
 	// =========================================================================
 	// SECURITY & AUDIT
