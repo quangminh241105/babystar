@@ -1,0 +1,128 @@
+<link rel="stylesheet" href="/css/past-health-log.css">
+
+<main role="main" aria-labelledby="pageTitle" class="page">
+    <header class="page-header" id="pageTitle">
+      <h1 class="title">Daily health logs</h1>
+      <p class="subtitle">View and edit your health history.</p>
+    </header>
+
+    <!-- Filter / search controls (UI only) -->
+    <section class="controls" aria-label="Filters">
+      <div class="filter-row">
+        <label for="startDate">From</label>
+        <input id="startDate" type="date" aria-label="start date" />
+
+        <label for="endDate">To</label>
+        <input id="endDate" type="date" aria-label="end date" />
+
+        <div class="quick-filters" role="tablist" aria-label="Quick filters">
+          <button type="button" class="filter-btn" data-range="7">Last 7 days</button>
+          <button type="button" class="filter-btn" data-range="30">Last 30 days</button>
+          <button type="button" class="filter-btn" data-range="all">All</button>
+        </div>
+
+        <button type="button" class="clear-btn">Clear</button>
+      </div>
+    </section>
+
+    <!-- Logs list -->
+    <section id="logsList" class="logs-list" aria-live="polite" aria-label="Daily health logs list">
+      <!-- Example log card — replace / generate dynamically in JS -->
+      <article class="log-card" aria-labelledby="log-2025-11-24">
+        <header class="log-header">
+          <div class="log-meta">
+            <h2 id="log-2025-11-24" class="log-date">Mon, Nov 24 2025</h2>
+            <div class="log-sub">Entry date: 2025-11-24 • ID #102</div>
+          </div>
+
+          <div class="log-actions" role="group" aria-label="Log actions">
+            <button type="button" class="btn edit" aria-label="Edit log 102">Edit</button>
+            <button type="button" class="btn delete" aria-label="Delete log 102">Delete</button>
+          </div>
+        </header>
+
+        <div class="log-vitals">
+          <div class="vital"><strong>Weight</strong><span>68.2 kg</span></div>
+          <div class="vital"><strong>Blood pressure</strong><span>118/76 mmHg</span></div>
+          <div class="vital"><strong>Sleep</strong><span>7.5 h</span></div>
+          <div class="vital"><strong>Mood</strong><span>Calm</span></div>
+        </div>
+
+        <div class="log-symptom" aria-label="Main symptom">
+          <strong>Main symptom</strong>
+          <p>Mild nausea in the morning; small meals helped.</p>
+        </div>
+
+        <div class="log-note" aria-label="User note">
+          <strong>Note</strong>
+          <p>Stayed hydrated and rested between tasks; walked 20 minutes in the evening.</p>
+        </div>
+      </article>
+
+      <article class="log-card" aria-labelledby="log-2025-11-22">
+        <header class="log-header">
+          <div class="log-meta">
+            <h2 id="log-2025-11-22" class="log-date">Sat, Nov 22 2025</h2>
+            <div class="log-sub">Entry date: 2025-11-22 • ID #101</div>
+          </div>
+
+          <div class="log-actions" role="group" aria-label="Log actions">
+            <button type="button" class="btn edit" aria-label="Edit log 101">Edit</button>
+            <button type="button" class="btn delete" aria-label="Delete log 101">Delete</button>
+          </div>
+        </header>
+
+        <div class="log-vitals">
+          <div class="vital"><strong>Weight</strong><span>67.9 kg</span></div>
+          <div class="vital"><strong>Blood pressure</strong><span>120/78 mmHg</span></div>
+          <div class="vital"><strong>Sleep</strong><span>6.8 h</span></div>
+          <div class="vital"><strong>Mood</strong><span>Tired</span></div>
+        </div>
+
+        <div class="log-symptom" aria-label="Main symptom">
+          <strong>Main symptom</strong>
+          <p>Lower back ache after extended sitting.</p>
+        </div>
+
+        <div class="log-note" aria-label="User note">
+          <strong>Note</strong>
+          <p>Used a warm compress and did light pelvic stretches; felt better in the evening.</p>
+        </div>
+      </article>
+
+      <article class="log-card" aria-labelledby="log-2025-11-20">
+        <header class="log-header">
+          <div class="log-meta">
+            <h2 id="log-2025-11-20" class="log-date">Thu, Nov 20 2025</h2>
+            <div class="log-sub">Entry date: 2025-11-20 • ID #100</div>
+          </div>
+
+          <div class="log-actions" role="group" aria-label="Log actions">
+            <button type="button" class="btn edit" aria-label="Edit log 100">Edit</button>
+            <button type="button" class="btn delete" aria-label="Delete log 100">Delete</button>
+          </div>
+        </header>
+
+        <div class="log-vitals">
+          <div class="vital"><strong>Weight</strong><span>67.5 kg</span></div>
+          <div class="vital"><strong>Blood pressure</strong><span>116/75 mmHg</span></div>
+          <div class="vital"><strong>Sleep</strong><span>8.0 h</span></div>
+          <div class="vital"><strong>Mood</strong><span>Happy</span></div>
+        </div>
+
+        <div class="log-symptom" aria-label="Main symptom">
+          <strong>Main symptom</strong>
+          <p>None reported.</p>
+        </div>
+
+        <div class="log-note" aria-label="User note">
+          <strong>Note</strong>
+          <p>Good energy today; 30-minute walk.</p>
+        </div>
+      </article>
+    </section>
+    
+    <footer class="page-footer" aria-hidden="false">
+      <p class="hint">Tip: Use the date filters to quickly find past entries.</p>
+    </footer>
+  </main>
