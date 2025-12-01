@@ -145,4 +145,68 @@ async function handleGoogleSignIn(response) {
     }
   } catch (err) {
     console.error('Google login error:', err);
-    if
+    if (errorEl) errorEl.textContent = 'Network error. Please try again.';
+    if (btn) {
+      btn.disabled = false;
+      btn.querySelector('span').textContent = 'Continue with Google';
+    }
+  }
+}
+// Handle form submission
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  // Clear previous errors
+  document.getElementById('general-error').textContent = '';
+  ['emailOrPhone', 'password'].forEach(field => {
+    document.getElementById(`${field}-error`).textContent = '';
+  });
+  
+  const emailOrPhone = document.getElementById('emailOrPhone').value.trim();
+  const password = document.getElementById('password').value;
+  const redirect = document.getElementById('redirect')?.value || '/';
+  
+  let hasError = false;
+  
+  // Basic validation
+  if (!emailOrPhone) {
+    document.getElementById('emailOrPhone-error').textContent = 'Email or phone number is required.';
+    hasError = true;
+  }
+  if (!password) {
+    document.getElementById('password-error').textContent = 'Password is required.';
+    hasError = true;
+  }
+  
+  if (hasError) return;
+  
+  try {
+    const resp = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emailOrPhone, password, redirect })
+    });
+    
+    const data = await resp.json();
+    
+    if (data.success) {
+      window.location.href = data.redirect || '/';
+    } else {
+      if (data.errors) {
+        for (const field in data.errors) {
+          if (field === 'general') {
+            document.getElementById('general-error').textContent = data.errors[field];
+          } else {
+            document.getElementById(`${field}-error`).textContent = data.errors[field];
+          }
+        }
+      } else {
+        document.getElementById('general-error').textContent = 'Login failed. Please try again.';
+      }
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    document.getElementById('general-error').textContent = 'Network error. Please try again.';
+  }
+});
+</script>
