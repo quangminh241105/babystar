@@ -804,6 +804,63 @@
     color: var(--gray-400);
 }
 
+/* ===== Expand Button ===== */
+.expand-sidebar-btn {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 48px;
+    background: var(--pink-500, #ec4899);
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    z-index: 100;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.expand-sidebar-btn:hover {
+    width: 32px;
+    background: var(--pink-600, #db2777);
+}
+
+.expand-sidebar-btn svg {
+    width: 16px;
+    height: 16px;
+    color: white;
+}
+
+.expand-sidebar-btn.visible {
+    display: flex;
+}
+
+/* Remove input selection/focus outline effect */
+.input-wrapper input {
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.input-wrapper input::selection {
+    background: var(--pink-200, #fbcfe8);
+    color: inherit;
+}
+
+.input-wrapper input::-moz-selection {
+    background: var(--pink-200, #fbcfe8);
+    color: inherit;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
     .sidebar {
