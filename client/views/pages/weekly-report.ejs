@@ -6,157 +6,597 @@
     <div class="header-content">
       <h1 class="page-title">📊 Weekly Progress & Reports</h1>
       <div class="week-badge">
-        <span class="week-number">Week 24</span>
+        <span class="week-number" id="weekNumber">Week --</span>
         <span class="separator">•</span>
-        <span class="trimester">2nd Trimester</span>
+        <span class="trimester" id="trimesterLabel">-- Trimester</span>
       </div>
+    </div>
+    <div class="week-navigation">
+      <button type="button" class="nav-btn" id="prevWeekBtn" title="Previous Week">← Previous</button>
+      <span class="week-range" id="weekRange">Loading...</span>
+      <button type="button" class="nav-btn" id="nextWeekBtn" title="Next Week" disabled>Next →</button>
     </div>
   </header>
 
-  <!-- Quick Stats Cards -->
-  <section class="stats-grid">
-    <div class="stat-card weight-card">
-      <div class="stat-label">Average Weight</div>
-      <div class="stat-value">68.3 kg</div>
-      <div class="stat-status positive">
-        <span class="icon">✓</span>
-        Within healthy range
-      </div>
-    </div>
+  <!-- Loading State -->
+  <div id="loadingState" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your weekly report...</p>
+  </div>
 
-    <div class="stat-card sleep-card">
-      <div class="stat-label">Average Sleep</div>
-      <div class="stat-value">6.5 hours</div>
-      <div class="stat-status info">
-        <span class="icon">😴</span>
-        Good sleep quality
-      </div>
-    </div>
+  <!-- No Data State -->
+  <div id="noDataState" class="no-data-state" style="display:none;">
+    <div class="no-data-icon">📝</div>
+    <h2>No Health Logs This Week</h2>
+    <p>Start logging your daily health to see your weekly progress here.</p>
+    <a href="/log-health" class="btn-primary">Log Today's Health</a>
+  </div>
 
-    <div class="stat-card logs-card">
-      <div class="stat-label">Health Logs</div>
-      <div class="stat-value">2 entries</div>
-      <div class="stat-status success">
-        <span class="icon">🎉</span>
-        Great consistency!
+  <!-- Report Content -->
+  <div id="reportContent" style="display:none;">
+    <!-- Overall Status Banner -->
+    <section class="status-banner" id="statusBanner">
+      <div class="status-icon" id="statusIcon">✓</div>
+      <div class="status-info">
+        <div class="status-label">Overall Status</div>
+        <div class="status-value" id="statusValue">Loading...</div>
       </div>
-    </div>
-  </section>
+      <div class="status-details" id="statusDetails"></div>
+    </section>
 
-  <!-- Charts Section -->
-  <section class="charts-section">
-    <div class="chart-card">
-      <div class="chart-header">
-        <h2 class="chart-title">Weight Tracking</h2>
-        <p class="chart-subtitle">Your weight progression over time</p>
-      </div>
-      <div class="chart-wrapper">
-        <canvas id="weightChart"></canvas>
-      </div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-header">
-        <h2 class="chart-title">Sleep Tracking</h2>
-        <p class="chart-subtitle">Your sleep hours per night</p>
-      </div>
-      <div class="chart-wrapper">
-        <canvas id="sleepChart"></canvas>
-      </div>
-    </div>
-  </section>
-
-  <!-- Mood & Symptoms -->
-  <section class="insights-section">
-    <div class="insight-card mood-card">
-      <div class="card-header">
-        <h2 class="card-title">Mood Tracking</h2>
-        <p class="card-subtitle">Distribution of your moods over time</p>
-      </div>
-      <div class="chart-wrapper">
-        <canvas id="moodChart"></canvas>
-      </div>
-    </div>
-
-    <div class="insight-card symptoms-card">
-      <div class="card-header">
-        <h2 class="card-title">Most Common Symptoms</h2>
-        <p class="card-subtitle">Symptoms you've experienced this period</p>
-      </div>
-      <div class="symptoms-list">
-        <div class="symptom-item">
-          <div class="symptom-info">
-            <span class="symptom-emoji">🤢</span>
-            <span class="symptom-name">Nausea</span>
-          </div>
-          <div class="symptom-bar">
-            <div class="symptom-fill" style="width: 30%;"></div>
-          </div>
-          <span class="symptom-days">1 days</span>
-        </div>
-
-        <div class="symptom-item">
-          <div class="symptom-info">
-            <span class="symptom-emoji">😴</span>
-            <span class="symptom-name">Fatigue</span>
-          </div>
-          <div class="symptom-bar">
-            <div class="symptom-fill" style="width: 30%;"></div>
-          </div>
-          <span class="symptom-days">1 days</span>
-        </div>
-
-        <div class="symptom-item">
-          <div class="symptom-info">
-            <span class="symptom-emoji">💆</span>
-            <span class="symptom-name">Back pain</span>
-          </div>
-          <div class="symptom-bar">
-            <div class="symptom-fill" style="width: 30%;"></div>
-          </div>
-          <span class="symptom-days">1 days</span>
+    <!-- Quick Stats Cards -->
+    <section class="stats-grid">
+      <div class="stat-card weight-card">
+        <div class="stat-icon">⚖️</div>
+        <div class="stat-content">
+          <div class="stat-label">Average Weight</div>
+          <div class="stat-value" id="avgWeight">-- kg</div>
+          <div class="stat-change" id="weightChange"></div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Baby Development -->
-  <section class="baby-development-section">
-    <div class="dev-header">
-      <span class="dev-emoji">👶</span>
-      <h2 class="dev-title">Baby Development - Week 24</h2>
-    </div>
-    <p class="dev-subtitle">What's happening this week</p>
-
-    <div class="dev-content">
-      <div class="dev-card size-card-dev">
-        <div class="dev-card-header">
-          <span class="dev-icon">🍈</span>
-          <h3>Size</h3>
+      <div class="stat-card sleep-card">
+        <div class="stat-icon">😴</div>
+        <div class="stat-content">
+          <div class="stat-label">Average Sleep</div>
+          <div class="stat-value" id="avgSleep">-- hours</div>
+          <div class="stat-status" id="sleepStatus"></div>
         </div>
-        <p>Your baby is about the size of a <strong>cantaloupe</strong>, measuring around <strong>30 cm long</strong>.
-        </p>
       </div>
 
-      <div class="dev-card development-card-dev">
-        <div class="dev-card-header">
-          <span class="dev-icon">🧠</span>
-          <h3>Development</h3>
+      <div class="stat-card energy-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-content">
+          <div class="stat-label">Average Energy</div>
+          <div class="stat-value" id="avgEnergy">--/5</div>
+          <div class="stat-status" id="energyStatus"></div>
         </div>
-        <p>Baby's brain is growing rapidly, and they're developing patterns of sleep and wakefulness. You might notice
-          more regular movement patterns now.</p>
       </div>
 
-      <div class="dev-card feelings-card-dev">
-        <div class="dev-card-header">
-          <span class="dev-icon">💗</span>
-          <h3>What You Might Feel</h3>
+      <div class="stat-card logs-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+          <div class="stat-label">Days Logged</div>
+          <div class="stat-value" id="daysLogged">--/7</div>
+          <div class="stat-status" id="logsStatus"></div>
         </div>
-        <p>You may experience increased appetite, vivid dreams, and more noticeable baby movements. Some back pain is
-          common as your center of gravity shifts.</p>
       </div>
-    </div>
-  </section>
+
+      <div class="stat-card water-card">
+        <div class="stat-icon">💧</div>
+        <div class="stat-content">
+          <div class="stat-label">Avg Water Intake</div>
+          <div class="stat-value" id="avgWater">-- L</div>
+          <div class="stat-status" id="waterStatus"></div>
+        </div>
+      </div>
+
+      <div class="stat-card exercise-card">
+        <div class="stat-icon">🏃‍♀️</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Exercise</div>
+          <div class="stat-value" id="totalExercise">-- min</div>
+          <div class="stat-status" id="exerciseStatus"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">📈 Daily Weight</h2>
+          <p class="chart-subtitle">Your weight entries this week</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="weightChart"></canvas>
+        </div>
+        <div class="chart-empty" id="weightChartEmpty" style="display:none;">
+          No weight data logged this week
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">🌙 Sleep Hours</h2>
+          <p class="chart-subtitle">Your sleep patterns this week</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="sleepChart"></canvas>
+        </div>
+        <div class="chart-empty" id="sleepChartEmpty" style="display:none;">
+          No sleep data logged this week
+        </div>
+      </div>
+    </section>
+
+    <!-- Mood & Symptoms -->
+    <section class="insights-section">
+      <div class="insight-card mood-card">
+        <div class="card-header">
+          <h2 class="card-title">🎭 Mood Distribution</h2>
+          <p class="card-subtitle">How you've been feeling this week</p>
+        </div>
+        <div class="chart-wrapper mood-chart-wrapper">
+          <canvas id="moodChart"></canvas>
+        </div>
+        <div class="chart-empty" id="moodChartEmpty" style="display:none;">
+          No mood data logged this week
+        </div>
+      </div>
+
+      <div class="insight-card symptoms-card">
+        <div class="card-header">
+          <h2 class="card-title">🩺 Common Symptoms</h2>
+          <p class="card-subtitle">Symptoms you've experienced</p>
+        </div>
+        <div class="symptoms-list" id="symptomsList">
+          <div class="chart-empty">No symptoms logged this week</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Highlights Section -->
+    <section class="highlights-section">
+      <div class="highlights-card positives">
+        <div class="highlights-header">
+          <span class="highlights-icon">✨</span>
+          <h3>Positive Highlights</h3>
+        </div>
+        <ul class="highlights-list" id="positivesList">
+          <li>Loading...</li>
+        </ul>
+      </div>
+      
+      <div class="highlights-card concerns" id="concernsCard" style="display:none;">
+        <div class="highlights-header">
+          <span class="highlights-icon">⚠️</span>
+          <h3>Areas to Watch</h3>
+        </div>
+        <ul class="highlights-list" id="concernsList"></ul>
+      </div>
+    </section>
+
+    <!-- Baby Development -->
+    <section class="baby-development-section">
+      <div class="dev-header">
+        <span class="dev-emoji">👶</span>
+        <h2 class="dev-title" id="devTitle">Baby Development</h2>
+      </div>
+      <p class="dev-subtitle">What's happening this week</p>
+
+      <div class="dev-content" id="devContent">
+        <div class="dev-card size-card-dev">
+          <div class="dev-card-header">
+            <span class="dev-icon" id="babySizeIcon">🍈</span>
+            <h3>Size</h3>
+          </div>
+          <p id="babySizeText">Loading...</p>
+        </div>
+
+        <div class="dev-card development-card-dev">
+          <div class="dev-card-header">
+            <span class="dev-icon">🧠</span>
+            <h3>Development</h3>
+          </div>
+          <p id="babyDevText">Loading...</p>
+        </div>
+
+        <div class="dev-card feelings-card-dev">
+          <div class="dev-card-header">
+            <span class="dev-icon">💗</span>
+            <h3>What You Might Feel</h3>
+          </div>
+          <p id="momFeelingsText">Loading...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Week Comparison -->
+    <section class="comparison-section">
+      <h2 class="section-title">📊 Week-over-Week Trends</h2>
+      <div class="chart-card full-width">
+        <div class="chart-wrapper">
+          <canvas id="trendsChart"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>
 
-<script src="/js/weekly-report.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  // ==================== STATE ====================
+  let currentWeekOffset = 0;
+  let charts = {};
+  
+  // ==================== DOM ELEMENTS ====================
+  const loadingState = document.getElementById('loadingState');
+  const noDataState = document.getElementById('noDataState');
+  const reportContent = document.getElementById('reportContent');
+  const prevWeekBtn = document.getElementById('prevWeekBtn');
+  const nextWeekBtn = document.getElementById('nextWeekBtn');
+  const weekRange = document.getElementById('weekRange');
+
+  // ==================== BABY DEVELOPMENT DATA ====================
+  const babyDevelopment = {
+    4: { icon: '🫐', size: 'poppy seed', length: '0.1 cm', dev: 'The neural tube is forming, which will become the brain and spinal cord.', feelings: 'You may not feel pregnant yet, but hormonal changes are beginning.' },
+    8: { icon: '🫐', size: 'raspberry', length: '1.6 cm', dev: 'Tiny fingers and toes are forming. The heart is beating!', feelings: 'Morning sickness and fatigue may be at their peak.' },
+    12: { icon: '🍋', size: 'lime', length: '5.4 cm', dev: 'Baby can now open and close fingers and curl toes.', feelings: 'Nausea often starts to ease. You may feel more energetic.' },
+    16: { icon: '🥑', size: 'avocado', length: '11.6 cm', dev: 'Baby is making facial expressions and may start sucking thumb.', feelings: 'You might start feeling baby movements (quickening).' },
+    20: { icon: '🍌', size: 'banana', length: '16.5 cm', dev: 'Baby can hear sounds. Hair is growing on the head.', feelings: 'You may feel stronger kicks. The belly is noticeably bigger.' },
+    24: { icon: '🌽', size: 'corn cob', length: '30 cm', dev: 'Baby\'s brain is developing rapidly. Sleep patterns are forming.', feelings: 'Back pain may increase. You might have vivid dreams.' },
+    28: { icon: '🍆', size: 'eggplant', length: '37.6 cm', dev: 'Baby can open eyes and may respond to light. Lungs are maturing.', feelings: 'Shortness of breath and heartburn are common.' },
+    32: { icon: '🥥', size: 'coconut', length: '42.4 cm', dev: 'Baby is practicing breathing. Bones are hardening.', feelings: 'Braxton Hicks contractions may start. Sleep may be difficult.' },
+    36: { icon: '🍈', size: 'honeydew melon', length: '47.4 cm', dev: 'Baby is gaining weight rapidly. Most organs are mature.', feelings: 'You may feel pressure in your pelvis as baby drops lower.' },
+    40: { icon: '🎃', size: 'small pumpkin', length: '51.2 cm', dev: 'Baby is fully developed and ready for birth!', feelings: 'You may feel anxious and excited. Watch for labor signs.' }
+  };
+
+  function getBabyInfo(week) {
+    if (!week) return null;
+    const weeks = Object.keys(babyDevelopment).map(Number).sort((a, b) => a - b);
+    let closest = weeks[0];
+    for (const w of weeks) {
+      if (w <= week) closest = w;
+      else break;
+    }
+    return { ...babyDevelopment[closest], week: closest };
+  }
+
+  // ==================== CHART COLORS ====================
+  const chartColors = {
+    pink: 'rgba(217, 30, 143, 1)',
+    pinkLight: 'rgba(217, 30, 143, 0.2)',
+    purple: 'rgba(138, 14, 82, 1)',
+    purpleLight: 'rgba(138, 14, 82, 0.2)',
+    green: 'rgba(34, 197, 94, 1)',
+    blue: 'rgba(59, 130, 246, 1)',
+    orange: 'rgba(249, 115, 22, 1)',
+    gray: 'rgba(156, 163, 175, 1)'
+  };
+
+  const moodColors = {
+    very_happy: '#22c55e',
+    happy: '#84cc16',
+    neutral: '#64748b',
+    anxious: '#f59e0b',
+    sad: '#3b82f6',
+    stressed: '#ef4444',
+    irritable: '#f97316',
+    emotional: '#a855f7',
+    overwhelmed: '#dc2626'
+  };
+
+  const moodEmojis = {
+    very_happy: '😁',
+    happy: '🙂',
+    neutral: '😐',
+    anxious: '😟',
+    sad: '😢',
+    stressed: '😣',
+    irritable: '😠',
+    emotional: '😭',
+    overwhelmed: '😩'
+  };
+
+  const symptomEmojis = {
+    nausea: '🤢', fatigue: '😴', headache: '🤕', back_pain: '💆',
+    spotting: '🩸', heartburn: '🔥', swelling_feet: '🦶', insomnia: '😵',
+    constipation: '💩', dizziness: '💫', leg_cramps: '🦵', default: '🩺'
+  };
+
+  // ==================== UTILITY FUNCTIONS ====================
+  function formatDateRange(start, end) {
+    const s = new Date(start);
+    const e = new Date(end);
+    return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  }
+
+  function getTrimesterLabel(t) {
+    if (t === 1) return '1st Trimester';
+    if (t === 2) return '2nd Trimester';
+    if (t === 3) return '3rd Trimester';
+    return '';
+  }
+
+  function destroyCharts() {
+    Object.values(charts).forEach(chart => chart?.destroy());
+    charts = {};
+  }
+
+  // ==================== RENDER FUNCTIONS ====================
+  function renderStats(report) {
+    const { summary, vitalsSummary, activities } = report;
+
+    document.getElementById('weekNumber').textContent = report.weekNumber ? `Week ${report.weekNumber}` : 'Current Week';
+    document.getElementById('trimesterLabel').textContent = report.trimester ? getTrimesterLabel(report.trimester) : '';
+    weekRange.textContent = formatDateRange(report.startDate, report.endDate);
+
+    const statusBanner = document.getElementById('statusBanner');
+    const statusIcon = document.getElementById('statusIcon');
+    const statusValue = document.getElementById('statusValue');
+    const statusDetails = document.getElementById('statusDetails');
+    
+    statusValue.textContent = summary.overallStatus || 'No Data';
+    statusBanner.className = 'status-banner status-' + (summary.overallStatus || 'stable').toLowerCase().replace(' ', '-');
+    
+    if (summary.overallStatus === 'Excellent') statusIcon.textContent = '🌟';
+    else if (summary.overallStatus === 'Good') statusIcon.textContent = '✓';
+    else if (summary.overallStatus === 'Needs Attention') statusIcon.textContent = '⚠️';
+    else statusIcon.textContent = '📊';
+    
+    statusDetails.textContent = `${summary.daysLogged}/7 days logged • ${summary.logCompletionRate}% completion`;
+
+    document.getElementById('avgWeight').textContent = vitalsSummary.avgWeightKg ? `${vitalsSummary.avgWeightKg} kg` : '-- kg';
+    const weightChange = document.getElementById('weightChange');
+    if (summary.weightChangeKg != null) {
+      const sign = summary.weightChangeKg >= 0 ? '+' : '';
+      weightChange.textContent = `${sign}${summary.weightChangeKg.toFixed(1)} kg this week`;
+      weightChange.className = 'stat-change ' + (Math.abs(summary.weightChangeKg) <= 0.5 ? 'neutral' : summary.weightChangeKg > 0 ? 'positive' : 'negative');
+    } else {
+      weightChange.textContent = '';
+    }
+
+    document.getElementById('avgSleep').textContent = activities.avgSleepHours ? `${activities.avgSleepHours} hours` : '-- hours';
+    const sleepStatus = document.getElementById('sleepStatus');
+    if (activities.avgSleepHours) {
+      if (activities.avgSleepHours >= 7) { sleepStatus.textContent = '✓ Good sleep'; sleepStatus.className = 'stat-status positive'; }
+      else if (activities.avgSleepHours >= 6) { sleepStatus.textContent = '⚠ Could be better'; sleepStatus.className = 'stat-status warning'; }
+      else { sleepStatus.textContent = '⚠ Low sleep'; sleepStatus.className = 'stat-status negative'; }
+    } else { sleepStatus.textContent = ''; }
+
+    document.getElementById('avgEnergy').textContent = summary.avgEnergyLevel ? `${summary.avgEnergyLevel}/5` : '--/5';
+    const energyStatus = document.getElementById('energyStatus');
+    if (summary.avgEnergyLevel) {
+      if (summary.avgEnergyLevel >= 4) { energyStatus.textContent = '⚡ High energy'; energyStatus.className = 'stat-status positive'; }
+      else if (summary.avgEnergyLevel >= 3) { energyStatus.textContent = '👍 Normal'; energyStatus.className = 'stat-status neutral'; }
+      else { energyStatus.textContent = '😴 Low energy'; energyStatus.className = 'stat-status warning'; }
+    } else { energyStatus.textContent = ''; }
+
+    document.getElementById('daysLogged').textContent = `${summary.daysLogged}/7`;
+    const logsStatus = document.getElementById('logsStatus');
+    if (summary.logCompletionRate >= 80) { logsStatus.textContent = '🎉 Excellent!'; logsStatus.className = 'stat-status positive'; }
+    else if (summary.logCompletionRate >= 50) { logsStatus.textContent = '👍 Good job'; logsStatus.className = 'stat-status neutral'; }
+    else { logsStatus.textContent = '📝 Log more!'; logsStatus.className = 'stat-status warning'; }
+
+    document.getElementById('avgWater').textContent = `${activities.avgWaterIntakeLiters} L`;
+    const waterStatus = document.getElementById('waterStatus');
+    if (activities.hydrationGoalMet) { waterStatus.textContent = '💧 Well hydrated'; waterStatus.className = 'stat-status positive'; }
+    else if (activities.avgWaterIntakeLiters >= 1.5) { waterStatus.textContent = '👍 Almost there'; waterStatus.className = 'stat-status neutral'; }
+    else { waterStatus.textContent = '⚠ Drink more water'; waterStatus.className = 'stat-status warning'; }
+
+    document.getElementById('totalExercise').textContent = `${activities.totalExerciseMinutes} min`;
+    const exerciseStatus = document.getElementById('exerciseStatus');
+    if (activities.exerciseGoalMet) { exerciseStatus.textContent = '🏆 Goal met!'; exerciseStatus.className = 'stat-status positive'; }
+    else if (activities.totalExerciseMinutes >= 75) { exerciseStatus.textContent = `${activities.exerciseDaysCount} active days`; exerciseStatus.className = 'stat-status neutral'; }
+    else { exerciseStatus.textContent = 'Keep moving!'; exerciseStatus.className = 'stat-status warning'; }
+  }
+
+  function renderCharts(report) {
+    destroyCharts();
+    const { dailyData, moodFrequency, symptomDetails } = report;
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    const dataByDay = {};
+    dailyData.forEach(d => {
+      const dayIndex = new Date(d.date).getDay();
+      const dayName = days[dayIndex === 0 ? 6 : dayIndex - 1];
+      dataByDay[dayName] = d;
+    });
+
+    // Weight Chart
+    const weightData = days.map(d => dataByDay[d]?.weight || null);
+    const hasWeightData = weightData.some(w => w != null);
+    
+    if (hasWeightData) {
+      document.getElementById('weightChartEmpty').style.display = 'none';
+      document.getElementById('weightChart').style.display = 'block';
+      charts.weight = new Chart(document.getElementById('weightChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: days, datasets: [{ label: 'Weight (kg)', data: weightData, borderColor: chartColors.pink, backgroundColor: chartColors.pinkLight, fill: true, tension: 0.4, spanGaps: true }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+      });
+    } else {
+      document.getElementById('weightChart').style.display = 'none';
+      document.getElementById('weightChartEmpty').style.display = 'flex';
+    }
+
+    // Sleep Chart
+    const sleepData = days.map(d => dataByDay[d]?.sleep || null);
+    const hasSleepData = sleepData.some(s => s != null);
+    
+    if (hasSleepData) {
+      document.getElementById('sleepChartEmpty').style.display = 'none';
+      document.getElementById('sleepChart').style.display = 'block';
+      charts.sleep = new Chart(document.getElementById('sleepChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: days, datasets: [{ label: 'Sleep (hours)', data: sleepData, backgroundColor: chartColors.purpleLight, borderColor: chartColors.purple, borderWidth: 2, borderRadius: 8 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 12 } } }
+      });
+    } else {
+      document.getElementById('sleepChart').style.display = 'none';
+      document.getElementById('sleepChartEmpty').style.display = 'flex';
+    }
+
+    // Mood Chart
+    const moodLabels = Object.keys(moodFrequency || {});
+    if (moodLabels.length > 0) {
+      document.getElementById('moodChartEmpty').style.display = 'none';
+      document.getElementById('moodChart').style.display = 'block';
+      charts.mood = new Chart(document.getElementById('moodChart').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: moodLabels.map(m => `${moodEmojis[m] || ''} ${m.replace('_', ' ')}`), datasets: [{ data: moodLabels.map(m => moodFrequency[m]), backgroundColor: moodLabels.map(m => moodColors[m] || chartColors.gray), borderWidth: 2, borderColor: '#fff' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+      });
+    } else {
+      document.getElementById('moodChart').style.display = 'none';
+      document.getElementById('moodChartEmpty').style.display = 'flex';
+    }
+
+    // Symptoms
+    const symptomsList = document.getElementById('symptomsList');
+    if (symptomDetails && symptomDetails.length > 0) {
+      symptomsList.innerHTML = symptomDetails.map(s => `
+        <div class="symptom-item">
+          <div class="symptom-info"><span class="symptom-emoji">${symptomEmojis[s.symptom] || symptomEmojis.default}</span><span class="symptom-name">${s.symptom.replace(/_/g, ' ')}</span></div>
+          <div class="symptom-bar"><div class="symptom-fill" style="width: ${Math.min(100, s.count * 15)}%;"></div></div>
+          <span class="symptom-days">${s.count} day${s.count > 1 ? 's' : ''}</span>
+        </div>
+      `).join('');
+    } else {
+      symptomsList.innerHTML = '<div class="chart-empty">No symptoms logged this week</div>';
+    }
+  }
+
+  function renderHighlights(report) {
+    const { summary } = report;
+    const positivesList = document.getElementById('positivesList');
+    if (summary.positiveHighlights && summary.positiveHighlights.length > 0) {
+      positivesList.innerHTML = summary.positiveHighlights.map(p => `<li>✓ ${p}</li>`).join('');
+    } else {
+      positivesList.innerHTML = '<li>Keep logging to see your highlights!</li>';
+    }
+
+    const concernsCard = document.getElementById('concernsCard');
+    const concernsList = document.getElementById('concernsList');
+    if (summary.concernsDetected && summary.concernsDetected.length > 0) {
+      concernsCard.style.display = 'block';
+      concernsList.innerHTML = summary.concernsDetected.map(c => `<li>⚠️ ${c}</li>`).join('');
+    } else {
+      concernsCard.style.display = 'none';
+    }
+  }
+
+  function renderBabyDevelopment(report) {
+    const babyInfo = getBabyInfo(report.weekNumber);
+    if (babyInfo) {
+      document.getElementById('devTitle').textContent = `Baby Development - Week ${report.weekNumber || babyInfo.week}`;
+      document.getElementById('babySizeIcon').textContent = babyInfo.icon;
+      document.getElementById('babySizeText').innerHTML = `Your baby is about the size of a <strong>${babyInfo.size}</strong>, measuring around <strong>${babyInfo.length}</strong>.`;
+      document.getElementById('babyDevText').textContent = babyInfo.dev;
+      document.getElementById('momFeelingsText').textContent = babyInfo.feelings;
+    } else {
+      document.getElementById('devTitle').textContent = 'Baby Development';
+      document.getElementById('babySizeText').textContent = 'Set your due date to see baby development info.';
+      document.getElementById('babyDevText').textContent = 'Track your pregnancy to get personalized development updates.';
+      document.getElementById('momFeelingsText').textContent = 'Log your symptoms and feelings to get relevant tips.';
+    }
+  }
+
+  async function renderTrends() {
+    try {
+      const resp = await fetch('/api/weekly-report/trends?weeks=4', { credentials: 'include' });
+      const result = await resp.json();
+      if (result.success && result.trends && result.trends.length > 0) {
+        const labels = result.trends.map(t => t.weekLabel);
+        const sleeps = result.trends.map(t => t.avgSleep);
+        const energies = result.trends.map(t => t.avgEnergy);
+        
+        charts.trends = new Chart(document.getElementById('trendsChart').getContext('2d'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Avg Sleep (hrs)', data: sleeps, borderColor: chartColors.purple, backgroundColor: 'transparent', tension: 0.4, yAxisID: 'y' },
+              { label: 'Avg Energy', data: energies, borderColor: chartColors.orange, backgroundColor: 'transparent', tension: 0.4, yAxisID: 'y1' }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+              y: { type: 'linear', position: 'left', title: { display: true, text: 'Sleep (hrs)' }, min: 0, max: 12 },
+              y1: { type: 'linear', position: 'right', min: 0, max: 5, title: { display: true, text: 'Energy' }, grid: { drawOnChartArea: false } }
+            }
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load trends:', err);
+    }
+  }
+
+  // ==================== LOAD REPORT ====================
+  async function loadReport(weekOffset = 0) {
+    loadingState.style.display = 'flex';
+    noDataState.style.display = 'none';
+    reportContent.style.display = 'none';
+
+    try {
+      const resp = await fetch(`/api/weekly-report/week/${weekOffset}`, { credentials: 'include' });
+      const result = await resp.json();
+
+      loadingState.style.display = 'none';
+
+      if (result.success && result.report) {
+        const { report } = result;
+        
+        if (report.summary.daysLogged === 0) {
+          noDataState.style.display = 'flex';
+          weekRange.textContent = formatDateRange(report.startDate, report.endDate);
+          document.getElementById('weekNumber').textContent = report.weekNumber ? `Week ${report.weekNumber}` : 'Current Week';
+          document.getElementById('trimesterLabel').textContent = report.trimester ? getTrimesterLabel(report.trimester) : '';
+          return;
+        }
+
+        reportContent.style.display = 'block';
+        renderStats(report);
+        renderCharts(report);
+        renderHighlights(report);
+        renderBabyDevelopment(report);
+        
+        if (weekOffset === 0) {
+          renderTrends();
+        }
+      } else {
+        noDataState.style.display = 'flex';
+      }
+    } catch (err) {
+      console.error('Failed to load report:', err);
+      loadingState.style.display = 'none';
+      noDataState.style.display = 'flex';
+    }
+  }
+
+  // ==================== EVENT LISTENERS ====================
+  prevWeekBtn.addEventListener('click', () => {
+    currentWeekOffset++;
+    nextWeekBtn.disabled = false;
+    loadReport(currentWeekOffset);
+  });
+
+  nextWeekBtn.addEventListener('click', () => {
+    if (currentWeekOffset > 0) {
+      currentWeekOffset--;
+      if (currentWeekOffset === 0) {
+        nextWeekBtn.disabled = true;
+      }
+      loadReport(currentWeekOffset);
+    }
+  });
+
+  // ==================== INITIALIZE ====================
+  loadReport(0);
+})();
+</script>

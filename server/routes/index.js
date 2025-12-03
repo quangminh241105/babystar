@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth, requireAuthRedirect } = require('../middleware');
 const User = require('../models/user');
+const HealthLog = require('../models/healthlogs');
+const WeeklyReport = require('../models/weeklyreports');
 
 // Homepage or Welcome page based on authentication
 router.get('/', (req, res) => {
@@ -291,8 +293,690 @@ router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
   res.render('pages/nearbyhealthcare', { title: 'Nearby Healthcare' });
 });
 
-router.get('/log-health', requireAuthRedirect, (req, res) => {
-  res.render('pages/health-log', { title: 'Health Log' });
+router.get('/log-health', requireAuthRedirect, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    const currentWeek = user?.currentPregnancyWeek?.weeks || null;
+    const trimester = user?.currentTrimester || null;
+    
+    res.render('pages/health-log', { 
+      title: 'Health Log',
+      currentPregnancyWeek: currentWeek,
+      currentTrimester: trimester
+    });
+  } catch (err) {
+    res.render('pages/health-log', { 
+      title: 'Health Log',
+      currentPregnancyWeek: null,
+      currentTrimester: null
+    });
+  }
 });
+
+// ==================== HEALTH LOG API ROUTES ====================
+
+// GET /api/health-log/today - Get or create today's health log
+router.get('/api/health-log/today', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
+    const trimester = user?.currentTrimester || null;
+    
+    const log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
+    
+    res.json({ 
+      success: true, 
+      log,
+      userContext: {
+        pregnancyWeek,
+        trimester,
+        dueDate: user?.pregnancyProfile?.dueDate
+      }
+    });
+  } catch (err) {
+    console.error('Get today health log error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get health log' });
+  }
+});
+
+// GET /api/health-log/:date - Get health log for specific date
+router.get('/api/health-log/:date', requireAuth, async (req, res) => {
+  try {
+    const date = new Date(req.params.date);
+    if (isNaN(date.getTime())) {
+      return res.status(400).json({ success: false, error: 'Invalid date' });
+    }
+    
+    const log = await HealthLog.getByDate(req.session.user.id, date);
+    
+    res.json({ success: true, log });
+  } catch (err) {
+    console.error('Get health log by date error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get health log' });
+  }
+});
+
+// POST /api/health-log - Create or update today's health log
+router.post('/api/health-log', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
+    const trimester = user?.currentTrimester || null;
+    
+    // Get or create today's log
+    let log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
+    
+    // SERVER-SIDE VALIDATION: Ensure log is from today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const logDate = new Date(log.logDate);
+    logDate.setHours(0, 0, 0, 0);
+    
+    if (logDate.getTime() !== today.getTime()) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Cannot edit health logs from previous days. You can only edit today\'s log.' 
+      });
+    }
+    
+    const {
+      // Vitals
+      weightKg,
+      heartRateBpm,
+      temperatureC,
+      bloodSugar,
+      
+      // Mood & Energy
+      mood,
+      moodLog,
+      energyLevel,
+      stressLevel,
+      
+      // Sleep
+      sleep,
+      
+      // Symptoms
+      symptoms,
+      
+      // Exercise
+      exercises,
+      
+      // Nutrition
+      foodIntake,
+      hydration,
+      caffeineIntakeMg,
+      
+      // Fetal Movement
+      fetalMovement,
+      kickCountSessions,
+      
+      // Contractions
+      contractions,
+      
+      // Doctor Visit
+      doctorVisit,
+      
+      // Notes
+      notes,
+      
+      // Status
+      isComplete
+    } = req.body;
+    
+    // Update vitals
+    if (weightKg !== undefined) log.weightKg = weightKg || null;
+    if (heartRateBpm !== undefined) log.heartRateBpm = heartRateBpm || null;
+    if (temperatureC !== undefined) log.temperatureC = temperatureC || null;
+    if (bloodSugar !== undefined) log.bloodSugar = bloodSugar;
+    
+    // Update mood & energy
+    if (mood !== undefined) log.mood = mood || null;
+    if (moodLog !== undefined) log.moodLog = moodLog || [];
+    if (energyLevel !== undefined) log.energyLevel = energyLevel || null;
+    if (stressLevel !== undefined) log.stressLevel = stressLevel || null;
+    
+    // Update sleep
+    if (sleep !== undefined) {
+      log.sleep = {
+        bedTime: sleep.bedTime || null,
+        wakeTime: sleep.wakeTime || null,
+        totalHours: sleep.totalHours || null,
+        quality: sleep.quality || null,
+        timesAwakened: sleep.timesAwakened || 0,
+        awakeningReasons: sleep.awakeningReasons || [],
+        primaryPosition: sleep.primaryPosition || null,
+        usedPregnancyPillow: sleep.usedPregnancyPillow || null,
+        naps: sleep.naps || [],
+        notes: sleep.notes || null
+      };
+      // Also update legacy field
+      if (sleep.totalHours) log.hoursSleept = sleep.totalHours;
+    }
+    
+    // Update symptoms
+    if (symptoms !== undefined) log.symptoms = symptoms || [];
+    
+    // Update exercises
+    if (exercises !== undefined) log.exercises = exercises || [];
+    
+    // Update nutrition
+    if (foodIntake !== undefined) log.foodIntake = foodIntake || [];
+    if (hydration !== undefined) log.hydration = hydration;
+    if (caffeineIntakeMg !== undefined) log.caffeineIntakeMg = caffeineIntakeMg || null;
+    
+    // Update fetal movement
+    if (fetalMovement !== undefined) log.fetalMovement = fetalMovement;
+    if (kickCountSessions !== undefined) log.kickCountSessions = kickCountSessions || [];
+    
+    // Update contractions
+    if (contractions !== undefined) log.contractions = contractions || [];
+    
+    // Update doctor visit
+    if (doctorVisit !== undefined) log.doctorVisit = doctorVisit;
+    
+    // Update notes
+    if (notes !== undefined) log.notes = notes || null;
+    
+    // Update completion status
+    if (isComplete !== undefined) log.isComplete = isComplete;
+    
+    // Save and recalculate sections
+    await log.save();
+    
+    res.json({ success: true, log, message: isComplete ? 'Log saved and marked complete' : 'Log saved' });
+  } catch (err) {
+    console.error('Save health log error:', err);
+    res.status(500).json({ success: false, error: 'Failed to save health log' });
+  }
+});
+
+// PUT /api/health-log/:id - Update specific health log (with same-day check)
+router.put('/api/health-log/:id', requireAuth, async (req, res) => {
+  try {
+    const log = await HealthLog.findOne({ 
+      _id: req.params.id, 
+      userId: req.session.user.id,
+      deletedAt: null
+    });
+    
+    if (!log) {
+      return res.status(404).json({ success: false, error: 'Health log not found' });
+    }
+    
+    // SERVER-SIDE VALIDATION: Ensure log is from today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const logDate = new Date(log.logDate);
+    logDate.setHours(0, 0, 0, 0);
+    
+    if (logDate.getTime() !== today.getTime()) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Cannot edit health logs from previous days. You can only edit today\'s log.' 
+      });
+    }
+    
+    // Update fields from request body
+    Object.keys(req.body).forEach(key => {
+      if (key !== '_id' && key !== 'userId' && key !== 'logDate') {
+        log[key] = req.body[key];
+      }
+    });
+    
+    await log.save();
+    
+    res.json({ success: true, log });
+  } catch (err) {
+    console.error('Update health log error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update health log' });
+  }
+});
+
+// GET /api/health-log/history/:days - Get recent health logs
+router.get('/api/health-log/history/:days', requireAuth, async (req, res) => {
+  try {
+    const days = parseInt(req.params.days) || 7;
+    const logs = await HealthLog.getRecent(req.session.user.id, days);
+    
+    res.json({ success: true, logs });
+  } catch (err) {
+    console.error('Get health log history error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get health log history' });
+  }
+});
+
+// GET /api/health-log/week/:weekNumber - Get logs for specific pregnancy week
+router.get('/api/health-log/week/:weekNumber', requireAuth, async (req, res) => {
+  try {
+    const weekNumber = parseInt(req.params.weekNumber);
+    const logs = await HealthLog.getByPregnancyWeek(req.session.user.id, weekNumber);
+    
+    res.json({ success: true, logs });
+  } catch (err) {
+    console.error('Get health log by week error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get health logs' });
+  }
+});
+
+// DELETE /api/health-log/:id - Soft delete health log
+router.delete('/api/health-log/:id', requireAuth, async (req, res) => {
+  try {
+    const log = await HealthLog.findOne({ 
+      _id: req.params.id, 
+      userId: req.session.user.id,
+      deletedAt: null
+    });
+    
+    if (!log) {
+      return res.status(404).json({ success: false, error: 'Health log not found' });
+    }
+    
+    log.deletedAt = new Date();
+    await log.save();
+    
+    res.json({ success: true, message: 'Health log deleted' });
+  } catch (err) {
+    console.error('Delete health log error:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete health log' });
+  }
+});
+
+// ==================== WEEKLY REPORT API ROUTES ====================
+
+// Helper function to get week date range
+function getWeekDateRange(weekOffset = 0) {
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = Sunday
+  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+  
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() + mondayOffset - (weekOffset * 7));
+  startOfWeek.setHours(0, 0, 0, 0);
+  
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+  
+  return { startDate: startOfWeek, endDate: endOfWeek };
+}
+
+// Helper function to aggregate health logs into weekly stats
+async function aggregateWeeklyStats(userId, startDate, endDate, pregnancyWeek, trimester) {
+  const logs = await HealthLog.find({
+    userId,
+    logDate: { $gte: startDate, $lte: endDate },
+    deletedAt: null
+  }).sort({ logDate: 1 });
+
+  const daysLogged = logs.length;
+  const totalDaysInWeek = 7;
+
+  // Weight stats
+  const weights = logs.map(l => l.weightKg).filter(w => w != null);
+  const avgWeight = weights.length ? weights.reduce((a, b) => a + b, 0) / weights.length : null;
+  const startWeight = weights.length ? weights[0] : null;
+  const endWeight = weights.length ? weights[weights.length - 1] : null;
+  const weightChange = (startWeight && endWeight) ? endWeight - startWeight : null;
+
+  // Sleep stats
+  const sleepHours = logs.map(l => l.sleep?.totalHours || l.hoursSleept).filter(s => s != null);
+  const avgSleep = sleepHours.length ? sleepHours.reduce((a, b) => a + b, 0) / sleepHours.length : null;
+  const sleepQualities = logs.map(l => l.sleep?.quality).filter(q => q != null);
+  const avgSleepQuality = sleepQualities.length ? sleepQualities.reduce((a, b) => a + b, 0) / sleepQualities.length : null;
+
+  // Energy stats
+  const energyLevels = logs.map(l => l.energyLevel).filter(e => e != null);
+  const avgEnergy = energyLevels.length ? energyLevels.reduce((a, b) => a + b, 0) / energyLevels.length : null;
+
+  // Stress stats
+  const stressLevels = logs.map(l => l.stressLevel).filter(s => s != null);
+  const avgStress = stressLevels.length ? stressLevels.reduce((a, b) => a + b, 0) / stressLevels.length : null;
+
+  // Mood frequency
+  const moodFrequency = {};
+  logs.forEach(l => {
+    if (l.mood) {
+      moodFrequency[l.mood] = (moodFrequency[l.mood] || 0) + 1;
+    }
+    if (l.moodLog?.length) {
+      l.moodLog.forEach(m => {
+        if (m.mood) {
+          moodFrequency[m.mood] = (moodFrequency[m.mood] || 0) + 1;
+        }
+      });
+    }
+  });
+  const dominantMood = Object.keys(moodFrequency).length 
+    ? Object.entries(moodFrequency).sort((a, b) => b[1] - a[1])[0][0] 
+    : null;
+
+  // Symptom frequency
+  const symptomFrequency = {};
+  logs.forEach(l => {
+    if (l.symptoms?.length) {
+      l.symptoms.forEach(s => {
+        if (!symptomFrequency[s.symptom]) {
+          symptomFrequency[s.symptom] = { count: 0, totalSeverity: 0 };
+        }
+        symptomFrequency[s.symptom].count++;
+        symptomFrequency[s.symptom].totalSeverity += s.severity || 5;
+      });
+    }
+  });
+  const topSymptoms = Object.entries(symptomFrequency)
+    .map(([symptom, data]) => ({
+      symptom,
+      count: data.count,
+      avgSeverity: data.totalSeverity / data.count
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  // Exercise stats
+  const totalExerciseMinutes = logs.reduce((sum, l) => sum + (l.totalExerciseMinutes || 0), 0);
+  const exerciseDays = logs.filter(l => l.exercises?.length > 0).length;
+  const exerciseTypes = {};
+  logs.forEach(l => {
+    if (l.exercises?.length) {
+      l.exercises.forEach(e => {
+        if (!exerciseTypes[e.type]) {
+          exerciseTypes[e.type] = { count: 0, totalMinutes: 0 };
+        }
+        exerciseTypes[e.type].count++;
+        exerciseTypes[e.type].totalMinutes += e.durationMinutes || 0;
+      });
+    }
+  });
+
+  // Hydration stats
+  const waterIntakes = logs.map(l => l.hydration?.waterLiters || 0);
+  const avgWater = waterIntakes.length ? waterIntakes.reduce((a, b) => a + b, 0) / waterIntakes.length : 0;
+  const totalWater = waterIntakes.reduce((a, b) => a + b, 0);
+
+  // Heart rate stats
+  const heartRates = logs.map(l => l.heartRateBpm).filter(h => h != null);
+  const avgHeartRate = heartRates.length ? heartRates.reduce((a, b) => a + b, 0) / heartRates.length : null;
+
+  // Fetal movement (if applicable)
+  const fetalMovements = logs.map(l => l.fetalMovement?.count).filter(f => f != null);
+  const avgFetalMovement = fetalMovements.length ? fetalMovements.reduce((a, b) => a + b, 0) / fetalMovements.length : null;
+
+  // Doctor visits this week
+  const doctorVisits = logs.filter(l => l.doctorVisit?.visited).length;
+
+  // Determine overall status
+  let overallStatus = 'Stable';
+  let concernSeverity = 'none';
+  const concerns = [];
+  const positives = [];
+
+  // Check for concerning symptoms
+  const concerningSymptoms = ['bleeding', 'spotting', 'decreased_fetal_movement', 'contractions', 'fainting'];
+  topSymptoms.forEach(s => {
+    if (concerningSymptoms.includes(s.symptom)) {
+      concerns.push(`Reported ${s.symptom} ${s.count} time(s)`);
+      concernSeverity = 'moderate';
+    }
+    if (s.avgSeverity >= 7) {
+      concerns.push(`High severity ${s.symptom} (avg ${s.avgSeverity.toFixed(1)})`);
+      concernSeverity = concernSeverity === 'none' ? 'low' : concernSeverity;
+    }
+  });
+
+  // Check sleep
+  if (avgSleep && avgSleep < 6) {
+    concerns.push('Low average sleep hours');
+    concernSeverity = concernSeverity === 'none' ? 'low' : concernSeverity;
+  } else if (avgSleep && avgSleep >= 7) {
+    positives.push('Good sleep habits');
+  }
+
+  // Check hydration
+  if (avgWater >= 2) {
+    positives.push('Good hydration');
+  } else if (avgWater < 1.5 && avgWater > 0) {
+    concerns.push('Low water intake');
+  }
+
+  // Check exercise
+  if (totalExerciseMinutes >= 150) {
+    positives.push('Meeting exercise goals');
+    overallStatus = 'Good';
+  } else if (exerciseDays >= 3) {
+    positives.push('Regular exercise routine');
+  }
+
+  // Check logging consistency
+  const logCompletionRate = (daysLogged / totalDaysInWeek) * 100;
+  if (logCompletionRate >= 80) {
+    positives.push('Excellent logging consistency');
+    if (overallStatus === 'Stable' && concerns.length === 0) overallStatus = 'Good';
+  } else if (logCompletionRate >= 50) {
+    positives.push('Good logging consistency');
+  }
+
+  if (concerns.length === 0 && positives.length >= 3) {
+    overallStatus = 'Excellent';
+  } else if (concernSeverity === 'moderate' || concernSeverity === 'high') {
+    overallStatus = 'Needs Attention';
+  }
+
+  return {
+    summary: {
+      overallStatus,
+      statusScore: overallStatus === 'Excellent' ? 9 : overallStatus === 'Good' ? 7 : overallStatus === 'Stable' ? 5 : 3,
+      keySymptoms: topSymptoms.map(s => s.symptom),
+      startWeightKg: startWeight,
+      endWeightKg: endWeight,
+      weightChangeKg: weightChange,
+      avgEnergyLevel: avgEnergy ? Math.round(avgEnergy * 10) / 10 : null,
+      avgMood: dominantMood,
+      concernsDetected: concerns,
+      concernSeverity,
+      positiveHighlights: positives,
+      logCompletionRate: Math.round(logCompletionRate),
+      daysLogged
+    },
+    vitalsSummary: {
+      avgWeightKg: avgWeight ? Math.round(avgWeight * 10) / 10 : null,
+      avgHeartRateBpm: avgHeartRate ? Math.round(avgHeartRate) : null,
+      avgFetalMovementCount: avgFetalMovement ? Math.round(avgFetalMovement) : null
+    },
+    activities: {
+      totalExerciseMinutes,
+      exerciseDaysCount: exerciseDays,
+      exercisesByType: Object.entries(exerciseTypes).map(([type, data]) => ({
+        type,
+        totalMinutes: data.totalMinutes,
+        sessionsCount: data.count
+      })),
+      exerciseGoalMet: totalExerciseMinutes >= 150,
+      avgSleepHours: avgSleep ? Math.round(avgSleep * 10) / 10 : null,
+      avgSleepQuality: avgSleepQuality ? Math.round(avgSleepQuality * 10) / 10 : null,
+      avgWaterIntakeLiters: Math.round(avgWater * 10) / 10,
+      totalWaterIntakeLiters: Math.round(totalWater * 10) / 10,
+      hydrationGoalMet: avgWater >= 2
+    },
+    moodFrequency,
+    symptomDetails: topSymptoms,
+    dailyData: logs.map(l => ({
+      date: l.logDate,
+      weight: l.weightKg,
+      sleep: l.sleep?.totalHours || l.hoursSleept,
+      energy: l.energyLevel,
+      mood: l.mood,
+      water: l.hydration?.waterLiters || 0,
+      exerciseMinutes: l.totalExerciseMinutes || 0,
+      symptomCount: l.symptoms?.length || 0
+    })),
+    pregnancyWeek,
+    trimester,
+    healthLogIds: logs.map(l => l._id)
+  };
+}
+
+// GET /api/weekly-report/current - Get current week's report
+router.get('/api/weekly-report/current', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
+    const trimester = user?.currentTrimester || null;
+    
+    const { startDate, endDate } = getWeekDateRange(0);
+    
+    const stats = await aggregateWeeklyStats(
+      req.session.user.id, 
+      startDate, 
+      endDate, 
+      pregnancyWeek, 
+      trimester
+    );
+    
+    res.json({
+      success: true,
+      report: {
+        weekNumber: pregnancyWeek,
+        trimester,
+        startDate,
+        endDate,
+        ...stats
+      },
+      userContext: {
+        firstName: user?.firstName,
+        pregnancyWeek,
+        trimester,
+        dueDate: user?.pregnancyProfile?.dueDate
+      }
+    });
+  } catch (err) {
+    console.error('Get current weekly report error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get weekly report' });
+  }
+});
+
+// GET /api/weekly-report/week/:offset - Get report for specific week (0 = current, 1 = last week, etc.)
+router.get('/api/weekly-report/week/:offset', requireAuth, async (req, res) => {
+  try {
+    const offset = parseInt(req.params.offset) || 0;
+    const user = await User.findById(req.session.user.id);
+    
+    const { startDate, endDate } = getWeekDateRange(offset);
+    
+    // Calculate pregnancy week for that period
+    let pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
+    if (pregnancyWeek && offset > 0) {
+      pregnancyWeek = Math.max(1, pregnancyWeek - offset);
+    }
+    const trimester = pregnancyWeek ? (pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3) : null;
+    
+    const stats = await aggregateWeeklyStats(
+      req.session.user.id,
+      startDate,
+      endDate,
+      pregnancyWeek,
+      trimester
+    );
+    
+    res.json({
+      success: true,
+      report: {
+        weekNumber: pregnancyWeek,
+        trimester,
+        startDate,
+        endDate,
+        weekOffset: offset,
+        ...stats
+      }
+    });
+  } catch (err) {
+    console.error('Get weekly report error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get weekly report' });
+  }
+});
+
+// GET /api/weekly-report/history - Get summary of past weeks
+router.get('/api/weekly-report/history', requireAuth, async (req, res) => {
+  try {
+    const weeksToFetch = parseInt(req.query.weeks) || 4;
+    const user = await User.findById(req.session.user.id);
+    const currentPregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
+    
+    const reports = [];
+    
+    for (let i = 0; i < weeksToFetch; i++) {
+      const { startDate, endDate } = getWeekDateRange(i);
+      
+      // Quick count of logs for this week
+      const logCount = await HealthLog.countDocuments({
+        userId: req.session.user.id,
+        logDate: { $gte: startDate, $lte: endDate },
+        deletedAt: null
+      });
+      
+      let pregnancyWeek = currentPregnancyWeek;
+      if (pregnancyWeek && i > 0) {
+        pregnancyWeek = Math.max(1, pregnancyWeek - i);
+      }
+      
+      reports.push({
+        weekOffset: i,
+        weekLabel: i === 0 ? 'This Week' : i === 1 ? 'Last Week' : `${i} weeks ago`,
+        startDate,
+        endDate,
+        pregnancyWeek,
+        daysLogged: logCount,
+        hasData: logCount > 0
+      });
+    }
+    
+    res.json({ success: true, reports });
+  } catch (err) {
+    console.error('Get weekly report history error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get report history' });
+  }
+});
+
+// GET /api/weekly-report/trends - Get trends across multiple weeks
+router.get('/api/weekly-report/trends', requireAuth, async (req, res) => {
+  try {
+    const weeksToAnalyze = parseInt(req.query.weeks) || 4;
+    const user = await User.findById(req.session.user.id);
+    
+    const weeklyData = [];
+    
+    for (let i = weeksToAnalyze - 1; i >= 0; i--) {
+      const { startDate, endDate } = getWeekDateRange(i);
+      
+      const logs = await HealthLog.find({
+        userId: req.session.user.id,
+        logDate: { $gte: startDate, $lte: endDate },
+        deletedAt: null
+      });
+      
+      const weights = logs.map(l => l.weightKg).filter(w => w != null);
+      const sleeps = logs.map(l => l.sleep?.totalHours || l.hoursSleept).filter(s => s != null);
+      const energies = logs.map(l => l.energyLevel).filter(e => e != null);
+      const waters = logs.map(l => l.hydration?.waterLiters || 0);
+      
+      weeklyData.push({
+        weekOffset: i,
+        weekLabel: i === 0 ? 'This Week' : `Week -${i}`,
+        startDate,
+        avgWeight: weights.length ? weights.reduce((a, b) => a + b, 0) / weights.length : null,
+        avgSleep: sleeps.length ? sleeps.reduce((a, b) => a + b, 0) / sleeps.length : null,
+        avgEnergy: energies.length ? energies.reduce((a, b) => a + b, 0) / energies.length : null,
+        avgWater: waters.length ? waters.reduce((a, b) => a + b, 0) / waters.length : 0,
+        daysLogged: logs.length
+      });
+    }
+    
+    res.json({ success: true, trends: weeklyData });
+  } catch (err) {
+    console.error('Get trends error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get trends' });
+  }
+});
+
+// ...existing code for other routes...
 
 module.exports = router;
