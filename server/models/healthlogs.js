@@ -349,13 +349,10 @@ const healthLogSchema = new mongoose.Schema({
 	// ===== APPOINTMENTS & REMINDERS =====
 	// [IMPROVED] Track doctor visits
 	doctorVisit: {
-		type: {
-			visited: { type: Boolean, default: false },
-			type: { type: String, enum: ['routine', 'ultrasound', 'lab_work', 'specialist', 'emergency', 'other', null], default: null },
-			notes: { type: String, trim: true, maxlength: 500, default: null },
-			nextAppointment: { type: Date, default: null }
-		},
-		default: () => ({ visited: false, type: null, notes: null, nextAppointment: null })
+		visited: { type: Boolean, default: false },
+		visitType: { type: String, enum: ['routine', 'ultrasound', 'lab_work', 'specialist', 'emergency', 'other', null], default: null },
+		notes: { type: String, trim: true, maxlength: 500, default: null },
+		nextAppointment: { type: Date, default: null }
 	},
 	
 	// ===== GENERAL =====
