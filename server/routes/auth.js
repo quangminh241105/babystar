@@ -211,21 +211,32 @@ router.post('/login', async (req, res) => {
     user.lastLoginIP = req.ip;
     await user.save();
 
-    // Set session
-    req.session.user = { 
-      id: user._id, 
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      profileImageUrl: user.profileImageUrl
-    };
+    // REGENERATE SESSION to prevent session fixation and clear old user data
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('Session regenerate error:', err);
+        return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+      }
 
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ success: false, errors: { general: 'Session error' }});
-      const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
-      res.json({ success: true, redirect: safeRedirect });
+      // Set NEW session with fresh user data
+      req.session.user = { 
+        id: user._id, 
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        profileImageUrl: user.profileImageUrl
+      };
+
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error:', saveErr);
+          return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+        }
+        const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
+        res.json({ success: true, redirect: safeRedirect });
+      });
     });
 
   } catch (err) {
@@ -377,21 +388,31 @@ router.post('/google', async (req, res) => {
       await user.save();
     }
 
-    // Set session
-    req.session.user = {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      profileImageUrl: user.profileImageUrl
-    };
+    // REGENERATE SESSION for security and to clear old data
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('Session regenerate error:', err);
+        return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+      }
 
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ success: false, errors: { general: 'Session error' }});
-      const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
-      res.json({ success: true, redirect: safeRedirect });
+      req.session.user = {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        profileImageUrl: user.profileImageUrl
+      };
+
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error:', saveErr);
+          return res.status(500).json({ success: false, errors: { general: 'Session error' }});
+        }
+        const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
+        res.json({ success: true, redirect: safeRedirect });
+      });
     });
 
   } catch (err) {
@@ -402,9 +423,18 @@ router.post('/google', async (req, res) => {
 
 // GET /auth/logout - destroy session
 router.get('/logout', (req, res) => {
-  req.session?.destroy(() => {});
-  res.clearCookie('connect.sid');
-  res.redirect('/');
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destroy error:', err);
+      }
+      res.clearCookie('connect.sid', { path: '/' });
+      res.redirect('/');
+    });
+  } else {
+    res.clearCookie('connect.sid', { path: '/' });
+    res.redirect('/');
+  }
 });
 
 // GET /auth/me - get current user info
@@ -428,6 +458,13 @@ router.get('/me', async (req, res) => {
 // GET /auth/user-edit
 router.get('/user-edit', requireAuth, async (req, res) => {
   try {
+    // Prevent browser caching
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     const user = await User.findById(req.session.user.id).select('-passwordHash');
     if (!user) return res.redirect('/auth/login');
     res.render('pages/auth/user-edit', { title: 'Edit Profile', user });
@@ -609,6 +646,13 @@ router.put('/user-edit', requireAuth, async (req, res) => {
 // GET /auth/user-edit/data - get current user data for form
 router.get('/user-edit/data', requireAuth, async (req, res) => {
   try {
+    // Prevent caching of user data
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     const user = await User.findById(req.session.user.id).select('-passwordHash');
     if (!user) {
       return res.status(404).json({ success: false, errors: { general: 'User not found' }});

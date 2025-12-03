@@ -1,291 +1,404 @@
 <link rel="stylesheet" href="/css/chatbot.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<div class="chatContainer">
+<div class="chat-wrapper">
     <!-- Sidebar -->
-    <aside class="conversationSidebar" id="conversationSidebar">
-        <div class="sidebarHeader">
-            <h3>Conversations</h3>
-            <div class="sidebarActions">
-                <button class="newChatBtn" id="newChatBtn" title="New chat">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M5 12h14"/>
+                        <path d="M12 8V4H8" />
+                        <rect width="16" height="12" x="4" y="8" rx="2" />
+                        <path d="M2 14h2M20 14h2M15 13v2M9 13v2" />
+                    </svg>
+                </div>
+                <span class="brand-text">BabyStar</span>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-icon btn-new" id="newChatBtn" title="New Chat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                 </button>
-                <button class="collapseSidebarBtn" id="collapseSidebarBtn" title="Toggle sidebar">
+                <button class="btn-icon btn-collapse" id="collapseSidebarBtn" title="Collapse">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 18l-6-6 6-6"/>
+                        <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
             </div>
         </div>
-        <div class="conversationList" id="conversationList">
-            <div class="loadingConversations">Loading...</div>
+        <div class="sidebar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" placeholder="Search conversations..." id="searchConversations">
+        </div>
+        <div class="conversation-list" id="conversationList">
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading chats...</p>
+            </div>
         </div>
     </aside>
 
-    <!-- Mobile Toggle -->
-    <button class="sidebarToggle" id="sidebarToggle">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="sidebarToggle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
     </button>
 
-    <!-- Main Chat -->
-    <main class="chatMainArea">
-        <div class="featureCard">
-            <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/>
-                    <path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>
-                </svg>
+    <!-- Main Chat Area -->
+    <main class="chat-main">
+        <!-- Chat Header -->
+        <header class="chat-header">
+            <div class="header-info">
+                <div class="avatar avatar-ai">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8V4H8" />
+                        <rect width="16" height="12" x="4" y="8" rx="2" />
+                        <path d="M2 14h2M20 14h2M15 13v2M9 13v2" />
+                    </svg>
+                </div>
+                <div class="header-text">
+                    <h1>Pregnancy Assistant</h1>
+                    <span class="status"><span class="status-dot"></span>Online & Ready to Help</span>
+                </div>
             </div>
-            <div class="feature">
-                <div class="featureName">AI Pregnancy Assistant</div>
-                <div class="featureDescription">Ask anything about pregnancy, health & wellness</div>
+            <div class="header-actions">
+                <button class="btn-icon" title="Clear Chat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Messages Container -->
+        <div class="messages-container" id="chatBox">
+            <!-- Welcome Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 8V4H8" />
+                        <rect width="16" height="12" x="4" y="8" rx="2" />
+                        <path d="M2 14h2M20 14h2M15 13v2M9 13v2" />
+                    </svg>
+                </div>
+                <h2>Welcome to BabyStar AI 💕</h2>
+                <p>Your trusted pregnancy companion. Ask me anything about nutrition, exercise, symptoms, and more!</p>
+                <div class="welcome-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">🍎</span>
+                        <span>Nutrition Tips</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🏃‍♀️</span>
+                        <span>Safe Exercises</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">💊</span>
+                        <span>Health Advice</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">👶</span>
+                        <span>Baby Development</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="chatBox" id="chatBox"></div>
-
-        <div class="userInput">
-            <div>Quick questions</div>
-            <div id="quickQuestions">
-                <button class="question" data-question="What foods should I avoid during pregnancy?">Foods to avoid</button>
-                <button class="question" data-question="Is it safe to exercise during pregnancy?">Safe exercises</button>
-                <button class="question" data-question="How can I manage morning sickness?">Morning sickness tips</button>
-                <button class="question" data-question="What are the signs of labor?">Signs of labor</button>
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="quick-prompts" id="quickQuestions">
+                <button class="prompt-chip" data-question="What foods should I avoid during pregnancy?">
+                    🍎 Foods to avoid
+                </button>
+                <button class="prompt-chip" data-question="Is it safe to exercise during pregnancy?">
+                    🏃‍♀️ Safe exercises
+                </button>
+                <button class="prompt-chip" data-question="How can I manage morning sickness?">
+                    🌅 Morning sickness
+                </button>
+                <button class="prompt-chip" data-question="What are the signs of labor?">
+                    👶 Signs of labor
+                </button>
             </div>
-            <div id="messageForm">
-                <form id="chatForm">
-                    <input type="text" placeholder="Type your question..." id="messageInput" disabled>
-                    <button type="submit" class="sendButton" id="sendBtn" disabled>
+            <form class="input-form" id="chatForm">
+                <div class="input-wrapper">
+                    <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" disabled>
+                    <button type="submit" class="btn-send" id="sendBtn" disabled>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>
                     </button>
-                </form>
-            </div>
+                </div>
+                <p class="input-hint">Press Enter to send • AI responses are for informational purposes only</p>
+            </form>
         </div>
     </main>
-</div>
 
-<div class="sidebarOverlay" id="sidebarOverlay"></div>
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="sidebarOverlay"></div>
+</div>
 
 <script>
     (async function () {
         // ===== DOM Elements =====
         const chatBox = document.getElementById('chatBox');
+        const welcomeScreen = document.getElementById('welcomeScreen');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const chatForm = document.getElementById('chatForm');
-        const quickQuestions = document.querySelectorAll('.question');
+        const quickQuestions = document.querySelectorAll('.prompt-chip');
         const conversationList = document.getElementById('conversationList');
         const newChatBtn = document.getElementById('newChatBtn');
         const sidebarToggle = document.getElementById('sidebarToggle');
-        const conversationSidebar = document.getElementById('conversationSidebar');
+        const sidebar = document.getElementById('sidebar');
         const collapseSidebarBtn = document.getElementById('collapseSidebarBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const chatContainer = document.querySelector('.chatContainer');
+        const chatWrapper = document.querySelector('.chat-wrapper');
 
         // ===== State =====
-        let conversationId = null; // Tracks current conversation for context
-        let conversations = []; // List of user's conversations
+        let conversationId = null;
+        let conversations = [];
         let sidebarCollapsed = localStorage.getItem('chatSidebarCollapsed') === 'true';
 
         // ===== Utility Functions =====
-
-        // Format current time as HH:MM
         function formatTime(date) {
             const d = date ? new Date(date) : new Date();
-            return d.getHours().toString().padStart(2, '0') + ':' +
-                d.getMinutes().toString().padStart(2, '0');
+            return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         }
 
-        // Format date for conversation list
         function formatDate(dateStr) {
             if (!dateStr) return '';
             const date = new Date(dateStr);
             const now = new Date();
-
-            // Reset time to midnight for accurate day comparison
             const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const diffTime = nowOnly.getTime() - dateOnly.getTime();
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays === 0) {
-                // Today - show time
-                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            }
+            if (diffDays === 0) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             if (diffDays === 1) return 'Yesterday';
-            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'long' });
-            if (diffDays < 365) return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Enable/disable all input elements
         function enableInput(enable) {
             messageInput.disabled = !enable;
             sendBtn.disabled = !enable;
-            quickQuestions.forEach(q => q.classList.toggle('disabled', !enable));
+            quickQuestions.forEach(q => q.disabled = !enable);
         }
 
-        // ===== Sidebar Toggle & Collapse =====
+        function hideWelcomeScreen() {
+            if (welcomeScreen) {
+                welcomeScreen.style.display = 'none';
+            }
+        }
 
-        // Mobile sidebar toggle
+        function showWelcomeScreen() {
+            if (welcomeScreen) {
+                welcomeScreen.style.display = 'flex';
+            }
+        }
+
+        function hasVisibleMessages() {
+            return chatBox.querySelectorAll('.message').length > 0;
+        }
+
+        // ===== Sidebar Functions =====
         function openMobileSidebar() {
-            conversationSidebar.classList.add('open');
+            sidebar.classList.add('open');
             sidebarOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeMobileSidebar() {
-            conversationSidebar.classList.remove('open');
+            sidebar.classList.remove('open');
             sidebarOverlay.classList.remove('active');
             document.body.style.overflow = '';
         }
 
         sidebarToggle.addEventListener('click', () => {
-            if (conversationSidebar.classList.contains('open')) {
-                closeMobileSidebar();
-            } else {
-                openMobileSidebar();
-            }
+            sidebar.classList.contains('open') ? closeMobileSidebar() : openMobileSidebar();
         });
 
-        // Close sidebar when clicking overlay
         sidebarOverlay.addEventListener('click', closeMobileSidebar);
 
-        // Collapse/expand sidebar on desktop
         function toggleSidebarCollapse() {
             sidebarCollapsed = !sidebarCollapsed;
             localStorage.setItem('chatSidebarCollapsed', sidebarCollapsed);
-            conversationSidebar.classList.toggle('collapsed', sidebarCollapsed);
-            chatContainer.classList.toggle('sidebar-collapsed', sidebarCollapsed);
+            sidebar.classList.toggle('collapsed', sidebarCollapsed);
+            chatWrapper.classList.toggle('sidebar-collapsed', sidebarCollapsed);
         }
 
         collapseSidebarBtn.addEventListener('click', toggleSidebarCollapse);
 
-        // Apply initial collapsed state (only on desktop)
         function applyInitialSidebarState() {
             if (window.innerWidth > 768 && sidebarCollapsed) {
-                conversationSidebar.classList.add('collapsed');
-                chatContainer.classList.add('sidebar-collapsed');
+                sidebar.classList.add('collapsed');
+                chatWrapper.classList.add('sidebar-collapsed');
             }
         }
         applyInitialSidebarState();
 
-        // Handle resize
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
                 closeMobileSidebar();
                 if (sidebarCollapsed) {
-                    conversationSidebar.classList.add('collapsed');
-                    chatContainer.classList.add('sidebar-collapsed');
+                    sidebar.classList.add('collapsed');
+                    chatWrapper.classList.add('sidebar-collapsed');
                 }
             } else {
-                conversationSidebar.classList.remove('collapsed');
-                chatContainer.classList.remove('sidebar-collapsed');
+                sidebar.classList.remove('collapsed');
+                chatWrapper.classList.remove('sidebar-collapsed');
             }
         });
 
-        // ===== Message Display Functions =====
-
-        // Add AI assistant message to chat
+        // ===== Message Functions =====
         function addAIMessage(text, timestamp) {
+            hideWelcomeScreen();
             const bubble = document.createElement('div');
-            bubble.className = 'AIChatBubble';
+            bubble.className = 'message message-ai';
             bubble.innerHTML = `
-            <div class="AIchatIcon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 8V4H8" />
-                    <rect width="16" height="12" x="4" y="8" rx="2" />
-                    <path d="M2 14h2" />
-                    <path d="M20 14h2" />
-                    <path d="M15 13v2" />
-                    <path d="M9 13v2" />
-                </svg>
-            </div>
-            <div class="chat">
-                <div class="chatText">${escapeHtml(text)}</div>
-                <div class="AIchatTime">${formatTime(timestamp)}</div>
-            </div>`;
+                <div class="message-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/>
+                        <path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>
+                    </svg>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">${escapeHtml(text)}</div>
+                    <span class="message-time">${formatTime(timestamp)}</span>
+                </div>
+            `;
             chatBox.appendChild(bubble);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            requestAnimationFrame(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
         }
 
-        // Add user message to chat
         function addUserMessage(text, timestamp) {
+            hideWelcomeScreen();
             const bubble = document.createElement('div');
-            bubble.className = 'UserChatBubble';
+            bubble.className = 'message message-user';
             bubble.innerHTML = `
-            <div class="UserchatIcon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="purple" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                </svg>
-            </div>
-            <div class="chat">
-                <div class="UserChatText">${escapeHtml(text)}</div>
-                <div class="UserChatTime">${formatTime(timestamp)}</div>
-            </div>`;
+                <div class="message-content">
+                    <div class="message-bubble">${escapeHtml(text)}</div>
+                    <span class="message-time">${formatTime(timestamp)}</span>
+                </div>
+                <div class="message-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+            `;
             chatBox.appendChild(bubble);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            requestAnimationFrame(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
         }
 
-        // Clear chat box
+        function addTypingIndicator() {
+            hideWelcomeScreen();
+            // Remove existing typing indicator first
+            removeTypingIndicator();
+
+            const typing = document.createElement('div');
+            typing.className = 'message message-ai typing-indicator';
+            typing.id = 'typingIndicator';
+            typing.innerHTML = `
+                <div class="message-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/>
+                        <path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>
+                    </svg>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            chatBox.appendChild(typing);
+            requestAnimationFrame(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        function removeTypingIndicator() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) {
+                typing.remove();
+            }
+        }
+
         function clearChatBox() {
-            chatBox.innerHTML = '';
+            const messages = chatBox.querySelectorAll('.message');
+            messages.forEach(m => m.remove());
+            showWelcomeScreen();
         }
 
-        // ===== Conversation List Functions =====
-
-        // Render conversation list in sidebar
+        // ===== Conversation List =====
         function renderConversationList() {
             if (conversations.length === 0) {
-                conversationList.innerHTML = '<div class="noConversations">No conversations yet. Start a new chat!</div>';
+                conversationList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <p>No conversations yet</p>
+                        <span>Start a new chat!</span>
+                    </div>
+                `;
                 return;
             }
 
             conversationList.innerHTML = conversations.map(conv => `
-            <div class="conversationItem ${conv._id === conversationId ? 'active' : ''}" data-id="${conv._id}">
-                <div class="convTitle">${escapeHtml(conv.title || 'Untitled')}</div>
-                <div class="convMeta">
-                    <span class="convDate">${formatDate(conv.lastMessageAt || conv.createdAt)}</span>
-                    <span class="convMessages">${conv.stats?.messageCount || 0} messages</span>
+                <div class="conversation-item ${conv._id === conversationId ? 'active' : ''}" data-id="${conv._id}">
+                    <div class="conv-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="conv-info">
+                        <span class="conv-title">${escapeHtml(conv.title || 'New Chat')}</span>
+                        <span class="conv-meta">${formatDate(conv.lastMessageAt || conv.createdAt)} • ${conv.stats?.messageCount || 0} msgs</span>
+                    </div>
+                    <button class="conv-delete" data-id="${conv._id}" title="Delete">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                 </div>
-                <button class="deleteConvBtn" data-id="${conv._id}" title="Delete conversation">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                    </svg>
-                </button>
-            </div>
-        `).join('');
+            `).join('');
 
-            // Add click handlers
-            conversationList.querySelectorAll('.conversationItem').forEach(item => {
+            conversationList.querySelectorAll('.conversation-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    if (!e.target.closest('.deleteConvBtn')) {
+                    if (!e.target.closest('.conv-delete')) {
                         loadConversation(item.dataset.id);
-                        // Close sidebar on mobile after selection
-                        if (window.innerWidth <= 768) {
-                            closeMobileSidebar();
-                        }
+                        if (window.innerWidth <= 768) closeMobileSidebar();
                     }
                 });
             });
 
-            // Add delete handlers
-            conversationList.querySelectorAll('.deleteConvBtn').forEach(btn => {
+            conversationList.querySelectorAll('.conv-delete').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     deleteConversation(btn.dataset.id);
@@ -294,8 +407,6 @@
         }
 
         // ===== API Functions =====
-
-        // Check if user has valid session
         async function checkSession() {
             try {
                 const resp = await fetch('/chatbot/debug-session', { credentials: 'include' });
@@ -306,7 +417,6 @@
             }
         }
 
-        // Fetch conversation list
         async function fetchConversations() {
             try {
                 const resp = await fetch('/chatbot/conversations', { credentials: 'include' });
@@ -317,11 +427,10 @@
                 }
             } catch (err) {
                 console.error('Error fetching conversations:', err);
-                conversationList.innerHTML = '<div class="errorLoading">Failed to load conversations</div>';
+                conversationList.innerHTML = '<div class="error-state">Failed to load</div>';
             }
         }
 
-        // Load a specific conversation
         async function loadConversation(id) {
             try {
                 enableInput(false);
@@ -331,17 +440,10 @@
                 if (data.success && data.conversation) {
                     conversationId = data.conversation._id;
                     clearChatBox();
-
-                    // Render all messages
                     data.conversation.messages.forEach(msg => {
-                        if (msg.role === 'user') {
-                            addUserMessage(msg.content, msg.createdAt);
-                        } else if (msg.role === 'assistant') {
-                            addAIMessage(msg.content, msg.createdAt);
-                        }
+                        if (msg.role === 'user') addUserMessage(msg.content, msg.createdAt);
+                        else if (msg.role === 'assistant') addAIMessage(msg.content, msg.createdAt);
                     });
-
-                    // Update active state in sidebar
                     renderConversationList();
                 }
             } catch (err) {
@@ -353,43 +455,28 @@
             }
         }
 
-        // Delete a conversation
         async function deleteConversation(id) {
-            if (!confirm('Are you sure you want to delete this conversation?')) return;
-
+            if (!confirm('Delete this conversation?')) return;
             try {
-                const resp = await fetch(`/chatbot/conversations/${id}`, {
-                    method: 'DELETE',
-                    credentials: 'include'
-                });
+                const resp = await fetch(`/chatbot/conversations/${id}`, { method: 'DELETE', credentials: 'include' });
                 const data = await resp.json();
-
                 if (data.success) {
-                    // Remove from list
                     conversations = conversations.filter(c => c._id !== id);
                     renderConversationList();
-
-                    // If deleted current conversation, start new chat
-                    if (conversationId === id) {
-                        startNewChat();
-                    }
+                    if (conversationId === id) startNewChat();
                 }
             } catch (err) {
                 console.error('Error deleting conversation:', err);
-                alert('Failed to delete conversation');
             }
         }
 
-        // Start a new chat
         function startNewChat() {
             conversationId = null;
             clearChatBox();
-            addAIMessage("Hello! I'm your BabyStar AI assistant. I can help answer questions about pregnancy, nutrition, exercise, and more. What would you like to know?");
             renderConversationList();
             messageInput.focus();
         }
 
-        // Send message to server and get AI response
         async function sendMessageToServer(text) {
             const resp = await fetch('/chatbot/message', {
                 method: 'POST',
@@ -399,70 +486,58 @@
             });
             const data = await resp.json();
             if (data.success) {
-                conversationId = data.conversationId; // Save for conversation context
-                return data.assistant;
+                conversationId = data.conversationId;
+                return data.reply || data.assistant; // Handle both response formats
+            } else {
+                throw new Error(data.error || 'Failed to get response');
             }
-            throw new Error(data.errors?.general || 'Server error');
         }
 
-        // ===== Main Send Message Handler =====
-        async function sendMessage(text) {
-            if (!text.trim()) return;
+        // ===== Event Listeners =====
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (!text) return;
 
             addUserMessage(text);
             messageInput.value = '';
             enableInput(false);
+            addTypingIndicator();
 
             try {
                 const reply = await sendMessageToServer(text);
+                removeTypingIndicator();
+
+                // Small delay to ensure DOM is updated before adding AI message
+                await new Promise(resolve => setTimeout(resolve, 50));
+
                 addAIMessage(reply);
-                // Refresh conversation list to show new/updated conversation
                 await fetchConversations();
-            } catch (e) {
-                addAIMessage('Sorry, an error occurred. Please try again.');
+            } catch (err) {
+                removeTypingIndicator();
+                addAIMessage('Error: ' + err.message);
+            } finally {
+                enableInput(true);
+                messageInput.focus();
             }
-
-            enableInput(true);
-            messageInput.focus();
-        }
-
-        // ===== Initialization =====
-
-        // Check session and initialize chat
-        const hasSession = await checkSession();
-        if (!hasSession) {
-            addAIMessage('Please login to use the chatbot. Redirecting...');
-            setTimeout(() => {
-                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
-            }, 2000);
-            return;
-        }
-
-        // Session valid - enable chat and show greeting
-        enableInput(true);
-        addAIMessage("Hello! I'm your BabyStar AI assistant. I can help answer questions about pregnancy, nutrition, exercise, and more. What would you like to know?");
-
-        // Fetch existing conversations
-        await fetchConversations();
-
-        // ===== Event Listeners =====
-
-        // Form submit
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            sendMessage(messageInput.value);
         });
-
-        // Quick question clicks
-        quickQuestions.forEach(q => {
-            q.addEventListener('click', () => {
-                if (!q.classList.contains('disabled')) {
-                    sendMessage(q.dataset.question);
-                }
+        quickQuestions.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.disabled) return;
+                const question = btn.dataset.question;
+                messageInput.value = question;
+                chatForm.dispatchEvent(new Event('submit'));
             });
         });
-
-        // New chat button
         newChatBtn.addEventListener('click', startNewChat);
+
+        // ===== Initialization =====
+        const sessionValid = await checkSession();
+        if (sessionValid) {
+            enableInput(true);
+            await fetchConversations();
+        } else {
+            addAIMessage('Please log in to use the chatbot.');
+        }
     })();
 </script>

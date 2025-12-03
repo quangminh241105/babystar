@@ -9,26 +9,30 @@
     </div>
   </header>
 
-  <form id="profileForm" novalidate>
+  <form id="profileForm" novalidate autocomplete="off">
+    <!-- Hidden fields to trick browser autofill -->
+    <input type="text" name="fakeusernameremembered" style="display:none;" />
+    <input type="password" name="fakepasswordremembered" style="display:none;" />
+
     <!-- Personal Information -->
     <section class="card">
       <h2 class="card-title">Personal Information</h2>
 
       <div class="field">
         <label for="fullName">Full Name</label>
-        <input id="fullName" name="fullName" type="text" placeholder="Enter your full name" />
+        <input id="fullName" name="fullName" type="text" placeholder="Enter your full name" autocomplete="nope" data-lpignore="true" data-form-type="other"/>
         <div class="field-error" id="fullNameError"></div>
       </div>
 
       <div class="row two">
         <div class="field">
           <label for="email">Email Address</label>
-          <input id="email" name="email" type="email" placeholder="name@example.com" />
+          <input id="email" name="email" type="email" placeholder="name@example.com" autocomplete="nope" data-lpignore="true" data-form-type="other"/>
           <div class="field-error" id="emailError"></div>
         </div>
         <div class="field">
           <label for="phoneNumber">Phone Number</label>
-          <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="+1 555 555 5555" />
+          <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="+1 555 555 5555" autocomplete="nope" data-lpignore="true" data-form-type="other"/>
           <div class="field-error" id="phoneNumberError"></div>
         </div>
       </div>
@@ -36,11 +40,11 @@
       <div class="row two">
         <div class="field">
           <label for="dateOfBirth">Date of Birth</label>
-          <input id="dateOfBirth" name="dateOfBirth" type="date" />
+          <input id="dateOfBirth" name="dateOfBirth" type="date" autocomplete="nope" data-lpignore="true" />
         </div>
         <div class="field">
           <label for="currentWeightKg">Current Weight (kg)</label>
-          <input id="currentWeightKg" name="currentWeightKg" type="number" step="0.1" min="20" max="500" />
+          <input id="currentWeightKg" name="currentWeightKg" type="number" step="0.1" min="20" max="500" autocomplete="nope" data-lpignore="true" />
         </div>
       </div>
     </section>
@@ -52,19 +56,19 @@
       <div class="row two">
         <div class="field">
           <label for="pp_lastMenstrualPeriod">Last Menstrual Period (LMP)</label>
-          <input id="pp_lastMenstrualPeriod" name="pregnancyProfile.lastMenstrualPeriod" type="date" />
+          <input id="pp_lastMenstrualPeriod" name="pregnancyProfile.lastMenstrualPeriod" type="date" autocomplete="nope" data-lpignore="true" />
           <div class="helper">First day of your last period</div>
         </div>
         <div class="field">
           <label for="pp_dueDate">Expected Due Date</label>
-          <input id="pp_dueDate" name="pregnancyProfile.dueDate" type="date" />
+          <input id="pp_dueDate" name="pregnancyProfile.dueDate" type="date" autocomplete="nope" data-lpignore="true" />
         </div>
       </div>
 
       <div class="row three">
         <div class="field">
           <label for="pp_bloodType">Blood Type</label>
-          <select id="pp_bloodType" name="pregnancyProfile.bloodType">
+          <select id="pp_bloodType" name="pregnancyProfile.bloodType" autocomplete="nope">
             <option value="">Select...</option>
             <option value="A+">A+</option>
             <option value="A-">A-</option>
@@ -78,12 +82,12 @@
         </div>
         <div class="field">
           <label for="pp_gravida">Gravida</label>
-          <input id="pp_gravida" name="pregnancyProfile.gravida" type="number" min="1" max="20" />
+          <input id="pp_gravida" name="pregnancyProfile.gravida" type="number" min="1" max="20" autocomplete="nope" data-lpignore="true" />
           <div class="helper">Total pregnancies</div>
         </div>
         <div class="field">
           <label for="pp_para">Para</label>
-          <input id="pp_para" name="pregnancyProfile.para" type="number" min="0" max="20" />
+          <input id="pp_para" name="pregnancyProfile.para" type="number" min="0" max="20" autocomplete="nope" data-lpignore="true" />
           <div class="helper">Prior births after 20 weeks</div>
         </div>
       </div>
@@ -91,30 +95,30 @@
       <div class="row two">
         <div class="field">
           <label for="pp_heightCm">Height (cm)</label>
-          <input id="pp_heightCm" name="pregnancyProfile.heightCm" type="number" step="0.1" min="50" max="300" />
+          <input id="pp_heightCm" name="pregnancyProfile.heightCm" type="number" step="0.1" min="50" max="300" autocomplete="nope" data-lpignore="true" />
         </div>
         <div class="field">
           <label for="pp_prePregnancyWeightKg">Pre-Pregnancy Weight (kg)</label>
           <input id="pp_prePregnancyWeightKg" name="pregnancyProfile.prePregnancyWeightKg" type="number" step="0.1"
-            min="20" max="500" />
+            min="20" max="500" autocomplete="nope" data-lpignore="true" />
         </div>
       </div>
 
       <div class="field">
         <label for="pp_allergies">Allergies</label>
-        <input id="pp_allergies" name="pregnancyProfile.allergies" type="text"
+        <input id="pp_allergies" name="pregnancyProfile.allergies" type="text" autocomplete="nope" data-lpignore="true"
           placeholder="Peanuts, Shellfish (comma separated)" />
       </div>
 
       <div class="field">
         <label for="pp_medicalConditions">Medical Conditions</label>
-        <input id="pp_medicalConditions" name="pregnancyProfile.medicalConditions" type="text"
+        <input id="pp_medicalConditions" name="pregnancyProfile.medicalConditions" type="text" autocomplete="nope" data-lpignore="true"
           placeholder="Gestational diabetes (comma separated)" />
       </div>
 
       <div class="field checkbox-field">
         <label class="checkbox-label">
-          <input type="checkbox" id="pp_isHighRisk" name="pregnancyProfile.isHighRisk" />
+          <input type="checkbox" id="pp_isHighRisk" name="pregnancyProfile.isHighRisk" autocomplete="nope" />
           <span>High-Risk Pregnancy</span>
         </label>
       </div>
@@ -126,11 +130,11 @@
       <div class="row two">
         <div class="field">
           <label for="pp_primaryPhysician">Primary Physician / Midwife</label>
-          <input id="pp_primaryPhysician" name="pregnancyProfile.primaryPhysician" type="text" />
+          <input id="pp_primaryPhysician" name="pregnancyProfile.primaryPhysician" type="text" autocomplete="nope" data-lpignore="true" />
         </div>
         <div class="field">
           <label for="pp_hospitalName">Hospital / Birth Center</label>
-          <input id="pp_hospitalName" name="pregnancyProfile.hospitalName" type="text" />
+          <input id="pp_hospitalName" name="pregnancyProfile.hospitalName" type="text" autocomplete="nope" data-lpignore="true" />
         </div>
       </div>
     </section>
@@ -186,19 +190,19 @@
       <div id="passwordForm">
         <div class="field" id="currentPasswordField">
           <label for="currentPassword">Current Password</label>
-          <input id="currentPassword" type="password" placeholder="Enter current password" />
+          <input id="currentPassword" type="password" placeholder="Enter current password" autocomplete="new-password" data-lpignore="true" data-form-type="other"/>
           <div class="field-error" id="currentPasswordError"></div>
         </div>
 
         <div class="field">
           <label for="newPassword">New Password</label>
-          <input id="newPassword" type="password" placeholder="At least 6 characters" />
+          <input id="newPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" data-lpignore="true" data-form-type="other"/>
           <div class="field-error" id="newPasswordError"></div>
         </div>
 
         <div class="field">
           <label for="newPassword2">Confirm New Password</label>
-          <input id="newPassword2" type="password" placeholder="Confirm new password" />
+          <input id="newPassword2" type="password" placeholder="Confirm new password" autocomplete="new-password" data-lpignore="true" data-form-type="other"/>
           <div class="field-error" id="newPassword2Error"></div>
         </div>
 
@@ -258,15 +262,37 @@
 
 <script>
   (function () {
+    // Clear all form fields on page load to prevent autofill
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        document.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])').forEach(function(input) {
+          if (input.name !== 'fakeusernameremembered' && input.name !== 'fakepasswordremembered') {
+            input.value = '';
+          }
+        });
+        document.querySelectorAll('select').forEach(function(select) {
+          select.selectedIndex = 0;
+        });
+        // Now load the actual user data
+        loadUserData();
+      }, 50);
+    });
+
     const form = document.getElementById('profileForm');
     const saveBtn = document.getElementById('saveBtn');
-    const resetBtn = document.getElementById('resetBtn');
     const messageEl = document.getElementById('message');
     let originalData = {};
 
     async function loadUserData() {
       try {
-        const resp = await fetch('/auth/user-edit/data', { credentials: 'include' });
+        const resp = await fetch('/auth/user-edit/data?_=' + Date.now(), { 
+          credentials: 'include',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
         const result = await resp.json();
         if (result.success) {
           originalData = JSON.parse(JSON.stringify(result.data));
@@ -399,7 +425,6 @@
       }
     });
 
-    resetBtn.addEventListener('click', () => { populateForm(originalData); showMessage('Form reset', 'success'); });
     document.getElementById('exportProfile').addEventListener('click', () => { window.location.href = '/auth/user-edit/export'; });
     document.getElementById('clearPregnancy').addEventListener('click', async () => {
       if (!confirm('Clear all pregnancy data?')) return;
@@ -411,7 +436,10 @@
     // Password section
     async function loadPasswordInfo() {
       try {
-        const resp = await fetch('/auth/has-password', { credentials: 'include' });
+        const resp = await fetch('/auth/has-password?_=' + Date.now(), { 
+          credentials: 'include',
+          cache: 'no-store'
+        });
         const data = await resp.json();
 
         const passwordInfo = document.getElementById('passwordInfo');
