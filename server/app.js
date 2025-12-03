@@ -37,9 +37,10 @@ const sessionMiddleware = session({
 	store: sessionStore, // USE MONGO STORE
 	cookie: {
 		maxAge: SESSION_MAX_AGE,
-		httpOnly: true,
-		secure: false, // Set to true only in production with HTTPS
-		sameSite: 'lax'
+		// httpOnly: true,
+		secure: true, // Set to true only in production with HTTPS
+		sameSite: 'lax',
+		domain: process.env.COOKIE_DOMAIN || undefined || '.obsidianbr.io.vn'
 	}
 });
 

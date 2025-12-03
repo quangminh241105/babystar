@@ -316,6 +316,7 @@ router.get('/log-health', requireAuthRedirect, async (req, res) => {
 // ==================== HEALTH LOG API ROUTES ====================
 
 // GET /api/health-log/today - Get or create today's health log
+// SPECIFIC ROUTES FIRST
 router.get('/api/health-log/today', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
@@ -339,10 +340,47 @@ router.get('/api/health-log/today', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/health-log/history/:days - Get recent health logs
+// THIS MUST COME BEFORE /:date
+router.get('/api/health-log/history/:days', requireAuth, async (req, res) => {
+  try {
+    const days = parseInt(req.params.days) || 7;
+    const logs = await HealthLog.getRecent(req.session.user.id, days);
+    
+    res.json({ success: true, logs });
+  } catch (err) {
+    console.error('Get health log history error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get health log history' });
+  }
+});
+
+// GET /api/health-log/week/:weekNumber - Get logs for specific pregnancy week
+// THIS MUST COME BEFORE /:date
+router.get('/api/health-log/week/:weekNumber', requireAuth, async (req, res) => {
+  try {
+    const weekNumber = parseInt(req.params.weekNumber);
+    const logs = await HealthLog.getByPregnancyWeek(req.session.user.id, weekNumber);
+    
+    res.json({ success: true, logs });
+  } catch (err) {
+    console.error('Get health log by week error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get health logs' });
+  }
+});
+
 // GET /api/health-log/:date - Get health log for specific date
+// PARAMETERIZED ROUTE MUST BE LAST
 router.get('/api/health-log/:date', requireAuth, async (req, res) => {
   try {
-    const date = new Date(req.params.date);
+    // Add validation to prevent matching non-date strings
+    const dateStr = req.params.date;
+    
+    // Skip if it looks like another route
+    if (dateStr === 'today' || dateStr === 'history' || dateStr === 'week') {
+      return res.status(400).json({ success: false, error: 'Invalid date format' });
+    }
+    
+    const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
       return res.status(400).json({ success: false, error: 'Invalid date' });
     }
@@ -555,6 +593,31 @@ router.get('/api/health-log/week/:weekNumber', requireAuth, async (req, res) => 
   } catch (err) {
     console.error('Get health log by week error:', err);
     res.status(500).json({ success: false, error: 'Failed to get health logs' });
+  }
+});
+
+// GET /api/health-log/:date - Get health log for specific date
+router.get('/api/health-log/:date', requireAuth, async (req, res) => {
+  try {
+    // Add validation to prevent matching non-date strings
+    const dateStr = req.params.date;
+    
+    // Skip if it looks like another route
+    if (dateStr === 'today' || dateStr === 'history' || dateStr === 'week') {
+      return res.status(400).json({ success: false, error: 'Invalid date format' });
+    }
+    
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return res.status(400).json({ success: false, error: 'Invalid date' });
+    }
+    
+    const log = await HealthLog.getByDate(req.session.user.id, date);
+    
+    res.json({ success: true, log });
+  } catch (err) {
+    console.error('Get health log by date error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get health log' });
   }
 });
 
@@ -976,7 +1039,5 @@ router.get('/api/weekly-report/trends', requireAuth, async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to get trends' });
   }
 });
-
-// ...existing code for other routes...
 
 module.exports = router;
