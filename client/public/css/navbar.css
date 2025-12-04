@@ -1,0 +1,365 @@
+/* ===== Navbar Variables ===== */
+:root {
+    --navbar-height: 65px;
+}
+
+/* ===== Main Navbar ===== */
+.topnav {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-height);
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    z-index: 9999;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== Brand ===== */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.navbar-logo-img {
+    height: 45px;
+    width: auto;
+    object-fit: contain;
+}
+
+.navbar-title {
+    font-size: 1.4rem;
+    margin: 0;
+    color: #6c4bd1;
+    font-weight: 700;
+}
+
+/* ===== Main Navigation Links ===== */
+.nav-main-links {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.nav-main-links a {
+    color: #444;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.nav-main-links a:hover {
+    background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+    color: #9333ea;
+}
+
+.nav-main-links a.active {
+    background: linear-gradient(135deg, #E03FD8 0%, #9333ea 100%);
+    color: white;
+}
+
+.nav-main-links a svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* ===== Dropdown ===== */
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown-btn {
+    color: #444;
+    background: none;
+    border: 1px solid #e0e0e0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.nav-dropdown-btn:hover {
+    background: #f3f3ff;
+    border-color: #c7c7ff;
+    color: #4b2fa6;
+}
+
+.nav-dropdown-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.nav-dropdown-btn .chevron {
+    width: 12px;
+    height: 12px;
+}
+
+.nav-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown-menu:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.nav-dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1rem;
+    color: #444;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.nav-dropdown-menu a:last-child {
+    border-bottom: none;
+}
+
+.nav-dropdown-menu a:hover {
+    background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+    color: #9333ea;
+}
+
+.nav-dropdown-menu a svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+/* ===== Right Side Nav Links ===== */
+.nav-links {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.nav-links a {
+    color: #333;
+    text-decoration: none;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.nav-links a:hover {
+    background: #f3f3ff;
+    color: #4b2fa6;
+}
+
+/* ===== User Greeting ===== */
+.greeting {
+    color: #444;
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
+    white-space: nowrap;
+}
+
+.badge {
+    background: rgba(240, 244, 255, 0.8);
+    color: #2b1b7a;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-left: 0.35rem;
+}
+
+.nav-divider {
+    width: 1px;
+    height: 24px;
+    background: #e0e0e0;
+    margin: 0 0.5rem;
+    flex-shrink: 0;
+}
+
+/* ===== Spacer ===== */
+.nav-spacer {
+    flex: 1;
+    min-width: 0.5rem;
+}
+
+/* ===== Responsive - Tablet ===== */
+@media (max-width: 1024px) {
+    .topnav {
+        padding: 0 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .nav-main-links a span {
+        display: none;
+    }
+
+    .nav-main-links a {
+        padding: 0.5rem;
+    }
+
+    .nav-main-links a svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .greeting {
+        display: none;
+    }
+
+    .nav-divider {
+        display: none;
+    }
+
+    .navbar-title {
+        font-size: 1.2rem;
+    }
+}
+
+/* ===== Responsive - Mobile ===== */
+@media (max-width: 768px) {
+    :root {
+        --navbar-height: 57px;
+    }
+
+    .topnav {
+        height: var(--navbar-height);
+        padding: 0 0.5rem;
+        gap: 0.35rem;
+    }
+
+    .navbar-title {
+        display: none;
+    }
+
+    .navbar-logo-img {
+        height: 38px;
+    }
+
+    .nav-dropdown-btn span:not(.chevron-wrapper) {
+        display: none;
+    }
+
+    .nav-dropdown-btn {
+        padding: 0.5rem;
+    }
+
+    .badge {
+        display: none;
+    }
+
+    .nav-links a {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .nav-main-links {
+        gap: 0.15rem;
+    }
+
+    .nav-main-links a {
+        padding: 0.45rem;
+    }
+}
+
+/* ===== Responsive - Small Mobile ===== */
+@media (max-width: 480px) {
+    .topnav {
+        padding: 0 0.4rem;
+    }
+
+    .navbar-logo-img {
+        height: 34px;
+    }
+
+    .nav-main-links a {
+        padding: 0.4rem;
+    }
+
+    .nav-main-links a svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .nav-dropdown-btn {
+        padding: 0.4rem;
+    }
+
+    .nav-dropdown-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .nav-links a {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .nav-dropdown-menu {
+        min-width: 180px;
+        right: -10px;
+    }
+
+    .nav-dropdown-menu a {
+        padding: 0.6rem 0.85rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* ===== Very Small Screens ===== */
+@media (max-width: 360px) {
+    .nav-main-links a:nth-child(n+4):not(.nav-dropdown) {
+        display: none;
+    }
+
+    .nav-links a:first-child {
+        display: none;
+    }
+}

@@ -22,6 +22,11 @@
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                 </button>
+                <button class="btn-icon btn-expand" id="expandSidebarBtn" title="Expand Sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
                 <button class="btn-icon btn-collapse" id="collapseSidebarBtn" title="Collapse">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="15 18 9 12 15 6"></polyline>
@@ -163,6 +168,7 @@
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
         const collapseSidebarBtn = document.getElementById('collapseSidebarBtn');
+        const expandSidebarBtn = document.getElementById('expandSidebarBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const chatWrapper = document.querySelector('.chat-wrapper');
 
@@ -242,16 +248,26 @@
         function toggleSidebarCollapse() {
             sidebarCollapsed = !sidebarCollapsed;
             localStorage.setItem('chatSidebarCollapsed', sidebarCollapsed);
+            updateSidebarState();
+        }
+
+        function updateSidebarState() {
             sidebar.classList.toggle('collapsed', sidebarCollapsed);
             chatWrapper.classList.toggle('sidebar-collapsed', sidebarCollapsed);
         }
 
+        function expandSidebar() {
+            sidebarCollapsed = false;
+            localStorage.setItem('chatSidebarCollapsed', 'false');
+            updateSidebarState();
+        }
+
         collapseSidebarBtn.addEventListener('click', toggleSidebarCollapse);
+        expandSidebarBtn.addEventListener('click', expandSidebar);
 
         function applyInitialSidebarState() {
-            if (window.innerWidth > 768 && sidebarCollapsed) {
-                sidebar.classList.add('collapsed');
-                chatWrapper.classList.add('sidebar-collapsed');
+            if (window.innerWidth > 768) {
+                updateSidebarState();
             }
         }
         applyInitialSidebarState();
@@ -259,11 +275,9 @@
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
                 closeMobileSidebar();
-                if (sidebarCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    chatWrapper.classList.add('sidebar-collapsed');
-                }
+                updateSidebarState();
             } else {
+                // On mobile, don't apply collapsed state
                 sidebar.classList.remove('collapsed');
                 chatWrapper.classList.remove('sidebar-collapsed');
             }
