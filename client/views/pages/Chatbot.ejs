@@ -22,6 +22,11 @@
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                 </button>
+                <button class="btn-icon btn-expand" id="expandSidebarBtn" title="Expand Sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
                 <button class="btn-icon btn-collapse" id="collapseSidebarBtn" title="Collapse">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="15 18 9 12 15 6"></polyline>
@@ -43,13 +48,6 @@
             </div>
         </div>
     </aside>
-
-    <!-- Expand Sidebar Button (visible when collapsed) -->
-    <button class="expand-sidebar-btn" id="expandSidebarBtn" title="Show conversations">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-    </button>
 
     <!-- Mobile Menu Button -->
     <button class="mobile-menu-btn" id="sidebarToggle">
@@ -256,7 +254,6 @@
         function updateSidebarState() {
             sidebar.classList.toggle('collapsed', sidebarCollapsed);
             chatWrapper.classList.toggle('sidebar-collapsed', sidebarCollapsed);
-            expandSidebarBtn.classList.toggle('visible', sidebarCollapsed);
         }
 
         function expandSidebar() {
@@ -280,9 +277,9 @@
                 closeMobileSidebar();
                 updateSidebarState();
             } else {
+                // On mobile, don't apply collapsed state
                 sidebar.classList.remove('collapsed');
                 chatWrapper.classList.remove('sidebar-collapsed');
-                expandSidebarBtn.classList.remove('visible');
             }
         });
 
