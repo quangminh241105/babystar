@@ -285,10 +285,6 @@ router.get('/weekly-advice', requireAuthRedirect, (req, res) => {
   res.render('pages/weekly-advice', { title: 'Weekly Advice' });
 });
 
-router.get('/learning-quizzes', requireAuthRedirect, (req, res) => {
-  res.render('pages/learningquizzes', { title: 'Learning Quizzes' });
-});
-
 router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
   res.render('pages/nearbyhealthcare', { title: 'Nearby Healthcare' });
 });

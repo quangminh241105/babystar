@@ -80,13 +80,14 @@ require('./models/user');
 // -----------------------------
 
 // Importing routers from /server/routes
-const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter } = require('./routes/indexRouter');
+const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter, quiz: quizRouter } = require('./routes/indexRouter');
 
 // Mount routers
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/partner', partnerRouter);
 app.use('/admin', adminRouter);
+app.use('/quiz', quizRouter);
 app.use('/chatbot', require('./chatbot/routes'));
 
 // -----------------------------
