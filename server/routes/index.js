@@ -404,20 +404,29 @@ router.get('/diet-plan', requireAuthRedirect, (req, res) => {
 // GET /notifications - Render notifications page
 router.get('/notifications', requireAuthRedirect, async (req, res) => {
   try {
-    const notifications = await Notification.getAll(req.session.user.id, { limit: 50 });
+    const limit = 50;
+    const notifications = await Notification.getAll(req.session.user.id, { limit: limit + 1 });
     const unreadCount = await Notification.getUnreadCount(req.session.user.id);
+    
+    // Check if there are more notifications
+    const hasMore = notifications.length > limit;
+    if (hasMore) {
+      notifications.pop(); // Remove the extra one
+    }
     
     res.render('pages/notifications', { 
       title: 'Notifications',
       notifications,
-      unreadCount
+      unreadCount,
+      hasMore
     });
   } catch (err) {
     console.error('Get notifications page error:', err);
     res.render('pages/notifications', { 
       title: 'Notifications',
       notifications: [],
-      unreadCount: 0
+      unreadCount: 0,
+      hasMore: false
     });
   }
 });
