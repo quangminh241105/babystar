@@ -142,6 +142,31 @@
 
             <div class="nav-links">
                 <% if (user) { %>
+                    <!-- Notification Bell -->
+                    <div class="notification-bell-wrapper">
+                        <a href="/notifications" class="notification-bell" id="notification-bell" title="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                            </svg>
+                            <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                        </a>
+                        
+                        <!-- Notification Dropdown Preview -->
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="dropdown-header">
+                                <span>Notifications</span>
+                                <a href="/notifications" class="view-all">View All</a>
+                            </div>
+                            <div class="dropdown-content" id="notification-dropdown-content">
+                                <div class="dropdown-empty">
+                                    <span>No new notifications</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="greeting">
                         Hello, <strong><%= user.fullName || 'User' %></strong>
                         <span class="badge">Active</span>
@@ -155,3 +180,270 @@
                 <% } %>
             </div>
 </nav>
+
+<% if (user) { %>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// Notification Bell Functionality with Socket.IO
+(function() {
+    const bell = document.getElementById('notification-bell');
+    const badge = document.getElementById('notification-badge');
+    const dropdown = document.getElementById('notification-dropdown');
+    const dropdownContent = document.getElementById('notification-dropdown-content');
+    
+    // Initialize Socket.IO connection - no reconnection for multi-page app
+    let socket = null;
+    let socketConnected = false;
+    
+    try {
+        socket = io({
+            transports: ['websocket'],
+            upgrade: false,
+            reconnection: false,  // Disable reconnection - new page = new connection
+            timeout: 5000
+        });
+        
+        socket.on('connect', () => {
+            socketConnected = true;
+        });
+        
+        // Handle real-time notifications
+        socket.on('notification', (data) => {
+            if (data.type === 'new') {
+                // Show new notification toast
+                showNotificationToast(data.notification);
+                // Update badge
+                loadUnreadCount();
+                // Refresh dropdown if open
+                if (dropdown.classList.contains('show')) {
+                    loadNotificationPreview();
+                }
+            } else if (data.type === 'count') {
+                updateBadge(data.count);
+            }
+        });
+        
+        // Handle link-account updates (for link-account page refresh)
+        socket.on('link-account', (data) => {
+            // Dispatch custom event for link-account page to handle
+            window.dispatchEvent(new CustomEvent('linkAccountUpdate', { detail: data }));
+        });
+        
+        socket.on('disconnect', () => {
+            socketConnected = false;
+        });
+        
+        socket.on('connect_error', () => {
+            socketConnected = false;
+        });
+    } catch (err) {
+        // Socket.IO not available, will use polling
+    }
+    
+    // Toggle dropdown on click
+    bell.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+        
+        if (dropdown.classList.contains('show')) {
+            loadNotificationPreview();
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!bell.closest('.notification-bell-wrapper').contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Update badge count
+    function updateBadge(count) {
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+    
+    // Load unread count (initial load and fallback)
+    async function loadUnreadCount() {
+        try {
+            const response = await fetch('/api/notifications/unread-count');
+            const data = await response.json();
+            updateBadge(data.success ? data.count : 0);
+        } catch (err) {
+            console.error('Failed to load notification count:', err);
+        }
+    }
+    
+    // Load notification preview for dropdown (only unread)
+    async function loadNotificationPreview() {
+        try {
+            const response = await fetch('/api/notifications?limit=5&read=false');
+            const data = await response.json();
+            
+            if (data.success && data.notifications.length > 0) {
+                dropdownContent.innerHTML = data.notifications.map(n => `
+                    <div class="dropdown-item unread" data-id="${n._id}" data-url="${n.actionUrl || '/notifications'}">
+                        <div class="item-icon ${n.category}">${getNotificationIcon(n.type)}</div>
+                        <div class="item-content">
+                            <div class="item-title">${escapeHtml(n.title)}</div>
+                            <div class="item-time">${formatTimeAgo(n.createdAt)}</div>
+                        </div>
+                        <button class="item-dismiss" data-id="${n._id}" title="Dismiss">×</button>
+                    </div>
+                `).join('');
+                
+                // Add click handlers for notification items
+                dropdownContent.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', async (e) => {
+                        if (e.target.classList.contains('item-dismiss')) return;
+                        const id = item.dataset.id;
+                        const url = item.dataset.url;
+                        // Mark as read
+                        try {
+                            await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+                        } catch (err) {
+                            console.error('Failed to mark as read:', err);
+                        }
+                        window.location.href = url;
+                    });
+                });
+                
+                // Add click handlers for dismiss buttons
+                dropdownContent.querySelectorAll('.item-dismiss').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const id = btn.dataset.id;
+                        try {
+                            await fetch(`/api/notifications/${id}/dismiss`, { method: 'POST' });
+                            const item = dropdownContent.querySelector(`.dropdown-item[data-id="${id}"]`);
+                            if (item) {
+                                item.style.animation = 'slideOutRight 0.2s ease forwards';
+                                setTimeout(() => {
+                                    item.remove();
+                                    loadUnreadCount();
+                                    if (dropdownContent.querySelectorAll('.dropdown-item').length === 0) {
+                                        dropdownContent.innerHTML = '<div class="dropdown-empty"><span>No new notifications</span></div>';
+                                    }
+                                }, 200);
+                            }
+                        } catch (err) {
+                            console.error('Failed to dismiss:', err);
+                        }
+                    });
+                });
+            } else {
+                dropdownContent.innerHTML = '<div class="dropdown-empty"><span>No new notifications</span></div>';
+            }
+        } catch (err) {
+            console.error('Failed to load notifications:', err);
+            dropdownContent.innerHTML = '<div class="dropdown-empty"><span>Failed to load</span></div>';
+        }
+    }
+    
+    // Show notification toast
+    function showNotificationToast(notification) {
+        // Create toast container if not exists
+        let toastContainer = document.getElementById('notification-toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'notification-toast-container';
+            toastContainer.style.cssText = 'position:fixed;top:80px;right:20px;z-index:10001;display:flex;flex-direction:column;gap:10px;';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = 'notification-toast';
+        toast.style.cssText = 'background:white;padding:12px 16px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;gap:12px;align-items:flex-start;max-width:320px;animation:slideInRight 0.3s ease;cursor:pointer;border-left:4px solid #E03FD8;';
+        toast.innerHTML = `
+            <div style="font-size:24px;">${getNotificationIcon(notification.type)}</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:14px;color:#333;margin-bottom:4px;">${escapeHtml(notification.title)}</div>
+                <div style="font-size:13px;color:#666;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(notification.message)}</div>
+            </div>
+            <button style="background:none;border:none;color:#999;cursor:pointer;padding:0;font-size:18px;" onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        toast.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                window.location.href = notification.actionUrl || '/notifications';
+            }
+        });
+        
+        toastContainer.appendChild(toast);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+    
+    function getNotificationIcon(type) {
+        const icons = {
+            'partner_request': '👥',
+            'partner_accepted': '✅',
+            'daily_log_reminder': '📝',
+            'health_alert': '⚠️',
+            'weekly_update': '📅',
+            'achievement_earned': '🏆',
+            'quiz_recommendation': '📚',
+            'system_announcement': '📢'
+        };
+        return icons[type] || '🔔';
+    }
+    
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return diffMins + 'm ago';
+        if (diffHours < 24) return diffHours + 'h ago';
+        if (diffDays < 7) return diffDays + 'd ago';
+        return date.toLocaleDateString();
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Initial load
+    loadUnreadCount();
+    
+    // Fallback polling if socket not connected (every 60 seconds)
+    setInterval(() => {
+        if (!socketConnected) {
+            loadUnreadCount();
+        }
+    }, 60000);
+    
+    // Add CSS animation for toasts
+    if (!document.getElementById('toast-animations')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+})();
+</script>
+<% } %>
