@@ -24,6 +24,17 @@ function clearStatus() {
 function renderResults(places) {
 	allPlaces = places;
 	currentPage = 1;
+	// Save results to localStorage
+	try {
+		const searchData = {
+			places,
+			radius: radiusSelect.value,
+			timestamp: Date.now(),
+		};
+		localStorage.setItem("nearbyHealthcareResults", JSON.stringify(searchData));
+	} catch (e) {
+		console.warn("Failed to save results to localStorage:", e);
+	}
 	renderPage();
 }
 
@@ -288,3 +299,31 @@ findBtn.onclick = function () {
 		}
 	);
 };
+
+// Restore previous results from localStorage on page load
+(function restoreNearbyHealthcareResults() {
+	try {
+		const saved = localStorage.getItem("nearbyHealthcareResults");
+		if (saved) {
+			const { places, radius, timestamp } = JSON.parse(saved);
+			// Optionally, only restore if less than 12 hours old
+			if (
+				places &&
+				Array.isArray(places) &&
+				(!timestamp || Date.now() - timestamp < 12 * 60 * 60 * 1000)
+			) {
+				radiusSelect.value = radius || radiusSelect.value;
+				resultsSection.style.display = "block";
+				renderResults(places);
+				const radiusText =
+					radiusSelect.options[radiusSelect.selectedIndex].text;
+				showStatus(
+					`Showing your last search: ${places.length} healthcare providers within ${radiusText}`,
+					"info"
+				);
+			}
+		}
+	} catch (e) {
+		console.warn("Failed to restore results from localStorage:", e);
+	}
+})();
