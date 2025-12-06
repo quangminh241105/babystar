@@ -252,7 +252,11 @@ router.post('/login', async (req, res) => {
           console.error('Session save error:', saveErr);
           return res.status(500).json({ success: false, errors: { general: 'Session error' }});
         }
-        const safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
+        // Redirect admin to admin page, others to their redirect/home
+        let safeRedirect = (redirect && redirect.startsWith('/')) ? redirect : '/';
+        if (user.role === 'admin') {
+          safeRedirect = '/admin';
+        }
         res.json({ success: true, redirect: safeRedirect });
       });
     });

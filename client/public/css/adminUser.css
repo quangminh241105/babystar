@@ -1,0 +1,71 @@
+
+.admin-users-main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 0;
+}
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(217,30,143,0.06);
+  padding: 24px;
+  margin-top: 18px;
+}
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #8a0e52;
+  margin-bottom: 18px;
+}
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+}
+.user-table th, .user-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+.status-badge.active {
+  background: #e0ffe8;
+  color: #2e7d32;
+}
+.status-badge.inactive {
+  background: #ffe0e0;
+  color: #d91e8f;
+}
+.btn-ghost {
+  background: #fff;
+  color: #d91e8f;
+  border: 2px solid #ed7eaf;
+  border-radius: 18px;
+  padding: 6px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: #ffe3f0;
+  border-color: #d91e8f;
+}
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.msg {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+}
+.msg.success { background: #e0ffe8; color: #2e7d32; }
+.msg.error { background: #ffe0e0; color: #d91e8f; }
+.msg.info { background: #e3f0ff; color: #1976d2; }
