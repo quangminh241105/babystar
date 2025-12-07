@@ -1,0 +1,107 @@
+<link rel="stylesheet" href="/css/adminUser.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<main class="container admin-users-main">
+  <header>
+    <h1>Admin: Manage Users</h1>
+    <p>Activate or deactivate users. No deletion allowed.</p>
+  </header>
+
+  <section class="card">
+    <h2 class="card-title">User List</h2>
+    <div id="userTableContainer">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div id="adminUserMsg" class="msg" style="display:none"></div>
+  </section>
+</main>
+
+<script>
+(async function() {
+  const userTableBody = document.getElementById('userTableBody');
+  const msgEl = document.getElementById('adminUserMsg');
+
+  function showMsg(text, type = 'info') {
+    msgEl.textContent = text;
+    msgEl.className = `msg ${type}`;
+    msgEl.style.display = 'block';
+    setTimeout(() => { msgEl.style.display = 'none'; }, 3500);
+  }
+
+  async function fetchUsers() {
+    userTableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+    try {
+      const resp = await fetch('/admin/users', { credentials: 'include' });
+      const data = await resp.json();
+      if (!data.success || !Array.isArray(data.users)) {
+        userTableBody.innerHTML = '<tr><td colspan="5">Failed to load users.</td></tr>';
+        return;
+      }
+      renderUsers(data.users);
+    } catch (err) {
+      userTableBody.innerHTML = '<tr><td colspan="5">Error loading users.</td></tr>';
+    }
+  }
+
+  function renderUsers(users) {
+    if (!users.length) {
+      userTableBody.innerHTML = '<tr><td colspan="5">No users found.</td></tr>';
+      return;
+    }
+    userTableBody.innerHTML = '';
+    users.forEach(user => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${user.fullName || '-'}</td>
+        <td>${user.email}</td>
+        <td>${user.role}</td>
+        <td>
+          <span class="status-badge ${user.isActive ? 'active' : 'inactive'}">
+            ${user.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td>
+          <button class="btn-ghost" onclick="toggleUser('${user._id}', ${user.isActive})" ${user.role === 'admin' ? 'disabled' : ''}>
+            ${user.isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      `;
+      userTableBody.appendChild(tr);
+    });
+  }
+
+  window.toggleUser = async function(userId, currentlyActive) {
+    const action = currentlyActive ? 'deactivate' : 'activate';
+    try {
+      const resp = await fetch(`/admin/users/${userId}/${action}`, {
+        method: 'PUT',
+        credentials: 'include'
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showMsg(`User ${action}d successfully`, 'success');
+        fetchUsers();
+      } else {
+        showMsg(data.error || 'Failed to update user', 'error');
+      }
+    } catch (err) {
+      showMsg('Network error', 'error');
+    }
+  };
+
+  fetchUsers();
+})();
+</script>

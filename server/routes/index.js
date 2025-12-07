@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const { requireAuth, requireAuthRedirect } = require('../middleware');
@@ -5,6 +6,7 @@ const User = require('../models/user');
 const HealthLog = require('../models/healthlogs');
 const WeeklyReport = require('../models/weeklyreports');
 const { Notification } = require('../models/notification');
+const axios = require('axios');
 
 // Helper function to emit real-time notification via Socket.IO
 function emitNotification(req, userId, notification) {
@@ -399,25 +401,38 @@ router.get('/diet-plan', requireAuthRedirect, (req, res) => {
   res.render('pages/dietplanner', { title: 'Diet Planner' });
 });
 
+router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
+  res.render('pages/nearbyhealthcare', { title: 'Diet Planner' });
+});
+
 // ==================== NOTIFICATION ROUTES ====================
 
 // GET /notifications - Render notifications page
 router.get('/notifications', requireAuthRedirect, async (req, res) => {
   try {
-    const notifications = await Notification.getAll(req.session.user.id, { limit: 50 });
+    const limit = 50;
+    const notifications = await Notification.getAll(req.session.user.id, { limit: limit + 1 });
     const unreadCount = await Notification.getUnreadCount(req.session.user.id);
+    
+    // Check if there are more notifications
+    const hasMore = notifications.length > limit;
+    if (hasMore) {
+      notifications.pop(); // Remove the extra one
+    }
     
     res.render('pages/notifications', { 
       title: 'Notifications',
       notifications,
-      unreadCount
+      unreadCount,
+      hasMore
     });
   } catch (err) {
     console.error('Get notifications page error:', err);
     res.render('pages/notifications', { 
       title: 'Notifications',
       notifications: [],
-      unreadCount: 0
+      unreadCount: 0,
+      hasMore: false
     });
   }
 });
@@ -1296,6 +1311,57 @@ router.get('/api/weekly-report/trends', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Get trends error:', err);
     res.status(500).json({ success: false, error: 'Failed to get trends' });
+  }
+});
+
+const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY;
+router.get('/api/nearby-healthcare', async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+    
+    if (!lat || !lon) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Latitude and longitude are required' 
+      });
+    }
+
+    // Geoapify Places API - searching for healthcare facilities
+    // Categories: healthcare.hospital, healthcare.clinic, healthcare.doctor, etc.
+    const categories = 'healthcare.hospital,healthcare.clinic_or_praxis,healthcare.dentist,healthcare.pharmacy';
+    const radiusKm = Math.min(parseFloat(req.query.radius) || 200, 200);
+    const radius = radiusKm * 1000; // Convert to meters
+    const limit = 50; // Increased limit for larger search area
+
+    const url = `https://api.geoapify.com/v2/places?` +
+      `categories=${categories}` +
+      `&filter=circle:${lon},${lat},${radius}` +
+      `&bias=proximity:${lon},${lat}` +
+      `&limit=${limit}` +
+      `&apiKey=${GEOAPIFY_API_KEY}`;
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Geoapify API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Return the results
+    res.json({
+      success: true,
+      places: data.features || [],
+      count: data.features?.length || 0
+    });
+
+  } catch (error) {
+    console.error('Error fetching nearby healthcare:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch nearby healthcare providers',
+      details: error.message
+    });
   }
 });
 
