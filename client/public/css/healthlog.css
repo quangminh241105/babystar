@@ -1,27 +1,36 @@
+/* ===== Health Log Page Styles ===== */
+/* Requires: style.css (global variables) */
+
+/* ===== Page Background ===== */
 .healthlog-bg {
   min-height: 100vh;
-  background: linear-gradient(135deg, #fff5f9 0%, #ffe3f0 100%);
+  background-color: var(--color-primary-50);
   padding: 0;
 }
+
+/* ===== Main Layout ===== */
 .healthlog-main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 0 48px 0;
+  padding: var(--spacing-2xl) 0 var(--spacing-3xl) 0;
   display: flex;
   flex-direction: column;
   gap: 0;
   width: 100vw;
   min-width: 0;
 }
+
+/* ===== Header ===== */
 .healthlog-header {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 18px;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
+
 .healthlog-header .logo {
-  background: #ed7eaf;
-  color: #fff;
+  background-color: var(--color-primary-300);
+  color: var(--color-text-inverse);
   font-weight: 700;
   font-size: 2rem;
   border-radius: 50%;
@@ -31,38 +40,45 @@
   align-items: center;
   justify-content: center;
 }
+
 .healthlog-header .brand .title {
   font-size: 2rem;
   font-weight: 700;
-  color: #8a0e52;
+  color: var(--color-primary-700);
 }
+
 .healthlog-header .brand .subtitle {
-  color: #b84b7a;
+  color: var(--color-primary-500);
   font-size: 1.1rem;
   margin-top: 2px;
 }
+
+/* ===== Action Bar ===== */
 .healthlog-actionbar {
-  margin-bottom: 24px;
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(217,30,143,0.06);
-  border-radius: 16px;
+  margin-bottom: var(--spacing-xl);
+  background-color: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   gap: 0;
   width: 100%;
-  padding: 0 24px;
+  padding: 0 var(--spacing-xl);
   min-height: 72px;
 }
+
 .step-label {
-  color: #d91e8f;
+  color: var(--color-primary);
   font-weight: 600;
   font-size: 1.1rem;
-  background: #ffe3f0;
-  border-radius: 12px;
+  background-color: var(--color-primary-100);
+  border-radius: var(--radius-lg);
 }
+
 .step-label.tab-btn {
+  user-select: none;
   flex: 1 1 0;
-  margin: 0 8px 0 0;
+  margin: 0 var(--spacing-sm) 0 0;
   padding: 0;
   height: 48px;
   display: flex;
@@ -70,184 +86,241 @@
   justify-content: center;
   font-size: 1.15rem;
   font-weight: 700;
-  border-radius: 20px;
-  background: transparent;
+  border-radius: var(--radius-2xl);
+  background-color: transparent;
   border: none;
-  transition: background 0.18s, color 0.18s;
+  transition: var(--transition-fast);
+  cursor: pointer;
+  background-color: transparent;
+  transition: var(--transition-fast);
 }
+
 .tab-btn.active {
-  background: #fde6f2;
-  color: #b84b7a;
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-500);
   box-shadow: none;
 }
+
 .action-btns {
   margin-left: auto;
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-md);
 }
-.action-btns {
-  margin-left: 16px;
-  display: flex;
-  gap: 16px;
-}
+
+/* ===== Grid Layout ===== */
 .healthlog-grid {
   display: grid;
   grid-template-columns: 1fr 340px;
-  gap: 32px;
+  gap: var(--spacing-2xl);
   align-items: flex-start;
   width: 100%;
 }
+
+/* ===== Cards ===== */
 .healthlog-card {
-  margin-bottom: 28px;
-  background: #fff;
-  border-radius: 24px;
-  box-shadow: 0 2px 16px rgba(217,30,143,0.07);
-  padding: 48px 48px 36px 48px;
+  margin-bottom: var(--spacing-xl);
+  background-color: var(--color-bg);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-3xl) var(--spacing-3xl) var(--spacing-2xl) var(--spacing-3xl);
   min-height: 600px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   font-size: 1.08rem;
 }
+
 .status-sidebar.healthlog-sidebar {
   margin-top: 0;
 }
+
 .status-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(217,30,143,0.06);
-  margin-bottom: 18px;
-  padding: 24px 20px;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
 }
-.quick-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
-}
-.btn-ghost, .btn-primary {
-  border-radius: 24px;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 10px 24px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.18s;
-}
-.btn-ghost {
-  border: 2px solid #ed7eaf;
-  background: #fff;
-  color: #d91e8f;
-  transition: background 0.18s, color 0.18s, border 0.18s;
-}
-.btn-ghost:hover {
-  background: #fde6f2;
-  border-color: #d91e8f;
-}
-.btn-primary {
-  background: linear-gradient(90deg, #e00072 0%, #d91e8f 100%);
-  color: #fff;
-  border: none;
-  box-shadow: 0 2px 8px rgba(217,30,143,0.10);
-  transition: background 0.18s;
-}
-.btn-primary:hover {
-  background: linear-gradient(90deg, #ff1a85 0%, #e83da1 100%);
-}
+
 .card-title {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #8a0e52;
-  margin-bottom: 18px;
+  color: var(--color-primary-700);
+  margin-bottom: var(--spacing-lg);
 }
+
+/* ===== Quick Actions ===== */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+/* ===== Buttons ===== */
+.btn-ghost,
+.btn-primary {
+  border-radius: var(--radius-2xl);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-ghost {
+  border: 2px solid var(--color-primary-300);
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+}
+
+.btn-ghost:hover {
+  background-color: var(--color-primary-100);
+  border-color: var(--color-primary);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: none;
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-600);
+}
+
+/* ===== Form Fields ===== */
 .field label {
   font-weight: 500;
-  color: #8a0e52;
+  color: var(--color-primary-700);
 }
-input, select, textarea {
-  border-radius: 12px;
-  border: 2px solid #ed7eaf;
-  padding: 10px 14px;
+
+input,
+select,
+textarea {
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-primary-300);
+  padding: var(--spacing-sm) var(--spacing-md);
   font-size: 1rem;
-  margin-top: 4px;
-  margin-bottom: 8px;
+  margin-top: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
   width: 100%;
-  background: #fff;
-  transition: border-color 0.18s;
+  background-color: var(--color-bg);
+  transition: var(--transition-fast);
 }
-input:focus, select:focus, textarea:focus {
-  border-color: #d91e8f;
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
   outline: none;
 }
-.row.three, .row.two {
+
+.row.three,
+.row.two {
   display: flex;
-  gap: 18px;
+  gap: var(--spacing-lg);
 }
-.row.three > .field, .row.two > .field {
+
+.row.three>.field,
+.row.two>.field {
   flex: 1;
 }
-@media (max-width: 1100px) {
-  .healthlog-main { max-width: 100vw; }
-  .healthlog-grid { grid-template-columns: 1fr; }
-  .status-sidebar.healthlog-sidebar { margin-top: 32px; }
-  .healthlog-card { padding: 32px 12px 24px 12px; }
-  .healthlog-actionbar {
-    margin-left: calc(-1 * 12px);
-    margin-right: calc(-1 * 12px);
-    width: calc(100% + 24px);
-  }
-}
 
-@media (max-width: 700px) {
-  .healthlog-header .brand .title { font-size: 1.3rem; }
-  .healthlog-card { padding: 18px 4px; }
-  .status-card { padding: 14px 4px; }
-  .healthlog-actionbar {
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px 4px;
-    min-height: unset;
-  }
-  .step-label.tab-btn {
-    margin: 0 0 8px 0;
-    height: 40px;
-    font-size: 1rem;
-  }
-  .action-btns {
-    margin-left: 0;
-    gap: 8px;
-  }
-  .btn-ghost, .btn-primary {
-    min-width: 90px;
-    height: 40px;
-    font-size: 0.98rem;
-    padding: 0 16px;
-  }
-}
-
+/* ===== Tab Buttons ===== */
 .tab-btn {
-  background: #ffe3f0;
+  background-color: var(--color-primary-100);
   border: none;
-  border-radius: 16px;
-  color: #d91e8f;
+  border-radius: var(--radius-xl);
+  color: var(--color-primary);
   font-weight: 600;
   font-size: 1.1rem;
-  margin: 8px;
+  margin: var(--spacing-sm);
   cursor: pointer;
-  padding-left: 10px;
-  transition: background 0.18s, color 0.18s;
+  padding-left: var(--spacing-sm);
+  transition: var(--transition-fast);
   outline: none;
   box-shadow: none;
 }
-.tab-btn.active, .tab-btn:focus {
-  background: linear-gradient(135deg, #e00072 0%, #d91e8f 100%);
-  color: #fff;
+
+.tab-btn.active,
+.tab-btn:focus {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
 }
 
+/* ===== Tab Sections ===== */
 .tab-section {
   width: 100%;
   max-width: 100%;
   min-height: 600px;
   box-sizing: border-box;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1100px) {
+  .healthlog-main {
+    max-width: 100vw;
+  }
+
+  .healthlog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-sidebar.healthlog-sidebar {
+    margin-top: var(--spacing-2xl);
+  }
+
+  .healthlog-card {
+    padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-xl) var(--spacing-md);
+  }
+
+  .healthlog-actionbar {
+    margin-left: calc(-1 * var(--spacing-md));
+    margin-right: calc(-1 * var(--spacing-md));
+    width: calc(100% + var(--spacing-xl));
+  }
+}
+
+@media (max-width: 700px) {
+  .healthlog-header .brand .title {
+    font-size: 1.3rem;
+  }
+
+  .healthlog-card {
+    padding: var(--spacing-lg) var(--spacing-xs);
+  }
+
+  .status-card {
+    padding: var(--spacing-md) var(--spacing-xs);
+  }
+
+  .healthlog-actionbar {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-xs);
+    min-height: unset;
+  }
+
+  .step-label.tab-btn {
+    margin: 0 0 var(--spacing-sm) 0;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .action-btns {
+    margin-left: 0;
+    gap: var(--spacing-sm);
+  }
+
+  .btn-ghost,
+  .btn-primary {
+    min-width: 90px;
+    height: 40px;
+    font-size: 0.98rem;
+    padding: 0 var(--spacing-md);
+  }
 }

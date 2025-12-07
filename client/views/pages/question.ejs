@@ -1,0 +1,47 @@
+<link rel="stylesheet" href="/css/question.css">
+
+<div class="question-page">
+<main role="main" aria-labelledby="quizTitle" class="page">
+      <header id="quizTitle" class="page-header">
+          <h1>Nutrition quiz</h1>
+      </header>
+
+      <!-- the question -->
+      <form aria-labelledby="questionLabel" method="post" action="#">
+          <div id="progressLabel" aria-live="polite" class="header-progress">
+            <div>Question 1 of 3</div>
+            <div class="progress-wrap" aria-hidden="true">
+              <progress value="1" max="3">1 of 3</progress>
+            </div>
+          </div>
+        <fieldset>
+          <legend id="questionLabel">Which nutrient is most important for fetal neural tube (early brain & spinal cord) development?</legend>
+
+          <div>
+            <input type="radio" id="opt-folic" name="answer" value="folic" required />
+            <label for="opt-folic">Folic acid (folate)</label>
+          </div>
+
+          <div>
+            <input type="radio" id="opt-iron" name="answer" value="iron" />
+            <label for="opt-iron">Iron</label>
+          </div>
+
+          <div>
+            <input type="radio" id="opt-calcium" name="answer" value="calcium" />
+            <label for="opt-calcium">Calcium</label>
+          </div>
+
+          <div>
+            <input type="radio" id="opt-vitD" name="answer" value="vitD" />
+            <label for="opt-vitD">Vitamin D</label>
+          </div>
+        </fieldset>
+
+        <div>
+          <button type="submit" aria-label="Submit answer">Submit answer</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>

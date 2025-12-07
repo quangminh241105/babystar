@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/user');
+const { Notification } = require('../models/notification');
 const { requireAuth, redirectIfLoggedIn } = require('../middleware');
 
 // Google OAuth client
@@ -129,6 +130,23 @@ router.post('/register', async (req, res) => {
     newUser.markModified('pregnancyProfile');
     newUser.markModified('notificationPreferences');
     await newUser.save();
+
+    // Create welcome notification with profile completion reminder
+    try {
+      await Notification.create({
+        userId: newUser._id,
+        title: 'Welcome to BabyStar! 👶',
+        message: 'Complete your profile to get personalized health advice and track your pregnancy journey.',
+        type: 'system_announcement',
+        category: 'system',
+        priority: 'high',
+        actionUrl: '/auth/profile?welcome=true',
+        actionLabel: 'Complete Profile',
+        createdBy: { type: 'system' }
+      });
+    } catch (notifErr) {
+      console.error('Failed to create welcome notification:', notifErr);
+    }
 
     // Set session
     req.session.user = { 

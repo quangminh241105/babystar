@@ -22,6 +22,11 @@
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                 </button>
+                <button class="btn-icon btn-expand" id="expandSidebarBtn" title="Expand Sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
                 <button class="btn-icon btn-collapse" id="collapseSidebarBtn" title="Collapse">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="15 18 9 12 15 6"></polyline>
@@ -265,6 +270,12 @@
             updateSidebarState();
         }
 
+        function expandSidebar() {
+            sidebarCollapsed = false;
+            localStorage.setItem('chatSidebarCollapsed', 'false');
+            updateSidebarState();
+        }
+
         collapseSidebarBtn.addEventListener('click', toggleSidebarCollapse);
         expandSidebarBtn.addEventListener('click', expandSidebar);
 
@@ -280,6 +291,7 @@
                 closeMobileSidebar();
                 updateSidebarState();
             } else {
+                // On mobile, don't apply collapsed state
                 sidebar.classList.remove('collapsed');
                 chatWrapper.classList.remove('sidebar-collapsed');
                 expandSidebarBtn.classList.remove('visible');

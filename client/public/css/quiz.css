@@ -1,0 +1,213 @@
+/* ===== Quiz Page Styles ===== */
+/* Requires: style.css (global variables) */
+
+/* ===== Quiz Page Container ===== */
+.quiz-page {
+    background-color: var(--color-primary-50);
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    min-height: 100vh;
+}
+
+.quiz-page .page {
+    width: 100%;
+    max-width: 1100px;
+    padding: 0 var(--spacing-lg);
+    margin: 0 auto;
+}
+
+/* ===== Page Header ===== */
+.quiz-page .page-header,
+.quiz-page .quiz-grid {
+    max-width: 960px;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.quiz-page .page-header {
+    padding-left: 22px;
+    margin-bottom: var(--spacing-xl);
+}
+
+.quiz-page .title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-primary);
+    display: inline-block;
+}
+
+.quiz-page .subtitle {
+    margin: var(--spacing-sm) 0 0;
+    color: var(--color-text-muted);
+    font-size: 15px;
+    font-weight: 600;
+    max-width: 60ch;
+}
+
+/* ===== Quiz Grid ===== */
+.quiz-page .quiz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-sm);
+}
+
+/* ===== Quiz Card ===== */
+.quiz-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: 22px;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-bg);
+    box-shadow: var(--shadow-xl);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    min-height: 170px;
+    overflow: visible;
+    border: 1px solid var(--gray-200);
+}
+
+.quiz-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Card Icon ===== */
+.quiz-card .icon {
+    display: inline-grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-primary-50);
+    box-shadow: var(--shadow-sm);
+    flex: 0 0 auto;
+}
+
+.quiz-card .icon svg {
+    width: 22px;
+    height: 22px;
+    color: var(--color-primary);
+}
+
+/* ===== Card Header ===== */
+.quiz-card .head {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+/* ===== Card Content ===== */
+.quiz-card h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.quiz-card p {
+    margin: var(--spacing-xs) 0 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* ===== CTA Button ===== */
+.quiz-card a,
+.start-btn {
+    margin: var(--spacing-lg) auto 0;
+    display: block;
+    width: min(76%, 420px);
+    text-align: center;
+    text-decoration: none;
+    padding: 11px var(--spacing-lg);
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    box-shadow: var(--shadow-primary);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.quiz-card a:hover,
+.start-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(224, 63, 216, 0.35);
+}
+
+.quiz-card a:focus,
+.start-btn:focus {
+    outline: 3px solid var(--color-primary-200);
+    outline-offset: 4px;
+}
+
+/* ===== Card Meta ===== */
+.quiz-card .meta {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: var(--spacing-xs);
+}
+
+/* ===== Focus State ===== */
+.quiz-card:focus-within {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 980px) {
+    .quiz-page {
+        padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    .quiz-page .page {
+        padding: 0 var(--spacing-md);
+    }
+
+    .quiz-page .page-header {
+        padding-left: 22px;
+    }
+
+    .quiz-page .title {
+        font-size: 22px;
+    }
+
+    .quiz-card {
+        min-height: 160px;
+    }
+}
+
+@media (max-width: 640px) {
+    .quiz-page .page-header {
+        padding-left: var(--spacing-md);
+        text-align: left;
+    }
+
+    .quiz-page .title {
+        font-size: 20px;
+    }
+
+    .quiz-page .subtitle {
+        font-size: 14px;
+    }
+
+    .quiz-page .quiz-grid {
+        gap: var(--spacing-lg);
+        grid-template-columns: 1fr;
+    }
+
+    .quiz-card {
+        min-height: 140px;
+        padding: var(--spacing-lg);
+    }
+
+    .quiz-card a,
+    .start-btn {
+        width: calc(100% - 32px);
+    }
+}

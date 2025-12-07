@@ -3,4 +3,5 @@ module.exports = {
   auth: require('./auth'),
   partner: require('./partner'),
   admin: require('./admin'),
+  quiz: require('./quiz')
 };
