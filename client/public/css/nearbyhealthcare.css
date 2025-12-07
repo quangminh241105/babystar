@@ -1,0 +1,236 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	background: #f5f7fa;
+}
+.nearby-main {
+	max-width: 900px;
+	margin: 0 auto;
+	padding: 2rem 1rem;
+}
+.nearby-header {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	margin-bottom: 2rem;
+}
+
+.icon-circle {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #d91e8f 0%, #ff6b9d 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.title {
+	font-size: 1.75rem;
+	font-weight: 700;
+	color: #1a1a1a;
+	margin-bottom: 0.25rem;
+}
+.subtitle {
+	color: #666;
+	font-size: 0.95rem;
+}
+.search-section {
+	background: white;
+	border-radius: 12px;
+	padding: 2rem;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	margin-bottom: 2rem;
+	text-align: center;
+}
+.btn-primary {
+	background: linear-gradient(135deg, #d91e8f 0%, #ff6b9d 100%);
+	color: white;
+	border: none;
+	padding: 1rem 2rem;
+	font-size: 1rem;
+	font-weight: 600;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(217, 30, 143, 0.3);
+}
+.btn-primary:active {
+	transform: translateY(0);
+}
+.btn-primary:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none;
+}
+.status-msg {
+	margin-top: 1rem;
+	padding: 0.75rem;
+	border-radius: 8px;
+	font-size: 0.9rem;
+}
+.status-msg.info {
+	background: #e3f2fd;
+	color: #1976d2;
+}
+.status-msg.error {
+	background: #ffebee;
+	color: #c62828;
+}
+.status-msg.success {
+	background: #e8f5e9;
+	color: #2e7d32;
+}
+.results-section {
+	background: white;
+	border-radius: 12px;
+	padding: 2rem;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.results-title {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin-bottom: 1.5rem;
+	color: #1a1a1a;
+}
+.results-list {
+	display: grid;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+.pagination {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.pagination button {
+	background: white;
+	border: 1px solid #d0d0d0;
+	color: #333;
+	padding: 0.5rem 0.75rem;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	transition: all 0.2s;
+	min-width: 40px;
+}
+.pagination button:hover:not(:disabled) {
+	background: #f5f7fa;
+	border-color: #d91e8f;
+	color: #d91e8f;
+}
+.pagination button:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+.pagination button.active {
+	background: #d91e8f;
+	color: white;
+	border-color: #d91e8f;
+	font-weight: 600;
+}
+.pagination-info {
+	font-size: 0.9rem;
+	color: #666;
+	padding: 0 0.5rem;
+}
+.place-card {
+	border: 1px solid #e0e0e0;
+	border-radius: 10px;
+	padding: 1.25rem;
+	transition: all 0.2s;
+}
+.place-card:hover {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	transform: translateY(-2px);
+}
+.place-header {
+	display: flex;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+.place-icon {
+	font-size: 2rem;
+}
+.place-name {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #1a1a1a;
+	margin-bottom: 0.25rem;
+}
+.place-type {
+	font-size: 0.85rem;
+	color: #d91e8f;
+	text-transform: capitalize;
+}
+.place-address {
+	color: #666;
+	font-size: 0.9rem;
+	margin-bottom: 0.75rem;
+}
+.place-details {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin-bottom: 1rem;
+	font-size: 0.85rem;
+	color: #666;
+}
+.place-distance {
+	color: #2e7d32;
+	font-weight: 500;
+}
+.place-phone {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+.place-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+.btn-ghost {
+	background: transparent;
+	border: 1px solid #d91e8f;
+	color: #d91e8f;
+	padding: 0.5rem 1rem;
+	border-radius: 6px;
+	text-decoration: none;
+	font-size: 0.85rem;
+	font-weight: 500;
+	transition: all 0.2s;
+}
+.btn-ghost:hover {
+	background: #d91e8f;
+	color: white;
+}
+.no-results {
+	text-align: center;
+	color: #666;
+	padding: 2rem;
+}
+.loading {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-top-color: white;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

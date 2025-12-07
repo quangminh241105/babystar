@@ -37,10 +37,11 @@ const sessionMiddleware = session({
 	store: sessionStore, // USE MONGO STORE
 	cookie: {
 		maxAge: SESSION_MAX_AGE,
-		// httpOnly: true,
-		secure: true, // Set to true only in production with HTTPS
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production', // Only secure in production with HTTPS
 		sameSite: 'lax',
-		domain: process.env.COOKIE_DOMAIN || undefined || '.obsidianbr.io.vn'
+		// Only set domain in production, leave undefined for localhost
+		domain: process.env.COOKIE_DOMAIN || undefined
 	}
 });
 
@@ -59,26 +60,6 @@ app.use((req, res, next) => {
 	res.locals.currentPath = req.path;
 	next();
 });
-
-// -----------------------------
-// i18n Middleware
-// -----------------------------
-// const translations = {
-// 	en: require('./i18n/en.json'),
-// 	vi: require('./i18n/vi.json')
-// };
-
-// app.use((req, res, next) => {
-// 	// determine language from session or default to 'en'
-// 	const lang = (req.session && req.session.language) || 'en';
-// 	const dict = translations[lang] || translations.en;
-
-// 	// expose translation helper and current language to views
-// 	res.locals.lang = lang;
-// 	res.locals.t = (key) => dict[key] || key;
-
-// 	next();
-// });
 
 // Middleware
 app.use(express.json());
@@ -99,13 +80,14 @@ require('./models/user');
 // -----------------------------
 
 // Importing routers from /server/routes
-const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter } = require('./routes/indexRouter');
+const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter, quiz: quizRouter } = require('./routes/indexRouter');
 
 // Mount routers
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/partner', partnerRouter);
 app.use('/admin', adminRouter);
+app.use('/quiz', quizRouter);
 app.use('/chatbot', require('./chatbot/routes'));
 
 // -----------------------------
@@ -200,19 +182,61 @@ app.use((err, req, res, next) => {
 // -----------------------------
 const server = http.createServer(app);
 
-// Socket.IO - kept for future use but chatbot uses HTTP API
+// Socket.IO with session authentication
 const io = new IOServer(server, {
 	cors: { origin: true, credentials: true }
 });
 
-// Socket.IO is available for future real-time features
-// Currently chatbot uses HTTP API for reliability
+// Make io available globally for routes
+app.set('io', io);
+
+// Socket.IO session middleware - wrap express-session for socket.io
+const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+io.use(wrap(cookieParserMiddleware));
+io.use(wrap(sessionMiddleware));
+
+// Socket authentication - verify user session
+io.use((socket, next) => {
+	const session = socket.request.session;
+	if (session && session.user && session.user.id) {
+		socket.userId = session.user.id;
+		next();
+	} else {
+		// Allow connection but mark as unauthenticated
+		socket.userId = null;
+		next();
+	}
+});
+
+// Track connected users for targeted notifications
+const connectedUsers = new Map(); // userId -> Set of socket ids
+
 io.on('connection', (socket) => {
-	console.log('Socket connected:', socket.id);
+	const userId = socket.userId;
+	
+	if (userId) {
+		// Add socket to user's room for targeted notifications
+		socket.join(`user:${userId}`);
+		
+		// Track connected sockets per user
+		if (!connectedUsers.has(userId)) {
+			connectedUsers.set(userId, new Set());
+		}
+		connectedUsers.get(userId).add(socket.id);
+	}
+	
 	socket.on('disconnect', () => {
-		console.log('Socket disconnected:', socket.id);
+		if (userId && connectedUsers.has(userId)) {
+			connectedUsers.get(userId).delete(socket.id);
+			if (connectedUsers.get(userId).size === 0) {
+				connectedUsers.delete(userId);
+			}
+		}
 	});
 });
+
+// Make connectedUsers available
+app.set('connectedUsers', connectedUsers);
 
 // -----------------------------
 // Connect to MongoDB then start server

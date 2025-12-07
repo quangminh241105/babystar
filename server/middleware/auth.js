@@ -46,13 +46,15 @@ function requireRole(...roles) {
 
 // Require admin role
 function requireAdmin(req, res, next) {
-  if (!req.session || !req.session.user) {
-    return res.status(401).json({ success: false, errors: { general: 'Unauthorized' }});
+  if (req.session && req.session.user && req.session.user.role === 'admin') {
+    return next();
   }
-  if (req.session.user.role !== 'admin') {
-    return res.status(403).json({ success: false, errors: { general: 'Admin access required' }});
-  }
-  next();
+  return res.status(403).render('pages/error', {
+    title: 'Forbidden',
+    statusCode: 403,
+    errorTitle: 'Access Denied',
+    errorMessage: 'You do not have permission to access this page.'
+  });
 }
 
 // Check if user is logged in (doesn't block, just sets flag)

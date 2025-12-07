@@ -1,9 +1,51 @@
+require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const { requireAuth, requireAuthRedirect } = require('../middleware');
 const User = require('../models/user');
 const HealthLog = require('../models/healthlogs');
 const WeeklyReport = require('../models/weeklyreports');
+const { Notification } = require('../models/notification');
+const axios = require('axios');
+
+// Helper function to emit real-time notification via Socket.IO
+function emitNotification(req, userId, notification) {
+  const io = req.app.get('io');
+  if (io) {
+    // Emit to user's room
+    io.to(`user:${userId}`).emit('notification', {
+      type: 'new',
+      notification: {
+        _id: notification._id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        category: notification.category,
+        priority: notification.priority,
+        actionUrl: notification.actionUrl,
+        actionLabel: notification.actionLabel,
+        createdAt: notification.createdAt,
+        read: notification.read
+      }
+    });
+    
+    // Also emit updated unread count
+    Notification.getUnreadCount(userId).then(count => {
+      io.to(`user:${userId}`).emit('notification', {
+        type: 'count',
+        count
+      });
+    }).catch(err => console.error('Failed to emit count:', err));
+  }
+}
+
+// Helper to emit link-account updates
+function emitLinkAccountUpdate(req, userId, data) {
+  const io = req.app.get('io');
+  if (io) {
+    io.to(`user:${userId}`).emit('link-account', data);
+  }
+}
 
 // Homepage or Welcome page based on authentication
 router.get('/', (req, res) => {
@@ -116,6 +158,37 @@ router.post('/link-account/connect', requireAuth, async (req, res) => {
     // Add current user as associated user to target
     await targetUser.addAssociatedUser(req.session.user.id, relationship);
     
+    // Get sender info for notification
+    const sender = await User.findById(req.session.user.id);
+    const senderName = sender?.fullName || sender?.email || 'Someone';
+    
+    // Create notification for target user (the one who shared the code)
+    const notification = await Notification.create({
+      userId: targetUser._id,
+      title: 'New Partner Link Request',
+      message: `${senderName} wants to link accounts with you as your ${relationship}. Review and accept or decline this request.`,
+      type: 'partner_request',
+      category: 'social',
+      priority: 'high',
+      actionUrl: '/link-account',
+      actionLabel: 'View Request',
+      relatedEntity: { type: 'user', id: req.session.user.id },
+      createdBy: { type: 'system' }
+    });
+    
+    // Emit real-time notification via Socket.IO
+    emitNotification(req, targetUser._id.toString(), notification);
+    
+    // Emit link-account update to target user
+    emitLinkAccountUpdate(req, targetUser._id.toString(), {
+      type: 'new_request',
+      from: {
+        id: req.session.user.id,
+        name: senderName,
+        relationship
+      }
+    });
+    
     res.json({ success: true, message: 'Link request sent successfully' });
   } catch (err) {
     console.error('Connect account error:', err);
@@ -134,7 +207,44 @@ router.post('/link-account/accept/:associationId', requireAuth, async (req, res)
       return res.status(404).json({ success: false, error: 'User not found' });
     }
     
+    // Find the association to get the partner's userId
+    const association = user.associatedUsers.id(req.params.associationId);
+    if (!association) {
+      return res.status(404).json({ success: false, error: 'Association not found' });
+    }
+    
+    const partnerId = association.userId;
+    
     await user.acceptAssociation(req.params.associationId);
+    
+    // Create notification for the partner (the one who sent the request)
+    const acceptorName = user.fullName || user.email || 'User';
+    const notification = await Notification.create({
+      userId: partnerId,
+      title: 'Partner Link Accepted! 🎉',
+      message: `${acceptorName} has accepted your link request. You can now share health records and stay connected.`,
+      type: 'partner_accepted',
+      category: 'social',
+      priority: 'normal',
+      actionUrl: '/link-account',
+      actionLabel: 'View Link',
+      relatedEntity: { type: 'user', id: req.session.user.id },
+      createdBy: { type: 'system' }
+    });
+    
+    // Emit real-time notification via Socket.IO
+    emitNotification(req, partnerId.toString(), notification);
+    
+    // Emit link-account update to both users
+    emitLinkAccountUpdate(req, partnerId.toString(), {
+      type: 'request_accepted',
+      by: { id: req.session.user.id, name: acceptorName }
+    });
+    emitLinkAccountUpdate(req, req.session.user.id, {
+      type: 'accepted',
+      associationId: req.params.associationId
+    });
+    
     res.json({ success: true, message: 'Association accepted' });
   } catch (err) {
     console.error('Accept association error:', err);
@@ -150,7 +260,20 @@ router.post('/link-account/reject/:associationId', requireAuth, async (req, res)
       return res.status(404).json({ success: false, error: 'User not found' });
     }
     
+    // Get the partner's userId before rejecting
+    const association = user.associatedUsers.id(req.params.associationId);
+    const partnerId = association?.userId;
+    
     await user.rejectAssociation(req.params.associationId);
+    
+    // Emit link-account update to partner if exists
+    if (partnerId) {
+      emitLinkAccountUpdate(req, partnerId.toString(), {
+        type: 'request_rejected',
+        by: { id: req.session.user.id }
+      });
+    }
+    
     res.json({ success: true, message: 'Association rejected' });
   } catch (err) {
     console.error('Reject association error:', err);
@@ -166,7 +289,20 @@ router.post('/link-account/revoke/:associationId', requireAuth, async (req, res)
       return res.status(404).json({ success: false, error: 'User not found' });
     }
     
+    // Get the partner's userId before revoking
+    const association = user.associatedUsers.id(req.params.associationId);
+    const partnerId = association?.userId;
+    
     await user.revokeAssociation(req.params.associationId);
+    
+    // Emit link-account update to partner if exists
+    if (partnerId) {
+      emitLinkAccountUpdate(req, partnerId.toString(), {
+        type: 'link_revoked',
+        by: { id: req.session.user.id }
+      });
+    }
+    
     res.json({ success: true, message: 'Association revoked' });
   } catch (err) {
     console.error('Revoke association error:', err);
@@ -265,6 +401,148 @@ router.get('/diet-plan', requireAuthRedirect, (req, res) => {
   res.render('pages/dietplanner', { title: 'Diet Planner' });
 });
 
+router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
+  res.render('pages/nearbyhealthcare', { title: 'Diet Planner' });
+});
+
+// ==================== NOTIFICATION ROUTES ====================
+
+// GET /notifications - Render notifications page
+router.get('/notifications', requireAuthRedirect, async (req, res) => {
+  try {
+    const limit = 50;
+    const notifications = await Notification.getAll(req.session.user.id, { limit: limit + 1 });
+    const unreadCount = await Notification.getUnreadCount(req.session.user.id);
+    
+    // Check if there are more notifications
+    const hasMore = notifications.length > limit;
+    if (hasMore) {
+      notifications.pop(); // Remove the extra one
+    }
+    
+    res.render('pages/notifications', { 
+      title: 'Notifications',
+      notifications,
+      unreadCount,
+      hasMore
+    });
+  } catch (err) {
+    console.error('Get notifications page error:', err);
+    res.render('pages/notifications', { 
+      title: 'Notifications',
+      notifications: [],
+      unreadCount: 0,
+      hasMore: false
+    });
+  }
+});
+
+// GET /api/notifications - Get user notifications (JSON)
+router.get('/api/notifications', requireAuth, async (req, res) => {
+  try {
+    const { category, read, limit = 20 } = req.query;
+    const options = { limit: parseInt(limit) };
+    
+    if (category && category !== 'all') {
+      options.category = category;
+    }
+    if (read !== undefined) {
+      options.read = read === 'true';
+    }
+    
+    const notifications = await Notification.getAll(req.session.user.id, options);
+    
+    res.json({ success: true, notifications });
+  } catch (err) {
+    console.error('Get notifications error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get notifications' });
+  }
+});
+
+// GET /api/notifications/unread-count - Get unread notification count
+router.get('/api/notifications/unread-count', requireAuth, async (req, res) => {
+  try {
+    const count = await Notification.getUnreadCount(req.session.user.id);
+    res.json({ success: true, count });
+  } catch (err) {
+    console.error('Get unread count error:', err);
+    res.status(500).json({ success: false, error: 'Failed to get count' });
+  }
+});
+
+// POST /api/notifications/:id/read - Mark notification as read
+router.post('/api/notifications/:id/read', requireAuth, async (req, res) => {
+  try {
+    const notification = await Notification.findOne({
+      _id: req.params.id,
+      userId: req.session.user.id
+    });
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+    
+    await notification.markAsRead();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Mark read error:', err);
+    res.status(500).json({ success: false, error: 'Failed to mark as read' });
+  }
+});
+
+// POST /api/notifications/mark-all-read - Mark all notifications as read
+router.post('/api/notifications/mark-all-read', requireAuth, async (req, res) => {
+  try {
+    await Notification.markAllAsRead(req.session.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Mark all read error:', err);
+    res.status(500).json({ success: false, error: 'Failed to mark all as read' });
+  }
+});
+
+// POST /api/notifications/:id/dismiss - Dismiss a notification
+router.post('/api/notifications/:id/dismiss', requireAuth, async (req, res) => {
+  try {
+    const notification = await Notification.findOne({
+      _id: req.params.id,
+      userId: req.session.user.id
+    });
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+    
+    await notification.dismiss();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Dismiss notification error:', err);
+    res.status(500).json({ success: false, error: 'Failed to dismiss notification' });
+  }
+});
+
+// POST /api/notifications/:id/click - Mark notification as clicked
+router.post('/api/notifications/:id/click', requireAuth, async (req, res) => {
+  try {
+    const notification = await Notification.findOne({
+      _id: req.params.id,
+      userId: req.session.user.id
+    });
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+    
+    await notification.markAsClicked();
+    res.json({ success: true, actionUrl: notification.actionUrl });
+  } catch (err) {
+    console.error('Click notification error:', err);
+    res.status(500).json({ success: false, error: 'Failed to process click' });
+  }
+});
+
+// ==================== END NOTIFICATION ROUTES ====================
+
 router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
   res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
 });
@@ -283,10 +561,6 @@ router.get('/past-health-records', requireAuthRedirect, (req, res) => {
 
 router.get('/weekly-advice', requireAuthRedirect, (req, res) => {
   res.render('pages/weekly-advice', { title: 'Weekly Advice' });
-});
-
-router.get('/learning-quizzes', requireAuthRedirect, (req, res) => {
-  res.render('pages/learningquizzes', { title: 'Learning Quizzes' });
 });
 
 router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
@@ -1037,6 +1311,57 @@ router.get('/api/weekly-report/trends', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Get trends error:', err);
     res.status(500).json({ success: false, error: 'Failed to get trends' });
+  }
+});
+
+const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY;
+router.get('/api/nearby-healthcare', async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+    
+    if (!lat || !lon) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Latitude and longitude are required' 
+      });
+    }
+
+    // Geoapify Places API - searching for healthcare facilities
+    // Categories: healthcare.hospital, healthcare.clinic, healthcare.doctor, etc.
+    const categories = 'healthcare.hospital,healthcare.clinic_or_praxis,healthcare.dentist,healthcare.pharmacy';
+    const radiusKm = Math.min(parseFloat(req.query.radius) || 200, 200);
+    const radius = radiusKm * 1000; // Convert to meters
+    const limit = 50; // Increased limit for larger search area
+
+    const url = `https://api.geoapify.com/v2/places?` +
+      `categories=${categories}` +
+      `&filter=circle:${lon},${lat},${radius}` +
+      `&bias=proximity:${lon},${lat}` +
+      `&limit=${limit}` +
+      `&apiKey=${GEOAPIFY_API_KEY}`;
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Geoapify API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Return the results
+    res.json({
+      success: true,
+      places: data.features || [],
+      count: data.features?.length || 0
+    });
+
+  } catch (error) {
+    console.error('Error fetching nearby healthcare:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch nearby healthcare providers',
+      details: error.message
+    });
   }
 });
 

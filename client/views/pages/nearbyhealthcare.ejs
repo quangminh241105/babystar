@@ -1,0 +1,41 @@
+
+<link rel="stylesheet" href="/css/nearbyhealthcare.css">
+
+<main class="nearby-main">
+    <header class="nearby-header">
+      <div class="icon-circle">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <circle cx="12" cy="10" r="3"/>
+          <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="title">Nearby Healthcare Providers</h1>
+        <p class="subtitle">Find hospitals, clinics, and doctors close to you.</p>
+      </div>
+    </header>
+
+    <section class="search-section">
+      <div style="margin-bottom: 1.5rem;">
+        <label for="radiusSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Search Radius:</label>
+        <select id="radiusSelect" style="width: 100%; max-width: 300px; margin: 0 auto; padding: 0.75rem; border: 1px solid #d0d0d0; border-radius: 8px; font-size: 1rem; background: white; cursor: pointer;">
+          <option value="5">5 km</option>
+          <option value="10">10 km</option>
+          <option value="20">20 km</option>
+          <option value="50" selected>50 km</option>
+          <option value="100">100 km</option>
+          <option value="200">200 km</option>
+        </select>
+      </div>
+      <button id="findBtn" class="btn-primary">Find Nearby Healthcare</button>
+      <div id="statusMsg" class="status-msg"></div>
+    </section>
+
+    <section id="resultsSection" class="results-section" style="display:none;">
+      <h2 class="results-title">Results near you</h2>
+      <div id="resultsList" class="results-list"></div>
+      <div id="pagination" class="pagination" style="display:none;"></div>
+    </section>
+  </main>
+
+<script src="/js/nearbyhealthcare.js"></script>
