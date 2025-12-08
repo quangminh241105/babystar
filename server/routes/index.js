@@ -7,6 +7,8 @@ const HealthLog = require('../models/healthlogs');
 const WeeklyReport = require('../models/weeklyreports');
 const { Notification } = require('../models/notification');
 const axios = require('axios');
+const puppeteer = require('puppeteer');
+const path = require('path');
 
 // Helper function to emit real-time notification via Socket.IO
 function emitNotification(req, userId, notification) {
@@ -548,15 +550,130 @@ router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
 });
 
 router.get('/share-records', requireAuthRedirect, (req, res) => {
-  res.render('pages/sharerecords', { title: 'Share Records' });
+  res.render('pages/share-report', { title: 'Share Records' });
+});
+
+// GET /download-report-pdf - Generate and download PDF using Puppeteer
+router.get('/download-report-pdf', requireAuth, async (req, res) => {
+  let browser;
+  try {
+    console.log('Starting PDF generation...');
+    
+    // Launch Puppeteer browser
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer'
+      ]
+    });
+    
+    const page = await browser.newPage();
+    
+    // Set viewport for consistent rendering
+    await page.setViewport({ 
+      width: 1200, 
+      height: 1600,
+      deviceScaleFactor: 1
+    });
+    
+    console.log('Rendering HTML template...');
+    
+    // Render the report-pdf.ejs template to HTML string
+    const html = await new Promise((resolve, reject) => {
+      res.app.render('report-pdf', { title: 'Health Report PDF' }, (err, html) => {
+        if (err) {
+          console.error('Template render error:', err);
+          reject(err);
+        } else {
+          resolve(html);
+        }
+      });
+    });
+    
+    console.log('HTML template rendered successfully');
+    
+    // Get the full path to CSS file
+    const cssPath = path.join(__dirname, '../../client/public/css/share-report.css');
+    const fs = require('fs');
+    let cssContent = '';
+    
+    try {
+      cssContent = fs.readFileSync(cssPath, 'utf8');
+      console.log('CSS file loaded successfully');
+    } catch (cssErr) {
+      console.warn('Could not load CSS file:', cssErr.message);
+    }
+    
+    // Inject CSS directly into HTML
+    const htmlWithCSS = html.replace(
+      '<link rel="stylesheet" href="/css/share-report.css">',
+      `<style>${cssContent}</style>`
+    );
+    
+    // Set the HTML content directly
+    await page.setContent(htmlWithCSS, {
+      waitUntil: 'networkidle0',
+      timeout: 30000
+    });
+    
+    console.log('Page content set, generating PDF...');
+    
+    // Generate PDF
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      },
+      displayHeaderFooter: false,
+      preferCSSPageSize: false
+    });
+    
+    await browser.close();
+    browser = null;
+    
+    console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+    
+    // Set headers for PDF download
+    const fileName = `pregnancy-report-${new Date().toISOString().split('T')[0]}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    res.end(pdfBuffer, 'binary');
+  } catch (err) {
+    console.error('Generate PDF error:', err);
+    console.error('Error stack:', err.stack);
+    
+    if (browser) {
+      await browser.close().catch(e => console.error('Error closing browser:', e));
+    }
+    
+    // Send proper error response
+    if (!res.headersSent) {
+      res.status(500).send(`
+        <html>
+          <body>
+            <h1>PDF Generation Failed</h1>
+            <p>Error: ${err.message}</p>
+            <p><a href="/share-records">Go Back</a></p>
+          </body>
+        </html>
+      `);
+    }
+  }
 });
 
 router.get('/reminder', requireAuthRedirect, (req, res) => {
   res.render('pages/reminder', { title: 'Reminder' });
-});
-
-router.get('/past-health-records', requireAuthRedirect, (req, res) => {
-  res.render('pages/pasthealthrecords', { title: 'Past Health Records' });
 });
 
 router.get('/weekly-advice', requireAuthRedirect, (req, res) => {
@@ -584,6 +701,33 @@ router.get('/log-health', requireAuthRedirect, async (req, res) => {
       currentPregnancyWeek: null,
       currentTrimester: null
     });
+  }
+});
+
+router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
+  try {
+    const logs = await HealthLog.getAllLogs(req.session.user.id);
+    res.render('pages/past-health-log', { title: 'Past Health Records', logs });
+  } catch (err) {
+    res.render('pages/past-health-log', { title: 'Past Health Records', logs: [] });
+  }
+});
+
+router.post('/past-health-records/:id/delete', requireAuth, async (req, res) => {
+  try {
+    const log = await HealthLog.findById(req.params.id);
+    
+    if (!log) {
+      return res.status(404).json({ success: false, error: 'Health log not found' });
+    }
+    
+    log.deletedAt = new Date();
+    await log.save();
+    
+    res.redirect('/past-health-records');
+  } catch (err) {
+    console.error('Delete health log error:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete health log' });
   }
 });
 

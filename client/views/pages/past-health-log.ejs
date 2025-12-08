@@ -27,99 +27,67 @@
 
     <!-- Logs list -->
     <section id="logsList" class="logs-list" aria-live="polite" aria-label="Daily health logs list">
-      <!-- Example log card — replace / generate dynamically in JS -->
-      <article class="log-card" aria-labelledby="log-2025-11-24">
-        <header class="log-header">
-          <div class="log-meta">
-            <h2 id="log-2025-11-24" class="log-date">Mon, Nov 24 2025</h2>
-            <div class="log-sub">Entry date: 2025-11-24 • ID #102</div>
-          </div>
+      <% if (logs && logs.length > 0) { %>
+        <% logs.forEach(log => { 
+          const logDate = new Date(log.logDate);
+          const formattedDate = logDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+          const isoDate = logDate.toISOString().split('T')[0];
+          const logId = log._id || log.id;
+          const today = new Date().toISOString().split('T')[0];
+          const isToday = isoDate === today;
+        %>
+          <article class="log-card" aria-labelledby="log-<%= isoDate %>">
+            <header class="log-header">
+              <div class="log-meta">
+                <h2 id="log-<%= isoDate %>" class="log-date"><%= formattedDate %></h2>
+                <div class="log-sub">Entry date: <%= isoDate %> • ID #<%= logId %></div>
+              </div>
 
-          <div class="log-actions" role="group" aria-label="Log actions">
-            <button type="button" class="btn edit" aria-label="Edit log 102">Edit</button>
-            <button type="button" class="btn delete" aria-label="Delete log 102">Delete</button>
-          </div>
-        </header>
+              <div class="log-actions" role="group" aria-label="Log actions">
+                <% if (isToday) { %>
+                  <button type="button" class="btn edit" data-log-id="<%= logId %>" aria-label="Edit log <%= logId %>">Edit</button>
+                <% } %>
+                <form method="POST" action="/past-health-records/<%= logId %>/delete" style="display: inline;">
+                  <button type="submit" class="btn delete" aria-label="Delete log <%= logId %>");">Delete</button>
+                </form>
+              </div>
+            </header>
 
-        <div class="log-vitals">
-          <div class="vital"><strong>Weight</strong><span>68.2 kg</span></div>
-          <div class="vital"><strong>Blood pressure</strong><span>118/76 mmHg</span></div>
-          <div class="vital"><strong>Sleep</strong><span>7.5 h</span></div>
-          <div class="vital"><strong>Mood</strong><span>Calm</span></div>
+            <div class="log-vitals">
+              <% if (log.weightKg) { %>
+                <div class="vital"><strong>Weight</strong><span><%= log.weightKg %> kg</span></div>
+              <% } %>
+              <% if (log.bloodPressure) { %>
+                <div class="vital"><strong>Blood pressure</strong><span><%= log.bloodPressure %> mmHg</span></div>
+              <% } %>
+              <% if (log.sleep && log.sleep.totalHours) { %>
+                <div class="vital"><strong>Sleep</strong><span><%= log.sleep.totalHours %> h</span></div>
+              <% } %>
+              <% if (log.mood) { %>
+                <div class="vital"><strong>Mood</strong><span><%= log.mood.replace(/_/g, ' ') %></span></div>
+              <% } %>
+            </div>
+
+            <% if (log.symptoms && log.symptoms.length > 0) { %>
+              <div class="log-symptom" aria-label="Main symptom">
+                <strong>Main symptom</strong>
+                <p><%= log.symptoms[0].symptom.replace(/_/g, ' ') %><% if (log.symptoms[0].notes) { %>; <%= log.symptoms[0].notes %><% } %></p>
+              </div>
+            <% } %>
+
+            <% if (log.notes) { %>
+              <div class="log-note" aria-label="User note">
+                <strong>Note</strong>
+                <p><%= log.notes %></p>
+              </div>
+            <% } %>
+          </article>
+        <% }); %>
+      <% } else { %>
+        <div class="no-logs">
+          <p>No health logs found. Start logging your daily health data to see them here.</p>
         </div>
-
-        <div class="log-symptom" aria-label="Main symptom">
-          <strong>Main symptom</strong>
-          <p>Mild nausea in the morning; small meals helped.</p>
-        </div>
-
-        <div class="log-note" aria-label="User note">
-          <strong>Note</strong>
-          <p>Stayed hydrated and rested between tasks; walked 20 minutes in the evening.</p>
-        </div>
-      </article>
-
-      <article class="log-card" aria-labelledby="log-2025-11-22">
-        <header class="log-header">
-          <div class="log-meta">
-            <h2 id="log-2025-11-22" class="log-date">Sat, Nov 22 2025</h2>
-            <div class="log-sub">Entry date: 2025-11-22 • ID #101</div>
-          </div>
-
-          <div class="log-actions" role="group" aria-label="Log actions">
-            <button type="button" class="btn edit" aria-label="Edit log 101">Edit</button>
-            <button type="button" class="btn delete" aria-label="Delete log 101">Delete</button>
-          </div>
-        </header>
-
-        <div class="log-vitals">
-          <div class="vital"><strong>Weight</strong><span>67.9 kg</span></div>
-          <div class="vital"><strong>Blood pressure</strong><span>120/78 mmHg</span></div>
-          <div class="vital"><strong>Sleep</strong><span>6.8 h</span></div>
-          <div class="vital"><strong>Mood</strong><span>Tired</span></div>
-        </div>
-
-        <div class="log-symptom" aria-label="Main symptom">
-          <strong>Main symptom</strong>
-          <p>Lower back ache after extended sitting.</p>
-        </div>
-
-        <div class="log-note" aria-label="User note">
-          <strong>Note</strong>
-          <p>Used a warm compress and did light pelvic stretches; felt better in the evening.</p>
-        </div>
-      </article>
-
-      <article class="log-card" aria-labelledby="log-2025-11-20">
-        <header class="log-header">
-          <div class="log-meta">
-            <h2 id="log-2025-11-20" class="log-date">Thu, Nov 20 2025</h2>
-            <div class="log-sub">Entry date: 2025-11-20 • ID #100</div>
-          </div>
-
-          <div class="log-actions" role="group" aria-label="Log actions">
-            <button type="button" class="btn edit" aria-label="Edit log 100">Edit</button>
-            <button type="button" class="btn delete" aria-label="Delete log 100">Delete</button>
-          </div>
-        </header>
-
-        <div class="log-vitals">
-          <div class="vital"><strong>Weight</strong><span>67.5 kg</span></div>
-          <div class="vital"><strong>Blood pressure</strong><span>116/75 mmHg</span></div>
-          <div class="vital"><strong>Sleep</strong><span>8.0 h</span></div>
-          <div class="vital"><strong>Mood</strong><span>Happy</span></div>
-        </div>
-
-        <div class="log-symptom" aria-label="Main symptom">
-          <strong>Main symptom</strong>
-          <p>None reported.</p>
-        </div>
-
-        <div class="log-note" aria-label="User note">
-          <strong>Note</strong>
-          <p>Good energy today; 30-minute walk.</p>
-        </div>
-      </article>
+      <% } %>
     </section>
     
     <footer class="page-footer" aria-hidden="false">

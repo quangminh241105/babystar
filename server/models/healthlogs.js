@@ -574,6 +574,14 @@ healthLogSchema.statics.getRecent = function(userId, days = 7) {
 	}).sort({ logDate: -1 });
 };
 
+// Get all logs
+healthLogSchema.statics.getAllLogs = function(userId) {
+	return this.find({
+		userId,
+		deletedAt: null
+	}).sort({ logDate: -1 });
+}
+
 // [IMPROVED] Get logs with concerns
 healthLogSchema.statics.getWithConcerns = function(userId) {
 	return this.find({
