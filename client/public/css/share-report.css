@@ -1,0 +1,773 @@
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #fff7fb;
+  color: #1f2937;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+}
+
+/* CSS Variables */
+:root {
+  --cta-1: #ff7aa2;
+  --cta-2: #ff9ec5;
+  --card-shadow: 
+    0 14px 32px rgba(0,0,0,0.12),
+    0 0 18px rgba(255,122,162,0.25),
+    0 0 6px rgba(255,255,255,0.9) inset;
+}
+
+/* Page Container */
+.page-container {
+  min-height: 100vh;
+  background: #fff7fb;
+}
+
+.content-wrapper {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.page-header p {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Main Grid Layout */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .main-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Left Column */
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Section Headings */
+.reports-section h2,
+.export-section h2 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+/* Reports Container */
+.reports-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Report Card */
+.report-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 2px solid #fce7f3;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--card-shadow);
+}
+
+.report-card:hover {
+  border-color: #fbcfe8;
+}
+
+.report-card.selected {
+  border-color: #f9a8d4;
+}
+
+.report-card-inner {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.checkbox-area {
+  padding-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.checkbox-area input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  accent-color: #ec4899;
+}
+
+.report-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Report Header */
+.report-header {
+  margin-bottom: 1rem;
+}
+
+.report-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.5;
+}
+
+/* Report Meta */
+.report-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #fce7f3;
+}
+
+.report-meta > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.report-meta dt {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.report-meta dd {
+  font-size: 1rem;
+  color: #111827;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Report Symptoms */
+.report-symptoms {
+  margin-top: 1rem;
+}
+
+.symptoms-title {
+  font-size: 0.875rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.symptoms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.symptoms-list li {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: #fdf2f8;
+  color: #be185d;
+  border: 1px solid #fbcfe8;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Export Options */
+.export-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Share Card */
+.share-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #fce7f3;
+  background: white;
+  box-shadow: var(--card-shadow);
+}
+
+.share-card-inner {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.share-icon {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: #fce7f3;
+  color: #db2777;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.share-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.share-content h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
+
+.share-content p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+/* Action Button */
+.action-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  background: linear-gradient(90deg, var(--cta-1), var(--cta-2));
+  line-height: 1.5;
+}
+
+.action-button:hover {
+  opacity: 0.9;
+}
+
+.action-button:active {
+  opacity: 0.8;
+}
+
+/* Right Column */
+.right-column {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .right-column {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+  }
+}
+
+/* PDF Preview */
+.pdf-preview {
+  background: white;
+  border-radius: 0.5rem;
+  border: 1px solid #fce7f3;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+
+/* PDF Preview Header */
+.pdf-preview-header {
+  background: linear-gradient(90deg, #fdf2f8, #fce7f3);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #fbcfe8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pdf-preview-header h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.page-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* PDF Content */
+.pdf-content {
+  padding: 1.5rem;
+  background: white;
+  min-height: 800px;
+}
+
+/* PDF Title Section */
+.pdf-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #ff7aa2;
+}
+
+.pdf-title-left,
+.pdf-title-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-title-right {
+  text-align: right;
+}
+
+.pdf-label {
+  font-size: 0.75rem;
+  color: #db2777;
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+  letter-spacing: 0.05em;
+}
+
+.pdf-title-left h1 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.pdf-value {
+  font-size: 0.875rem;
+  color: #111827;
+  line-height: 1.5;
+}
+
+/* PDF Sections */
+.pdf-info-section,
+.pdf-metrics-section,
+.pdf-bp-section,
+.pdf-mood-section,
+.pdf-concerns-section,
+.pdf-symptoms-section,
+.pdf-summary-section {
+  margin-bottom: 1.5rem;
+}
+
+.pdf-info-section h2,
+.pdf-metrics-section h2,
+.pdf-bp-section h2,
+.pdf-mood-section h2,
+.pdf-concerns-section h2,
+.pdf-symptoms-section h2,
+.pdf-summary-section h2 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+/* PDF Info Grid */
+.pdf-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pdf-info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-info-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
+
+.pdf-info-label svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.pdf-info-value {
+  font-size: 0.875rem;
+  color: #111827;
+  line-height: 1.5;
+}
+
+/* PDF Section Header */
+.pdf-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.pdf-section-header svg {
+  width: 1rem;
+  height: 1rem;
+  color: #db2777;
+}
+
+.pdf-section-header h2 {
+  margin: 0;
+}
+
+/* Extended Metrics Grid - 4 columns for more compact display */
+.metrics-grid-extended {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.metric-card {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  color: #be185d;
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.metric-value {
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.metric-value-tag {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.metric-value-tag.energy-moderate {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Blood Pressure Grid */
+.bp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.bp-card {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  border: 1px solid #fbcfe8;
+  text-align: center;
+}
+
+.bp-label {
+  font-size: 0.7rem;
+  color: #be185d;
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.bp-value {
+  font-size: 1.25rem;
+  color: #111827;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.bp-unit {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.bp-status {
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.bp-status.normal {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.bp-status.elevated {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.bp-status.high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Mood Grid */
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.mood-card {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  text-align: center;
+}
+
+.mood-label {
+  font-size: 0.7rem;
+  color: #be185d;
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.mood-value {
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Concerns Section */
+.concerns-box {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.concerns-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.concern-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.concern-indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.concern-item.low .concern-indicator {
+  background: #fbbf24;
+}
+
+.concern-item.medium .concern-indicator {
+  background: #f97316;
+}
+
+.concern-item.high .concern-indicator {
+  background: #ef4444;
+}
+
+.concerns-note {
+  font-size: 0.75rem;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  text-align: center;
+}
+
+/* Symptoms Box */
+.symptoms-box {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+}
+
+.symptoms-box-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.symptoms-box-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #111827;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  background: white;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid #fbcfe8;
+}
+
+.symptom-bullet {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: #db2777;
+  flex-shrink: 0;
+}
+
+/* Summary Text */
+.summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-text p {
+  font-size: 0.8rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* PDF Footer */
+.pdf-footer {
+  padding-top: 1rem;
+  border-top: 1px solid #fbcfe8;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.7rem;
+}
+
+.pdf-footer p {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.pdf-footer p:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .pdf-title-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pdf-title-right {
+    text-align: left;
+  }
+
+  .pdf-info-grid,
+  .bp-grid,
+  .mood-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid-extended {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .report-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .pdf-content {
+    padding: 1rem;
+  }
+
+  .pdf-title-left h1 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-wrapper {
+    padding: 0.75rem;
+  }
+
+  .report-card,
+  .share-card {
+    padding: 1rem;
+  }
+
+  .pdf-content {
+    padding: 0.75rem;
+    min-height: 600px;
+  }
+
+  .metrics-grid-extended {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .metric-card,
+  .bp-card,
+  .mood-card {
+    padding: 0.5rem;
+  }
+}

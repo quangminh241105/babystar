@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || 'Health Report PDF' %></title>
+  <link rel="stylesheet" href="/css/share-report.css">
+</head>
+<body>
+  <div class="pdf-preview">
+    <!-- PDF Content -->
+    <div class="pdf-content">
+      <!-- PDF Title Section -->
+      <section class="pdf-title-section">
+        <div class="pdf-title-left">
+          <div class="pdf-label">PREGNANCY CHECK-IN REPORT</div>
+          <h1>Check-in — 2025-09-15</h1>
+        </div>
+        <div class="pdf-title-right">
+          <div class="pdf-label">Report ID</div>
+          <div class="pdf-value">RPT-1001</div>
+        </div>
+      </section>
+
+      <!-- Report Info -->
+      <section class="pdf-info-section">
+        <div class="pdf-info-grid">
+          <div class="pdf-info-item">
+            <div class="pdf-info-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Check-in Date</span>
+            </div>
+            <div class="pdf-info-value">2025-09-15</div>
+          </div>
+          <div class="pdf-info-item">
+            <div class="pdf-info-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Report Generated</span>
+            </div>
+            <div class="pdf-info-value">2025-11-01</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Health Metrics Section -->
+      <section class="pdf-metrics-section">
+        <header class="pdf-section-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <h2>Health Metrics</h2>
+        </header>
+        <div class="metrics-grid-extended">
+          <div class="metric-card">
+            <div class="metric-label">Average Weight</div>
+            <div class="metric-value">68.4 kg</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Average Sleep</div>
+            <div class="metric-value">7.2 hrs/night</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Sleep Quality</div>
+            <div class="metric-value">Good</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Avg Heart Rate</div>
+            <div class="metric-value">82 bpm</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Avg Temperature</div>
+            <div class="metric-value">36.8°C</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Exercise Minutes</div>
+            <div class="metric-value">145 min/week</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Avg Water Intake</div>
+            <div class="metric-value">2.4 L/day</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Energy Level</div>
+            <div class="metric-value metric-value-tag energy-moderate">Moderate</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Blood Pressure Section -->
+      <section class="pdf-bp-section">
+        <header class="pdf-section-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
+          <h2>Blood Pressure</h2>
+        </header>
+        <div class="bp-grid">
+          <div class="bp-card">
+            <div class="bp-label">Avg Systolic</div>
+            <div class="bp-value">118 <span class="bp-unit">mmHg</span></div>
+            <div class="bp-status normal">Normal</div>
+          </div>
+          <div class="bp-card">
+            <div class="bp-label">Avg Diastolic</div>
+            <div class="bp-value">76 <span class="bp-unit">mmHg</span></div>
+            <div class="bp-status normal">Normal</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mood & Wellbeing Section -->
+      <section class="pdf-mood-section">
+        <header class="pdf-section-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+          </svg>
+          <h2>Mood & Wellbeing</h2>
+        </header>
+        <div class="mood-grid">
+          <div class="mood-card">
+            <div class="mood-label">Overall Mood</div>
+            <div class="mood-value">😊 Happy</div>
+          </div>
+          <div class="mood-card">
+            <div class="mood-label">Stress Level</div>
+            <div class="mood-value">Low</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Concerns Section -->
+      <section class="pdf-concerns-section">
+        <header class="pdf-section-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <h2>Concerns Detected</h2>
+        </header>
+        <div class="concerns-box">
+          <ul class="concerns-list">
+            <li class="concern-item low">
+              <span class="concern-indicator"></span>
+              <span class="concern-text">Mild fatigue — recommend more rest</span>
+            </li>
+            <li class="concern-item low">
+              <span class="concern-indicator"></span>
+              <span class="concern-text">Slight decrease in water intake</span>
+            </li>
+          </ul>
+          <div class="concerns-note">
+            No critical issues detected during this check-in period.
+          </div>
+        </div>
+      </section>
+
+      <!-- Symptoms Section -->
+      <section class="pdf-symptoms-section">
+        <h2>Reported Symptoms</h2>
+        <div class="symptoms-box">
+          <ul class="symptoms-box-list">
+            <li>
+              <span class="symptom-bullet"></span>
+              Nausea
+            </li>
+            <li>
+              <span class="symptom-bullet"></span>
+              Fatigue
+            </li>
+            <li>
+              <span class="symptom-bullet"></span>
+              Back pain
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Summary Section -->
+      <section class="pdf-summary-section">
+        <h2>Summary</h2>
+        <div class="summary-text">
+          <p>This check-in report provides a comprehensive overview of health metrics and symptoms recorded during this period of your pregnancy journey.</p>
+          <p>Regular monitoring of weight, sleep patterns, and symptoms helps ensure a healthy pregnancy and allows healthcare providers to track your progress effectively.</p>
+          <p>Please share this report with your healthcare provider during your next appointment for a detailed discussion of your pregnancy progress.</p>
+        </div>
+      </section>
+
+      <!-- PDF Footer -->
+      <footer class="pdf-footer">
+        <p>This report was automatically generated on December 5, 2025</p>
+        <p>For medical advice, please consult with your healthcare provider</p>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
