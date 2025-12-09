@@ -282,10 +282,6 @@
             </div>
             <div class="row two">
               <div class="field">
-                <label for="exerciseCalories">Calories Burned</label>
-                <input id="exerciseCalories" type="number" min="0" max="2000" placeholder="kcal">
-              </div>
-              <div class="field">
                 <label for="exerciseFeeling">Feeling</label>
                 <select id="exerciseFeeling">
                   <option value="">Select...</option>
@@ -297,10 +293,10 @@
                   <option value="painful">Painful</option>
                 </select>
               </div>
-            </div>
-            <div class="field">
-              <label for="exerciseTime">Time</label>
-              <input id="exerciseTime" type="time">
+              <div class="field">
+                <label for="exerciseTime">Time</label>
+                <input id="exerciseTime" type="time">
+              </div>
             </div>
             <div class="field">
               <label for="exerciseNotes">Notes</label>
@@ -326,10 +322,14 @@
                 <option value="other">Other</option>
               </select>
               <input id="mealTime" type="time" placeholder="Time">
-              <input id="mealFoods" type="text" placeholder="Foods (comma separated)">
-              <input id="mealCalories" type="number" min="0" placeholder="Calories">
-              <input id="mealNotes" type="text" placeholder="Notes">
-              <label><input type="checkbox" id="mealSkipped"> Skipped?</label>
+              <div style="display:flex;gap:6px;margin-top:12px;">
+                <input id="foodName" type="text" placeholder="Food name" style="flex:2;">
+                <input id="foodAmount" type="number" min="0" placeholder="Amount (g)" style="flex:1;">
+                <button type="button" class="btn-ghost" id="addFoodBtn">Add Food</button>
+              </div>
+              <ul id="foodList" style="margin-top:10px;"></ul>
+              <input id="mealNotes" type="text" placeholder="Meal notes" style="margin-top:12px;">
+              <label style="margin-top:8px;"><input type="checkbox" id="mealSkipped"> Skipped?</label>
               <input id="mealSkipReason" type="text" placeholder="Reason (if skipped)">
               <button type="button" class="btn-ghost" id="addMealBtn">Add Meal</button>
               <ul id="mealList" style="margin-top:10px;"></ul>
@@ -482,6 +482,7 @@
     let naps = [];
     let drinks = [];
     let meals = [];
+    let currentFoodList = []; // Add this line - initialize food list
     let isReadOnly = false;
     let userContext = {
       pregnancyWeek: <%= typeof currentPregnancyWeek !== 'undefined' && currentPregnancyWeek ? currentPregnancyWeek : 'null' %>,
@@ -662,16 +663,14 @@
       const type = document.getElementById('exerciseType').value;
       const durationMinutes = document.getElementById('exerciseMinutes').value ? Number(document.getElementById('exerciseMinutes').value) : null;
       const intensity = document.getElementById('exerciseIntensity').value || 'light';
-      const caloriesBurned = document.getElementById('exerciseCalories').value ? Number(document.getElementById('exerciseCalories').value) : null;
       const feeling = document.getElementById('exerciseFeeling').value || null;
       const time = document.getElementById('exerciseTime').value || null;
       const notes = document.getElementById('exerciseNotes').value || null;
       if (!type) return;
-      exercises.push({ type, durationMinutes, intensity, caloriesBurned, feeling, time, notes });
+      exercises.push({ type, durationMinutes, intensity, feeling, time, notes });
       renderExerciseList();
       document.getElementById('exerciseType').value = '';
       document.getElementById('exerciseMinutes').value = '';
-      document.getElementById('exerciseCalories').value = '';
       document.getElementById('exerciseFeeling').value = '';
       document.getElementById('exerciseTime').value = '';
       document.getElementById('exerciseNotes').value = '';
@@ -759,24 +758,44 @@
     }
     window.removeDrink = (i) => { if (isReadOnly) return; drinks.splice(i, 1); renderDrinkList(); updateLogStatus(); };
 
+    // ==================== FOODS ====================
+    document.getElementById('addFoodBtn').addEventListener('click', () => {
+      if (isReadOnly) return;
+      const name = document.getElementById('foodName').value.trim();
+      const amount = document.getElementById('foodAmount').value ? Number(document.getElementById('foodAmount').value) : null;
+      if (!name) return;
+      currentFoodList.push({ name, amountGrams: amount });
+      renderFoodList();
+      document.getElementById('foodName').value = '';
+      document.getElementById('foodAmount').value = '';
+    });
+
+    function renderFoodList() {
+      const ul = document.getElementById('foodList');
+      ul.innerHTML = currentFoodList.map((f, i) => `
+      <li>${f.name}${f.amountGrams ? ' (' + f.amountGrams + 'g)' : ''}
+        ${!isReadOnly ? `<button type="button" onclick="removeFood(${i})" style="margin-left:8px;color:#d91e8f;background:none;border:none;cursor:pointer;">✕</button>` : ''}
+      </li>
+    `).join('');
+    }
+    window.removeFood = (i) => { if (isReadOnly) return; currentFoodList.splice(i, 1); renderFoodList(); };
+
     // ==================== MEALS ====================
     document.getElementById('addMealBtn').addEventListener('click', () => {
       if (isReadOnly) return;
       const mealType = document.getElementById('mealType').value;
       const time = document.getElementById('mealTime').value || null;
-      const foodsStr = document.getElementById('mealFoods').value;
       const notes = document.getElementById('mealNotes').value || null;
       const skipped = document.getElementById('mealSkipped').checked;
       const skipReason = document.getElementById('mealSkipReason').value || null;
       if (!mealType && !skipped) return;
 
-      const foods = foodsStr ? foodsStr.split(',').map(f => ({ name: f.trim() })) : [];
-      meals.push({ mealType, time, foods, notes, skipped, skipReason });
+      meals.push({ mealType, time, foods: [...currentFoodList], notes, skipped, skipReason });
       renderMealList();
+      currentFoodList = [];
+      renderFoodList();
       document.getElementById('mealType').value = '';
       document.getElementById('mealTime').value = '';
-      document.getElementById('mealFoods').value = '';
-      document.getElementById('mealCalories').value = '';
       document.getElementById('mealNotes').value = '';
       document.getElementById('mealSkipped').checked = false;
       document.getElementById('mealSkipReason').value = '';
@@ -785,11 +804,17 @@
 
     function renderMealList() {
       const ul = document.getElementById('mealList');
-      ul.innerHTML = meals.map((m, i) => `
-      <li>${m.mealType || 'Meal'}${m.time ? ' at ' + m.time : ''}${m.skipped ? ' (skipped)' : ''}
-        ${!isReadOnly ? `<button type="button" onclick="removeMeal(${i})" style="margin-left:8px;color:#d91e8f;background:none;border:none;cursor:pointer;">✕</button>` : ''}
-      </li>
-    `).join('');
+      ul.innerHTML = meals.map((m, i) => {
+        const foodsText = m.foods && m.foods.length > 0 
+          ? m.foods.map(f => `${f.name}${f.amountGrams ? ' (' + f.amountGrams + 'g)' : ''}`).join(', ')
+          : '';
+        return `
+        <li>${m.mealType || 'Meal'}${m.time ? ' at ' + m.time : ''}${m.skipped ? ' (skipped)' : ''}
+          ${foodsText ? '<br><small style="color:#666;">Foods: ' + foodsText + '</small>' : ''}
+          ${!isReadOnly ? `<button type="button" onclick="removeMeal(${i})" style="margin-left:8px;color:#d91e8f;background:none;border:none;cursor:pointer;">✕</button>` : ''}
+        </li>
+      `;
+      }).join('');
     }
     window.removeMeal = (i) => { if (isReadOnly) return; meals.splice(i, 1); renderMealList(); updateLogStatus(); };
 
