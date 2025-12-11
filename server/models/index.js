@@ -13,7 +13,7 @@ const User = require('./user');
 const HealthLog = require('./healthlogs');
 const WeeklyReport = require('./weeklyreports');
 const Conversation = require('./aichatbot');
-const { Quiz, QuizAttempt, UserQuizProgress } = require('./quizzes');
+const { Quiz, QuizAttempt } = require('./quizzes');
 const Appointment = require('./appointment');
 const { Article, UserArticleInteraction } = require('./article');
 const { Notification, NotificationPreferences, ScheduledNotification } = require('./notification');
@@ -32,7 +32,6 @@ module.exports = {
 	// Quizzes & Gamification
 	Quiz,
 	QuizAttempt,
-	UserQuizProgress,
 	
 	// Appointments
 	Appointment,

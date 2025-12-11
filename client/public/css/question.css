@@ -3,9 +3,9 @@
 
 /* ===== Question Page Container ===== */
 .question-page {
-    background-color: var(--color-primary-50);
+    background-color: var(--color-primary-50, #fdf2f8);
     min-height: 100vh;
-    padding: var(--spacing-xl);
+    padding: var(--spacing-xl, 2rem);
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -14,37 +14,38 @@
 .question-page .page {
     width: 100%;
     max-width: 1100px;
-    padding: 0 var(--spacing-lg);
+    padding: 0 var(--spacing-lg, 1.5rem);
 }
 
 /* ===== Page Header ===== */
 .question-page .page-header {
     max-width: 820px;
-    margin: 0 auto var(--spacing-lg);
+    margin: 0 auto var(--spacing-lg, 1.5rem);
 }
 
 .question-page .page-header h1 {
     margin: 0;
     font-size: 26px;
     font-weight: 800;
-    color: var(--color-primary);
+    color: var(--color-primary, #e03fd8);
     display: inline-block;
 }
 
 /* ===== Progress Row ===== */
 .question-page .header-progress {
     display: flex;
-    gap: var(--spacing-md);
+    gap: var(--spacing-md, 1rem);
     align-items: center;
     justify-content: space-between;
-    margin: var(--spacing-sm) 0 var(--spacing-lg);
-    color: var(--color-text-muted);
+    margin: var(--spacing-sm, 0.5rem) auto var(--spacing-lg, 1.5rem);
+    color: var(--color-text-muted, #6b7280);
     font-weight: 600;
+    max-width: 820px;
 }
 
 .question-page .header-progress > div:first-child {
     font-size: 14px;
-    color: var(--color-text-muted);
+    color: var(--color-text-muted, #6b7280);
 }
 
 .question-page .progress-wrap {
@@ -59,165 +60,206 @@
     height: 10px;
     -webkit-appearance: none;
     appearance: none;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-full, 9999px);
     overflow: hidden;
-    background-color: var(--gray-200);
+    background-color: var(--gray-200, #e5e7eb);
     display: block;
 }
 
 .question-page progress::-webkit-progress-bar {
-    background-color: var(--gray-100);
-    border-radius: var(--radius-full);
+    background-color: var(--gray-100, #f3f4f6);
+    border-radius: var(--radius-full, 9999px);
 }
 
 .question-page progress::-webkit-progress-value {
-    background-color: var(--color-primary);
-    border-radius: var(--radius-full);
+    background-color: var(--color-primary, #e03fd8);
+    border-radius: var(--radius-full, 9999px);
 }
 
 .question-page progress::-moz-progress-bar {
-    background-color: var(--color-primary);
-    border-radius: var(--radius-full);
+    background-color: var(--color-primary, #e03fd8);
+    border-radius: var(--radius-full, 9999px);
 }
 
-/* ===== Quiz Form Card ===== */
-.question-page form {
-    background-color: var(--color-bg);
-    border-radius: var(--radius-lg);
-    padding: 22px;
-    padding-top: var(--spacing-sm);
-    border: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-xl);
+/* ===== Score Display ===== */
+.question-page .score-display {
     max-width: 820px;
-    margin: 0 auto var(--spacing-xl);
+    margin: 0 auto var(--spacing-md, 1rem);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-muted, #6b7280);
 }
 
-.question-page fieldset {
-    border: none;
-    margin: 0;
-    padding: 0;
+/* ===== Quiz Fieldset Card ===== */
+.question-page fieldset,
+.question-page #questionFieldset {
+    background-color: var(--color-bg, #ffffff);
+    border-radius: var(--radius-lg, 1rem);
+    padding: 22px;
+    padding-top: var(--spacing-sm, 0.5rem);
+    border: 1px solid var(--gray-200, #e5e7eb);
+    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
+    max-width: 820px;
+    margin: 0 auto var(--spacing-xl, 2rem);
 }
 
 /* ===== Question Label ===== */
-.question-page legend#questionLabel {
+.question-page legend,
+.question-page #questionLabel {
     display: block;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-md, 1rem);
     font-size: 18px;
     font-weight: 700;
-    color: var(--color-text);
+    color: var(--color-text, #1f2937);
     line-height: 1.3;
+    padding: var(--spacing-sm, 0.5rem) 0;
 }
 
 /* ===== Option Rows ===== */
-.question-page form > fieldset > div {
+.question-page .option {
+    margin-bottom: var(--spacing-sm, 0.5rem);
+}
+
+.question-page .option-btn {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-md, 1rem);
+    padding: var(--spacing-md, 1rem);
+    border-radius: var(--radius-lg, 1rem);
     cursor: pointer;
-    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+    border: 2px solid var(--gray-200, #e5e7eb);
+    background-color: var(--color-bg, #ffffff);
+    text-align: left;
+    font-size: 15px;
+    color: var(--color-text, #1f2937);
 }
 
-.question-page form > fieldset > div:hover {
-    background-color: var(--color-primary-50);
+.question-page .option-btn:hover:not(:disabled) {
+    background-color: var(--color-primary-50, #fdf2f8);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+    border-color: var(--color-primary-200, #f5d0fe);
 }
 
-/* ===== Custom Radio Control ===== */
-.question-page input[type="radio"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    min-height: 20px;
+.question-page .option-btn:focus-visible {
+    outline: 3px solid var(--color-primary-200, #f5d0fe);
+    outline-offset: 2px;
+}
+
+/* ===== Option Label (A, B, C, D) ===== */
+.question-page .option-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
     border-radius: 50%;
-    border: 2px solid var(--color-primary-200);
-    display: inline-grid;
-    place-items: center;
-    background: var(--color-bg);
-    transition: all var(--transition-fast);
-    margin: 0;
-    flex: 0 0 auto;
-}
-
-.question-page input[type="radio"]::after {
-    content: "";
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: transparent;
-    transform: scale(0);
-    transition: transform var(--transition-fast), background var(--transition-fast);
-}
-
-.question-page form > fieldset > div > label {
-    display: block;
-    cursor: pointer;
-    font-size: 15px;
-    color: var(--color-text);
-    user-select: none;
-    flex: 1 1 auto;
-}
-
-/* ===== Checked State ===== */
-.question-page input[type="radio"]:checked {
-    border-color: var(--color-primary);
-    background-color: var(--color-primary);
-}
-
-.question-page input[type="radio"]:checked::after {
-    transform: scale(1);
-    background: var(--color-text-inverse);
-}
-
-.question-page input[type="radio"]:checked + label {
+    background-color: var(--color-primary-100, #fae8ff);
+    color: var(--color-primary, #e03fd8);
     font-weight: 700;
-    color: var(--color-text);
+    font-size: 14px;
 }
 
-/* ===== Focus State ===== */
-.question-page input[type="radio"]:focus-visible {
-    outline: 3px solid var(--color-primary-200);
-    outline-offset: 4px;
+.question-page .option-text {
+    flex: 1;
 }
 
-/* ===== Submit Button Area ===== */
-.question-page form > div {
-    margin-top: var(--spacing-lg);
-    display: flex;
-    justify-content: flex-end;
+/* ===== Correct/Incorrect States ===== */
+.question-page .option-btn.correct {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
 }
 
-.question-page button[type="submit"] {
-    background-color: var(--color-primary);
-    color: var(--color-text-inverse);
+.question-page .option-btn.correct .option-label {
+    background-color: #28a745;
+    color: white;
+}
+
+.question-page .option-btn.incorrect {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.question-page .option-btn.incorrect .option-label {
+    background-color: #dc3545;
+    color: white;
+}
+
+.question-page .option-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* ===== Feedback Section ===== */
+.question-page .feedback-section,
+.question-page #feedback {
+    max-width: 820px;
+    margin: 0 auto var(--spacing-xl, 2rem);
+    background-color: var(--color-bg, #ffffff);
+    border-radius: var(--radius-lg, 1rem);
+    padding: var(--spacing-lg, 1.5rem);
+    border: 1px solid var(--gray-200, #e5e7eb);
+    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+}
+
+.question-page .feedback-message,
+.question-page #feedbackMessage {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: var(--spacing-md, 1rem);
+}
+
+.question-page .feedback-message.correct {
+    color: #28a745;
+}
+
+.question-page .feedback-message.incorrect {
+    color: #dc3545;
+}
+
+.question-page .explanation,
+.question-page #explanation {
+    font-size: 15px;
+    color: var(--color-text-muted, #6b7280);
+    margin-bottom: var(--spacing-lg, 1.5rem);
+    line-height: 1.5;
+}
+
+.question-page .next-btn,
+.question-page #nextBtn {
+    background-color: var(--color-primary, #e03fd8);
+    color: var(--color-text-inverse, #ffffff);
     border: none;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--radius-full);
+    padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
+    border-radius: var(--radius-full, 9999px);
     font-weight: 700;
     cursor: pointer;
     font-size: 15px;
-    box-shadow: var(--shadow-primary);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow-primary, 0 4px 14px rgba(224, 63, 216, 0.4));
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
 }
 
-.question-page button[type="submit"]:hover {
+.question-page .next-btn:hover,
+.question-page #nextBtn:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(224, 63, 216, 0.35);
 }
 
-.question-page button[type="submit"]:active {
+.question-page .next-btn:active,
+.question-page #nextBtn:active {
     transform: translateY(0) scale(0.98);
 }
 
 /* ===== Responsive ===== */
 @media (max-width: 640px) {
     .question-page {
-        padding: var(--spacing-lg);
+        padding: var(--spacing-lg, 1.5rem);
     }
 
     .question-page .page {
@@ -227,7 +269,7 @@
     .question-page .header-progress {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-sm, 0.5rem);
     }
 
     .question-page .progress-wrap {
@@ -235,33 +277,39 @@
         max-width: none;
     }
 
-    .question-page form {
-        padding: var(--spacing-md);
-        border-radius: var(--radius-lg);
+    .question-page fieldset,
+    .question-page #questionFieldset {
+        padding: var(--spacing-md, 1rem);
+        border-radius: var(--radius-lg, 1rem);
     }
 
-    .question-page form > fieldset > div {
-        padding: var(--spacing-sm);
-        gap: var(--spacing-sm);
-        border-radius: var(--radius-md);
+    .question-page .option-btn {
+        padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
+        gap: var(--spacing-sm, 0.5rem);
+        border-radius: var(--radius-md, 0.5rem);
     }
 
-    .question-page input[type="radio"] {
-        width: 18px;
-        height: 18px;
-        min-width: 18px;
-        min-height: 18px;
+    .question-page .option-label {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        font-size: 13px;
     }
 
-    .question-page button[type="submit"] {
-        width: 100%;
-        padding: var(--spacing-md);
-        border-radius: var(--radius-lg);
+    .question-page .feedback-section,
+    .question-page #feedback {
+        padding: var(--spacing-md, 1rem);
+    }
+
+    .question-page .next-btn,
+    .question-page #nextBtn {
+        padding: var(--spacing-md, 1rem);
+        border-radius: var(--radius-lg, 1rem);
     }
 }
 
 /* ===== Utility ===== */
 .small-muted {
-    color: var(--color-text-muted);
+    color: var(--color-text-muted, #6b7280);
     font-size: 14px;
 }
