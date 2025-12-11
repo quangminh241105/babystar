@@ -246,6 +246,15 @@ const healthLogSchema = new mongoose.Schema({
 		default: null
 	},
 	
+	// [IMPROVED] Blood pressure tracking
+	bloodPressure: {
+		type: {
+			systolic: { type: Number, min: 70, max: 200, default: null },
+			diastolic: { type: Number, min: 40, max: 130, default: null }
+		},
+		default: () => ({ systolic: null, diastolic: null })
+	},
+	
 	// [IMPROVED] Blood sugar for gestational diabetes tracking
 	bloodSugar: {
 		type: {
@@ -499,10 +508,10 @@ healthLogSchema.methods.calculateSectionsCompleted = function() {
 // [IMPROVED] Get log for specific date
 healthLogSchema.statics.getByDate = function(userId, date) {
 	const startOfDay = new Date(date);
-	startOfDay.setHours(0, 0, 0, 0);
+	startOfDay.setUTCHours(0, 0, 0, 0);
 	
 	const endOfDay = new Date(date);
-	endOfDay.setHours(23, 59, 59, 999);
+	endOfDay.setUTCHours(23, 59, 59, 999);
 	
 	return this.findOne({
 		userId,
@@ -514,7 +523,8 @@ healthLogSchema.statics.getByDate = function(userId, date) {
 // [IMPROVED] Get or create log for today
 healthLogSchema.statics.getOrCreateToday = async function(userId, pregnancyWeek = null, trimester = null) {
 	const today = new Date();
-	today.setHours(0, 0, 0, 0);
+	// Use UTC to avoid timezone issues
+	today.setUTCHours(0, 0, 0, 0);
 	
 	let log = await this.findOne({
 		userId,

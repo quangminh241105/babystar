@@ -815,12 +815,19 @@ router.get('/api/health-log/:date', requireAuth, async (req, res) => {
 // POST /api/health-log - Create or update today's health log
 router.post('/api/health-log', requireAuth, async (req, res) => {
   try {
+    console.log('=== HEALTH LOG SAVE REQUEST ===');
+    console.log('User ID:', req.session.user.id);
+    console.log('Request body keys:', Object.keys(req.body));
+    
     const user = await User.findById(req.session.user.id);
     const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
     const trimester = user?.currentTrimester || null;
     
     // Get or create today's log
     let log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
+    
+    console.log('Existing log ID:', log._id);
+    console.log('Log date:', log.logDate);
     
     // SERVER-SIDE VALIDATION: Ensure log is from today
     const today = new Date();
@@ -829,6 +836,7 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     logDate.setHours(0, 0, 0, 0);
     
     if (logDate.getTime() !== today.getTime()) {
+      console.log('ERROR: Trying to edit old log');
       return res.status(403).json({ 
         success: false, 
         error: 'Cannot edit health logs from previous days. You can only edit today\'s log.' 
@@ -840,6 +848,7 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       weightKg,
       heartRateBpm,
       temperatureC,
+      bloodPressure,
       bloodSugar,
       
       // Mood & Energy
@@ -883,19 +892,42 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     if (weightKg !== undefined) log.weightKg = weightKg || null;
     if (heartRateBpm !== undefined) log.heartRateBpm = heartRateBpm || null;
     if (temperatureC !== undefined) log.temperatureC = temperatureC || null;
-    if (bloodSugar !== undefined) log.bloodSugar = bloodSugar;
+    if (bloodPressure !== undefined) log.bloodPressure = bloodPressure;
+    if (bloodSugar !== undefined) {
+      // Ensure measuredAt is null if it's a time string (not a valid Date)
+      if (bloodSugar.measuredAt && typeof bloodSugar.measuredAt === 'string' && bloodSugar.measuredAt.includes(':')) {
+        bloodSugar.measuredAt = null;
+      }
+      log.bloodSugar = bloodSugar;
+    }
     
     // Update mood & energy
     if (mood !== undefined) log.mood = mood || null;
-    if (moodLog !== undefined) log.moodLog = moodLog || [];
+    if (moodLog !== undefined) {
+      // Convert time strings to null for moodLog time field
+      log.moodLog = (moodLog || []).map(entry => ({
+        ...entry,
+        time: (entry.time && typeof entry.time === 'string' && entry.time.includes(':')) 
+          ? null 
+          : entry.time
+      }));
+    }
     if (energyLevel !== undefined) log.energyLevel = energyLevel || null;
     if (stressLevel !== undefined) log.stressLevel = stressLevel || null;
     
     // Update sleep
     if (sleep !== undefined) {
+      // Convert time strings to null for bedTime and wakeTime
+      const bedTime = (sleep.bedTime && typeof sleep.bedTime === 'string' && sleep.bedTime.includes(':')) 
+        ? null 
+        : sleep.bedTime;
+      const wakeTime = (sleep.wakeTime && typeof sleep.wakeTime === 'string' && sleep.wakeTime.includes(':')) 
+        ? null 
+        : sleep.wakeTime;
+      
       log.sleep = {
-        bedTime: sleep.bedTime || null,
-        wakeTime: sleep.wakeTime || null,
+        bedTime: bedTime || null,
+        wakeTime: wakeTime || null,
         totalHours: sleep.totalHours || null,
         quality: sleep.quality || null,
         timesAwakened: sleep.timesAwakened || 0,
@@ -910,18 +942,62 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     }
     
     // Update symptoms
-    if (symptoms !== undefined) log.symptoms = symptoms || [];
+    if (symptoms !== undefined) {
+      // Convert time strings to null for occurredAt field
+      log.symptoms = (symptoms || []).map(symptom => ({
+        ...symptom,
+        occurredAt: (symptom.occurredAt && typeof symptom.occurredAt === 'string' && symptom.occurredAt.includes(':')) 
+          ? null 
+          : symptom.occurredAt
+      }));
+    }
     
     // Update exercises
-    if (exercises !== undefined) log.exercises = exercises || [];
+    if (exercises !== undefined) {
+      // Convert time strings to null for exercise time field
+      log.exercises = (exercises || []).map(exercise => ({
+        ...exercise,
+        time: (exercise.time && typeof exercise.time === 'string' && exercise.time.includes(':')) 
+          ? null 
+          : exercise.time
+      }));
+    }
     
     // Update nutrition
-    if (foodIntake !== undefined) log.foodIntake = foodIntake || [];
-    if (hydration !== undefined) log.hydration = hydration;
+    if (foodIntake !== undefined) {
+      // Convert time strings to null for foodIntake (meals) time field
+      log.foodIntake = (foodIntake || []).map(meal => ({
+        ...meal,
+        time: (meal.time && typeof meal.time === 'string' && meal.time.includes(':')) 
+          ? null 
+          : meal.time
+      }));
+    }
+    if (hydration !== undefined) {
+      // Convert time strings to null for drinks time field
+      if (hydration.drinks) {
+        hydration.drinks = hydration.drinks.map(drink => ({
+          ...drink,
+          time: (drink.time && typeof drink.time === 'string' && drink.time.includes(':')) 
+            ? null 
+            : drink.time
+        }));
+      }
+      log.hydration = hydration;
+    }
     if (caffeineIntakeMg !== undefined) log.caffeineIntakeMg = caffeineIntakeMg || null;
     
     // Update fetal movement
-    if (fetalMovement !== undefined) log.fetalMovement = fetalMovement;
+    if (fetalMovement !== undefined) {
+      // Convert time strings to null for startTime and endTime
+      if (fetalMovement.startTime && typeof fetalMovement.startTime === 'string' && fetalMovement.startTime.includes(':')) {
+        fetalMovement.startTime = null;
+      }
+      if (fetalMovement.endTime && typeof fetalMovement.endTime === 'string' && fetalMovement.endTime.includes(':')) {
+        fetalMovement.endTime = null;
+      }
+      log.fetalMovement = fetalMovement;
+    }
     if (kickCountSessions !== undefined) log.kickCountSessions = kickCountSessions || [];
     
     // Update contractions
@@ -937,11 +1013,26 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     if (isComplete !== undefined) log.isComplete = isComplete;
     
     // Save and recalculate sections
+    console.log('Saving log with data...');
     await log.save();
+    
+    console.log('Log saved successfully! ID:', log._id);
+    console.log('Updated fields:', {
+      weightKg: log.weightKg,
+      heartRateBpm: log.heartRateBpm,
+      bloodPressure: log.bloodPressure,
+      energyLevel: log.energyLevel,
+      sleepHours: log.sleep?.totalHours,
+      symptomsCount: log.symptoms?.length,
+      exercisesCount: log.exercises?.length,
+      mealsCount: log.foodIntake?.length
+    });
     
     res.json({ success: true, log, message: isComplete ? 'Log saved and marked complete' : 'Log saved' });
   } catch (err) {
     console.error('Save health log error:', err);
+    console.error('Error details:', err.message);
+    console.error('Error stack:', err.stack);
     res.status(500).json({ success: false, error: 'Failed to save health log' });
   }
 });
