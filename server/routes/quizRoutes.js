@@ -463,19 +463,27 @@ router.post('/:quizId/answer', async (req, res) => {
 });
 
 // GET /quiz/:quizId/results - View quiz results
-router.get('/:quizId/results', async (req, res) => {
+router.get('/:quizId/results', requireAuthRedirect, async (req, res) => {
 	try {
 		const { quizId } = req.params;
-		const { attemptId } = req.query;
+		const userId = req.session?.user?.id;
 		
-		const quiz = await Quiz.findById(quizId);
-		const attempt = await QuizAttempt.findById(attemptId);
-		
-		if (!quiz || !attempt) {
-			return res.status(404).render('pages/error', { title: 'Not Found', message: 'Quiz or attempt not found' });
+		if (!userId) {
+			return res.redirect('/auth/login');
 		}
 		
-		res.render('pages/quiz-results', { title: 'Quiz Results', quiz, attempt });
+		const quiz = await Quiz.findById(quizId);
+		if (!quiz) {
+			return res.status(404).render('pages/error', { title: 'Not Found', message: 'Quiz not found' });
+		}
+		
+		// Fetch all attempts for this quiz by the current user
+		const attempts = await QuizAttempt.find({ 
+			quizId, 
+			userId 
+		}).sort({ startedAt: -1 }); // Most recent first
+		
+		res.render('pages/quiz-result', { title: 'Quiz Results', quiz, attempts });
 	} catch (error) {
 		console.error('Error loading results:', error);
 		res.status(500).render('pages/error', { title: 'Error', message: 'Failed to load results' });
