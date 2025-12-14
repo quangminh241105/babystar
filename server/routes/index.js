@@ -913,9 +913,30 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     
     // Update sleep
     if (sleep !== undefined) {
+      // Helper function to convert time string to Date object
+      const parseTimeToDate = (timeString) => {
+        if (!timeString) return null;
+        if (timeString instanceof Date) return timeString;
+        
+        // If it's a time string like "22:51", convert to today's date with that time
+        if (typeof timeString === 'string' && timeString.match(/^\d{1,2}:\d{2}$/)) {
+          const [hours, minutes] = timeString.split(':');
+          const date = new Date();
+          date.setHours(parseInt(hours, 10));
+          date.setMinutes(parseInt(minutes, 10));
+          date.setSeconds(0);
+          date.setMilliseconds(0);
+          return date;
+        }
+        
+        // Try to parse as ISO date string
+        const parsed = new Date(timeString);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      };
+      
       log.sleep = {
-        bedTime: sleep.bedTime || null,
-        wakeTime: sleep.wakeTime || null,
+        bedTime: parseTimeToDate(sleep.bedTime),
+        wakeTime: parseTimeToDate(sleep.wakeTime),
         totalHours: sleep.totalHours || null,
         quality: sleep.quality || null,
         timesAwakened: sleep.timesAwakened || 0,

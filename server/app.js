@@ -92,6 +92,7 @@ app.use('/partner', partnerRouter);
 app.use('/admin', adminRouter);
 app.use('/quiz', quizRouter);
 app.use('/chatbot', require('./chatbot/routes'));
+app.use('/api/nutrition', require('./routes/nutrition'));
 
 // -----------------------------
 // Render wrapper
