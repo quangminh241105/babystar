@@ -9,6 +9,9 @@ const http = require('http');
 const { Server: IOServer } = require('socket.io');
 const cookieParser = require('cookie-parser');
 
+// Import the weekly report scheduler
+const { initializeWeeklyReportScheduler } = require('./jobs/weeklyReportScheduler');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -265,6 +268,9 @@ mongoose.connect(MONGO_URI, {
 	} catch (indexErr) {
 		console.warn('⚠️ Index sync warning:', indexErr.message);
 	}
+	
+	// Initialize the weekly report scheduler
+	initializeWeeklyReportScheduler();
 	
 	startServer();
 })
