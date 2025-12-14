@@ -613,11 +613,27 @@
             </div>
           </div>
         </div>
-        <div class="card">
-          <strong>Quick Actions</strong>
+        <div class="card quick-actions-card">
+          <div class="quick-actions-header">
+            <strong>⚡ Quick Actions</strong>
+            <p class="quick-actions-subtitle">Manage your daily log</p>
+          </div>
           <div class="quick-actions">
-            <button type="button" class="btn-ghost" id="saveSidebarBtn">Save</button>
-            <button type="button" class="btn-ghost" id="completeSidebarBtn">Mark Complete</button>
+            
+            <button type="button" class="btn-action btn-complete" id="completeSidebarBtn">
+              <span class="btn-icon">✓</span>
+              <div class="btn-content">
+                <div class="btn-title">Mark Complete</div>
+                <div class="btn-subtitle">Finish today's log</div>
+              </div>
+            </button>
+            <button type="button" class="btn-action btn-secondary" id="viewPastLogsBtn">
+              <span class="btn-icon">📜</span>
+              <div class="btn-content">
+                <div class="btn-title">Past Logs</div>
+                <div class="btn-subtitle">View your history</div>
+              </div>
+            </button>
           </div>
         </div>
       </aside>
@@ -638,15 +654,14 @@
     let currentFoodList = []; // Add this line - initialize food list
     let isReadOnly = false;
     let userContext = {
-      pregnancyWeek: <%= typeof currentPregnancyWeek !== 'undefined' && currentPregnancyWeek ? currentPregnancyWeek : null %>,
-      trimester: <%= typeof currentTrimester !== 'undefined' && currentTrimester ? currentTrimester : null %>
+      pregnancyWeek: <%= typeof currentPregnancyWeek !== 'undefined' && currentPregnancyWeek ? JSON.stringify(currentPregnancyWeek) : 'null' %>,
+      trimester: <%= typeof currentTrimester !== 'undefined' && currentTrimester ? JSON.stringify(currentTrimester) : 'null' %>
     };
 
     // ==================== DOM ELEMENTS ====================
     const messageEl = document.getElementById('message');
     const saveBtn = document.getElementById('saveBtn');
     const saveCompleteBtn = document.getElementById('saveCompleteBtn');
-    const saveSidebarBtn = document.getElementById('saveSidebarBtn');
     const completeSidebarBtn = document.getElementById('completeSidebarBtn');
 
     // ==================== BLOOD PRESSURE VALIDATION ====================
@@ -710,7 +725,7 @@
       // Disable add buttons but keep tab buttons enabled
       allButtons.forEach(btn => {
         if (btn.id.startsWith('add') || btn.id === 'saveBtn' || btn.id === 'saveCompleteBtn' ||
-          btn.id === 'saveSidebarBtn' || btn.id === 'completeSidebarBtn') {
+          btn.id === 'completeSidebarBtn') {
           btn.disabled = readonly;
           btn.style.opacity = readonly ? '0.5' : '1';
         }
@@ -763,16 +778,21 @@
     const tabNotes = document.getElementById('tabNotes');
 
     function showTab(tab) {
+      if (!tabBasics || !tabHealthDetails || !tabNotes) {
+        console.error('Tab sections not found!');
+        return;
+      }
       tabBasics.style.display = tab === 'basics' ? 'block' : 'none';
       tabHealthDetails.style.display = tab === 'health' ? 'block' : 'none';
       tabNotes.style.display = tab === 'notes' ? 'block' : 'none';
-      tabBasicsBtn.classList.toggle('active', tab === 'basics');
-      tabHealthDetailsBtn.classList.toggle('active', tab === 'health');
-      tabNotesBtn.classList.toggle('active', tab === 'notes');
+      if (tabBasicsBtn) tabBasicsBtn.classList.toggle('active', tab === 'basics');
+      if (tabHealthDetailsBtn) tabHealthDetailsBtn.classList.toggle('active', tab === 'health');
+      if (tabNotesBtn) tabNotesBtn.classList.toggle('active', tab === 'notes');
     }
-    tabBasicsBtn.addEventListener('click', () => showTab('basics'));
-    tabHealthDetailsBtn.addEventListener('click', () => showTab('health'));
-    tabNotesBtn.addEventListener('click', () => showTab('notes'));
+    
+    if (tabBasicsBtn) tabBasicsBtn.addEventListener('click', () => showTab('basics'));
+    if (tabHealthDetailsBtn) tabHealthDetailsBtn.addEventListener('click', () => showTab('health'));
+    if (tabNotesBtn) tabNotesBtn.addEventListener('click', () => showTab('notes'));
 
     // Show fetal movement only if week >= 16
     const fetalMovementSection = document.getElementById('fetalMovementSection');
@@ -1574,8 +1594,7 @@
       // Disable buttons during save
       saveBtn.disabled = true;
       saveCompleteBtn.disabled = true;
-      saveSidebarBtn.disabled = true;
-      completeSidebarBtn.disabled = true;
+      if (completeSidebarBtn) completeSidebarBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
 
       const formData = collectFormData();
@@ -1616,8 +1635,7 @@
       } finally {
         saveBtn.disabled = false;
         saveCompleteBtn.disabled = false;
-        saveSidebarBtn.disabled = false;
-        completeSidebarBtn.disabled = false;
+        if (completeSidebarBtn) completeSidebarBtn.disabled = false;
         saveBtn.textContent = 'Save';
       }
     }
@@ -1625,12 +1643,63 @@
     // ==================== EVENT LISTENERS ====================
     saveBtn.addEventListener('click', () => saveLog(false));
     saveCompleteBtn.addEventListener('click', () => saveLog(true));
-    saveSidebarBtn.addEventListener('click', () => saveLog(false));
-    completeSidebarBtn.addEventListener('click', () => saveLog(true));
+    if (completeSidebarBtn) completeSidebarBtn.addEventListener('click', () => saveLog(true));
+
+    // View Past Logs button
+    const viewPastLogsBtn = document.getElementById('viewPastLogsBtn');
+    if (viewPastLogsBtn) {
+      viewPastLogsBtn.addEventListener('click', () => {
+        window.location.href = '/past-health-records';
+      });
+    }
+
+    // Clear Form button
+    const clearFormBtn = document.getElementById('clearFormBtn');
+    if (clearFormBtn) {
+      clearFormBtn.addEventListener('click', () => {
+        if (isReadOnly) {
+          showMsg('Cannot clear read-only log', 'error');
+          return;
+        }
+        if (confirm('Are you sure you want to clear all fields? This will not delete your saved data.')) {
+          document.getElementById('healthLogForm').reset();
+          symptoms = [];
+          exercises = [];
+          moodLog = [];
+          drinks = [];
+          meals = [];
+          currentFoodList = [];
+          selectedAwakeningReasons.clear();
+          
+          renderSymptomList();
+          renderExerciseList();
+          renderMoodLogList();
+          renderDrinkList();
+          renderMealList();
+          renderFoodList();
+          
+          // Reset custom displays
+          if (document.getElementById('heartRateDisplay')) document.getElementById('heartRateDisplay').textContent = '—';
+          if (document.getElementById('sleepHoursDisplay')) document.getElementById('sleepHoursDisplay').textContent = '0';
+          if (document.getElementById('waterDisplay')) document.getElementById('waterDisplay').textContent = '0';
+          if (document.getElementById('fluidsDisplay')) document.getElementById('fluidsDisplay').textContent = '0';
+          if (document.getElementById('caffeineDisplay')) document.getElementById('caffeineDisplay').textContent = '0';
+          
+          // Clear awakening chips
+          document.querySelectorAll('.awakening-chip').forEach(chip => chip.classList.remove('active'));
+          
+          // Clear symptom chips
+          document.querySelectorAll('.symptom-chip').forEach(chip => chip.classList.remove('active'));
+          if (symptomDetailsPanel) symptomDetailsPanel.style.display = 'none';
+          
+          updateLogStatus();
+          showMsg('Form cleared successfully', 'info');
+        }
+      });
+    }
 
     // ==================== INITIALIZE ====================
     loadTodayLog();
     updateLogStatus();
   })();
 </script>
-
