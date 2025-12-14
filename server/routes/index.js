@@ -50,9 +50,29 @@ function emitLinkAccountUpdate(req, userId, data) {
 }
 
 // Homepage or Welcome page based on authentication
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   if (req.session && req.session.user) {
-      res.render('pages/home', { title: 'Home' });
+      try {
+        // Fetch user data to get pregnancy information
+        const user = await User.findById(req.session.user.id);
+        
+        // Get pregnancy week and days until due date
+        const pregnancyWeek = user?.currentPregnancyWeek;
+        const daysUntilDueDate = user?.daysUntilDueDate;
+        
+        res.render('pages/home', { 
+          title: 'Home',
+          pregnancyWeek,
+          daysUntilDueDate
+        });
+      } catch (error) {
+        console.error('Error fetching user data for home:', error);
+        res.render('pages/home', { 
+          title: 'Home',
+          pregnancyWeek: null,
+          daysUntilDueDate: null
+        });
+      }
       return;
   }
   else {

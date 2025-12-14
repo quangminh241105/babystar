@@ -23,8 +23,17 @@
 
     <div class="mainBox" id="pregnancyInfo">
         <div>
-            <p id="pregnancyWeek">Week 24 of Your Journey</p>
-            <p>112 days until your due date </p>
+            <% if (pregnancyWeek && pregnancyWeek.weeks !== undefined) { %>
+                <p id="pregnancyWeek">Week <%= pregnancyWeek.weeks %> of Your Journey</p>
+            <% } else { %>
+                <p id="pregnancyWeek">Start tracking your pregnancy journey</p>
+            <% } %>
+            
+            <% if (daysUntilDueDate !== null && daysUntilDueDate !== undefined) { %>
+                <p><%= daysUntilDueDate %> days until your due date</p>
+            <% } else { %>
+                <p>Update your due date in your profile</p>
+            <% } %>
         </div>
 
         <p id="pregnancyEmoji">🤰</p>

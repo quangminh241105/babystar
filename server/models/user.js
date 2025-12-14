@@ -259,10 +259,18 @@ userSchema.virtual('currentPregnancyWeek').get(function() {
 	if (this.pregnancyProfile?.lastMenstrualPeriod) {
 		const lmp = new Date(this.pregnancyProfile.lastMenstrualPeriod);
 		const now = new Date();
+		
+		// Prevent future LMP dates
+		if (lmp > now) {
+			return null;
+		}
+		
 		const diffTime = now - lmp;
 		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 		const weeks = Math.floor(diffDays / 7);
 		const days = diffDays % 7;
+		
+		// Valid pregnancy range: 0-42 weeks
 		if (weeks >= 0 && weeks <= 42) {
 			return { weeks, days, totalDays: diffDays };
 		}
@@ -283,7 +291,15 @@ userSchema.virtual('daysUntilDueDate').get(function() {
 		const dueDate = new Date(this.pregnancyProfile.dueDate);
 		const now = new Date();
 		const diffTime = dueDate - now;
-		return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+		const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+		
+		// Return null if due date has passed (negative days)
+		// This indicates the pregnancy should be marked as completed
+		if (days < 0) {
+			return null;
+		}
+		
+		return days;
 	}
 	return null;
 });

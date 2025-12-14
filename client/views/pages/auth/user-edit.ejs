@@ -57,11 +57,12 @@
         <div class="field">
           <label for="pp_lastMenstrualPeriod">Last Menstrual Period (LMP)</label>
           <input id="pp_lastMenstrualPeriod" name="pregnancyProfile.lastMenstrualPeriod" type="date" autocomplete="nope" data-lpignore="true" />
-          <div class="helper">First day of your last period</div>
+          <div class="helper">First day of your last period • Auto-calculates due date</div>
         </div>
         <div class="field">
           <label for="pp_dueDate">Expected Due Date</label>
           <input id="pp_dueDate" name="pregnancyProfile.dueDate" type="date" autocomplete="nope" data-lpignore="true" />
+          <div class="helper">Auto-calculates from LMP (40 weeks)</div>
         </div>
       </div>
 
@@ -523,12 +524,73 @@
     // Load password info on page load
     loadPasswordInfo();
 
-    // Auto-calculate due date
-    document.getElementById('pp_lastMenstrualPeriod').addEventListener('change', (e) => {
-      if (e.target.value && !document.getElementById('pp_dueDate').value) {
+    // Auto-calculate pregnancy dates (LMP <-> Due Date)
+    const lmpInput = document.getElementById('pp_lastMenstrualPeriod');
+    const dueDateInput = document.getElementById('pp_dueDate');
+    
+    let isCalculating = false; // Prevent infinite loop
+    
+    // Calculate due date from LMP (LMP + 280 days)
+    lmpInput.addEventListener('change', (e) => {
+      if (isCalculating) return;
+      
+      if (e.target.value) {
         const lmp = new Date(e.target.value);
-        const due = new Date(lmp.getTime() + 280 * 24 * 60 * 60 * 1000);
-        document.getElementById('pp_dueDate').value = due.toISOString().split('T')[0];
+        const today = new Date();
+        
+        // Validate LMP is not in the future
+        if (lmp > today) {
+          alert('Last Menstrual Period cannot be in the future');
+          e.target.value = '';
+          return;
+        }
+        
+        // Validate LMP is not more than 42 weeks ago
+        const weeksSinceLMP = Math.floor((today - lmp) / (1000 * 60 * 60 * 24 * 7));
+        if (weeksSinceLMP > 42) {
+          if (!confirm('Last Menstrual Period is over 42 weeks ago. This pregnancy may have already concluded. Continue anyway?')) {
+            e.target.value = '';
+            return;
+          }
+        }
+        
+        // Calculate due date (LMP + 280 days = 40 weeks)
+        isCalculating = true;
+        const dueDate = new Date(lmp.getTime() + 280 * 24 * 60 * 60 * 1000);
+        dueDateInput.value = dueDate.toISOString().split('T')[0];
+        dueDateInput.style.backgroundColor = '#e8f5e9'; // Light green to indicate auto-calculated
+        setTimeout(() => {
+          dueDateInput.style.backgroundColor = '';
+        }, 2000);
+        isCalculating = false;
+      }
+    });
+    
+    // Calculate LMP from due date (Due Date - 280 days)
+    dueDateInput.addEventListener('change', (e) => {
+      if (isCalculating) return;
+      
+      if (e.target.value) {
+        const dueDate = new Date(e.target.value);
+        const today = new Date();
+        
+        // Validate due date is not too far in the past
+        if (dueDate < today) {
+          if (!confirm('Due date has passed. If pregnancy is complete, update your pregnancy status. Continue anyway?')) {
+            e.target.value = '';
+            return;
+          }
+        }
+        
+        // Calculate LMP (Due Date - 280 days)
+        isCalculating = true;
+        const lmp = new Date(dueDate.getTime() - 280 * 24 * 60 * 60 * 1000);
+        lmpInput.value = lmp.toISOString().split('T')[0];
+        lmpInput.style.backgroundColor = '#e3f2fd'; // Light blue to indicate auto-calculated
+        setTimeout(() => {
+          lmpInput.style.backgroundColor = '';
+        }, 2000);
+        isCalculating = false;
       }
     });
 
