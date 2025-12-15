@@ -315,7 +315,7 @@ ${relevantFoods.protein.map(f => `- ${f.food}: ${f.protein}g protein, ${f.calori
 ${relevantFoods.folicAcid.map(f => `- ${f.food}: ${f.folicAcid}mcg folic acid, ${f.calories} cal`).slice(0, 10).join('\n')}
 
 **INSTRUCTIONS:**
-Generate a complete weekly nutrition plan in the following JSON format. Use ONLY foods from the database provided above or common pregnancy-safe foods. Be specific and practical.
+Generate a complete weekly nutrition plan in the following JSON format. Use ONLY foods from the database provided above or common pregnancy-safe foods. Be specific and practical. IMPORTANT: Use metric measurements (grams, ml) instead of imperial (oz, cups).
 
 Return ONLY valid JSON (no markdown, no code blocks, no explanations):
 
@@ -325,16 +325,19 @@ Return ONLY valid JSON (no markdown, no code blocks, no explanations):
       "day": "Monday",
       "breakfast": {
         "meal": "Specific meal description",
+        "portion": "Portion size in grams (e.g., '150g', '2 slices', '1 cup')",
         "alternatives": ["Alternative 1", "Alternative 2"],
         "estimatedCalories": 350
       },
       "lunch": {
         "meal": "Specific meal description",
+        "portion": "Portion size in grams (e.g., '200g', '1 bowl')",
         "alternatives": ["Alternative 1", "Alternative 2"],
         "estimatedCalories": 500
       },
       "dinner": {
         "meal": "Specific meal description",
+        "portion": "Portion size in grams (e.g., '180g chicken, 150g rice')",
         "alternatives": ["Alternative 1", "Alternative 2"],
         "estimatedCalories": 550
       },
@@ -342,6 +345,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no explanations):
         {
           "name": "Snack name",
           "time": "Mid-morning",
+          "portion": "Portion size in grams (e.g., '30g almonds', '150g yogurt')",
           "estimatedCalories": 150
         }
       ]
