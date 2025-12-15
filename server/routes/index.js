@@ -419,8 +419,28 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/diet-plan', requireAuthRedirect, (req, res) => {
-  res.render('pages/dietplanner', { title: 'Diet Planner' });
+// AI-Powered Diet Planner
+router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
+    const trimester = user?.currentTrimester || null;
+
+    res.render('pages/dietplanner', { 
+      title: 'AI Diet Planner',
+      pregnancyWeek,
+      trimester,
+      userName: user?.name || user?.username || 'there'
+    });
+  } catch (error) {
+    console.error('Error loading diet planner:', error);
+    res.render('pages/dietplanner', { 
+      title: 'AI Diet Planner',
+      pregnancyWeek: null,
+      trimester: null,
+      userName: 'there'
+    });
+  }
 });
 
 router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {

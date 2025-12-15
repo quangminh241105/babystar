@@ -13,7 +13,7 @@ const WeeklyReport = require('../models/weeklyreports');
  */
 async function generateNutritionSuggestions(req, res) {
 	try {
-		const userId = req.user?.id || req.session?.userId;
+		const userId = req.session?.user?.id;
 
 		if (!userId) {
 			return res.status(401).json({
@@ -70,13 +70,69 @@ async function generateNutritionSuggestions(req, res) {
 			}
 		});
 
+		// Transform AI response to match frontend expectations
+		const weeklyMeals = (suggestions.dailyMealRecommendations || []).map(day => {
+			const transformMeal = (meal) => meal ? {
+				food: meal.meal || '',
+				portion: meal.portion || '',
+				calories: meal.estimatedCalories || 0,
+				reason: meal.reason || '',
+				keyNutrients: meal.keyNutrients || [],
+				alternatives: meal.alternatives || []
+			} : null;
+
+			return {
+				day: day.day,
+				breakfast: day.breakfast ? [transformMeal(day.breakfast)] : [],
+				lunch: day.lunch ? [transformMeal(day.lunch)] : [],
+				dinner: day.dinner ? [transformMeal(day.dinner)] : [],
+				snacks: (day.snacks || []).map(snack => ({
+					food: snack.name || snack.meal || '',
+					portion: snack.portion || snack.time || '',
+					calories: snack.estimatedCalories || 0,
+					reason: snack.reason || '',
+					keyNutrients: snack.keyNutrients || [],
+					alternatives: snack.alternatives || []
+				}))
+			};
+		});
+
+		// Transform nutrient focus from string array to object array
+		const nutrientFocusArray = suggestions.nutrientFocus || [];
+		const nutrientFocus = nutrientFocusArray.map(nutrient => {
+			// Get food sources from recommendedFoods if available
+			const recommended = (suggestions.recommendedFoods || []).find(
+				item => item.nutrient === nutrient
+			);
+			
+			return {
+				nutrient: nutrient,
+				reason: `Important for ${trimester === 1 ? 'early' : trimester === 2 ? 'mid' : 'late'} pregnancy development`,
+				sources: recommended?.foods || []
+			};
+		});
+
+		// Transform daily targets
+		const dailyTargets = {};
+		if (suggestions.dailyTargets) {
+			const targets = suggestions.dailyTargets;
+			if (targets.calories) dailyTargets.calories = targets.calories;
+			if (targets.proteinGrams) dailyTargets.protein = `${targets.proteinGrams}g`;
+			if (targets.calciumMg) dailyTargets.calcium = `${targets.calciumMg}mg`;
+			if (targets.ironMg) dailyTargets.iron = `${targets.ironMg}mg`;
+			if (targets.folicAcidMcg) dailyTargets.folate = `${targets.folicAcidMcg}mcg`;
+			if (targets.omega3Grams) dailyTargets.dha = `${targets.omega3Grams}g`;
+		}
+
 		return res.status(200).json({
 			success: true,
 			message: 'Nutrition suggestions generated successfully',
 			data: {
 				pregnancyWeek,
 				trimester,
-				suggestions
+				dailyTargets,
+				weeklyMeals,
+				nutrientFocus
 			}
 		});
 
@@ -96,7 +152,7 @@ async function generateNutritionSuggestions(req, res) {
  */
 async function getQuickAdvice(req, res) {
 	try {
-		const userId = req.user?.id || req.session?.userId;
+		const userId = req.session?.user?.id;
 
 		if (!userId) {
 			return res.status(401).json({
@@ -163,12 +219,21 @@ async function getQuickAdvice(req, res) {
  */
 async function getWeeklyNutritionPlan(req, res) {
 	try {
-		const userId = req.user?.id || req.session?.userId;
+		const userId = req.session?.user?.id;
 
 		if (!userId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Unauthorized. Please login.'
+			});
+		}
+
+		// Check if user has due date set
+		const user = await User.findById(userId);
+		if (!user?.pregnancyProfile?.dueDate) {
+			return res.status(404).json({
+				success: false,
+				message: 'Due date not set. Please update your profile.'
 			});
 		}
 
@@ -179,21 +244,78 @@ async function getWeeklyNutritionPlan(req, res) {
 			'dietPlan': { $exists: true, $ne: null }
 		}).sort({ createdAt: -1 });
 
-		if (!latestReport) {
+		if (!latestReport || !latestReport.dietPlan) {
 			return res.status(404).json({
 				success: false,
 				message: 'No weekly nutrition plan found. Weekly reports are generated automatically.'
 			});
 		}
 
+		const dietPlan = latestReport.dietPlan;
+
+		// Transform AI response to match frontend expectations
+		const weeklyMeals = (dietPlan.dailyMealRecommendations || []).map(day => {
+			const transformMeal = (meal) => meal ? {
+				food: meal.meal || '',
+				portion: meal.portion || '',
+				calories: meal.estimatedCalories || 0,
+				reason: meal.reason || '',
+				keyNutrients: meal.keyNutrients || [],
+				alternatives: meal.alternatives || []
+			} : null;
+
+			return {
+				day: day.day,
+				breakfast: day.breakfast ? [transformMeal(day.breakfast)] : [],
+				lunch: day.lunch ? [transformMeal(day.lunch)] : [],
+				dinner: day.dinner ? [transformMeal(day.dinner)] : [],
+				snacks: (day.snacks || []).map(snack => ({
+					food: snack.name || snack.meal || '',
+					portion: snack.portion || snack.time || '',
+					calories: snack.estimatedCalories || 0,
+					reason: snack.reason || '',
+					keyNutrients: snack.keyNutrients || [],
+					alternatives: snack.alternatives || []
+				}))
+			};
+		});
+
+		// Transform nutrient focus from string array to object array
+		const nutrientFocusArray = dietPlan.nutrientFocus || [];
+		const nutrientFocus = nutrientFocusArray.map(nutrient => {
+			// Get food sources from recommendedFoods if available
+			const recommended = (dietPlan.recommendedFoods || []).find(
+				item => item.nutrient === nutrient
+			);
+			
+			return {
+				nutrient: nutrient,
+				reason: `Important for ${latestReport.trimester === 1 ? 'early' : latestReport.trimester === 2 ? 'mid' : 'late'} pregnancy development`,
+				sources: recommended?.foods || []
+			};
+		});
+
+		// Transform daily targets
+		const dailyTargets = {};
+		if (dietPlan.dailyTargets) {
+			const targets = dietPlan.dailyTargets;
+			if (targets.calories) dailyTargets.calories = targets.calories;
+			if (targets.proteinGrams) dailyTargets.protein = `${targets.proteinGrams}g`;
+			if (targets.calciumMg) dailyTargets.calcium = `${targets.calciumMg}mg`;
+			if (targets.ironMg) dailyTargets.iron = `${targets.ironMg}mg`;
+			if (targets.folicAcidMcg) dailyTargets.folate = `${targets.folicAcidMcg}mcg`;
+			if (targets.omega3Grams) dailyTargets.dha = `${targets.omega3Grams}g`;
+		}
+
+		// Return diet plan with proper structure
 		return res.status(200).json({
 			success: true,
 			data: {
-				weekNumber: latestReport.weekNumber,
+				pregnancyWeek: latestReport.weekNumber,
 				trimester: latestReport.trimester,
-				startDate: latestReport.startDate,
-				endDate: latestReport.endDate,
-				dietPlan: latestReport.dietPlan
+				dailyTargets,
+				weeklyMeals,
+				nutrientFocus
 			}
 		});
 
