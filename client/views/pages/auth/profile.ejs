@@ -2,10 +2,10 @@
 
 <main class="profile-container">
   <!-- Welcome Banner for New Users -->
-  <!-- <div id="welcomeBanner" style="display: none; background: linear-gradient(135deg, #FFE3F0 0%, #FFF5F9 100%); border: 2px solid #ED7EAF; border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: center;">
+  <div id="welcomeBanner" style="display: none; background: linear-gradient(135deg, #FFE3F0 0%, #FFF5F9 100%); border: 2px solid #ED7EAF; border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: center;">
     <h2 style="color: #8A0E52; margin: 0 0 12px 0; font-size: 24px;">👋 Welcome to Your Profile!</h2>
     <p style="color: #B84B7A; margin: 0 0 16px 0; font-size: 16px;">
-      Your profile is currently empty. Let's add your <strong>pregnancy information</strong> to get personalized AI recommendations!
+      Your profile is currently incomplete. Let's add your <strong>pregnancy information</strong> to get personalized AI recommendations!
     </p>
     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
       <a href="/auth/user-edit" style="background: linear-gradient(135deg, #E00072 0%, #D91E8F 100%); color: white; border: none; padding: 12px 28px; border-radius: 24px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;">
@@ -15,7 +15,7 @@
         Dismiss
       </button>
     </div>
-  </div> -->
+  </div>
 
   <header class="profile-header">
     <div class="profile-avatar">
@@ -185,25 +185,39 @@
     document.getElementById('infoPhysician').textContent = pp.primaryPhysician || '-';
     document.getElementById('infoHospital').textContent = pp.hospitalName || '-';
 
-    // Show welcome banner if:
-    // 1. URL has ?welcome=true (new user), OR
-    // 2. Profile is incomplete (no LMP and no due date)
-    const urlParams = new URLSearchParams(window.location.search);
-    const isNewUser = urlParams.get('welcome') === 'true';
-    const isEmpty = !pp.lastMenstrualPeriod && !pp.dueDate;
+    // Show welcome banner logic:
+    // Only show if pregnancy information is missing (no LMP AND no due date)
+    const hasPregancyInfo = pp.lastMenstrualPeriod || pp.dueDate;
     
-    if (isNewUser || isEmpty) {
+    // Check if banner was previously dismissed (stored in localStorage)
+    const bannerDismissed = localStorage.getItem('pregnancyBannerDismissed') === 'true';
+    
+    if (!hasPregancyInfo && !bannerDismissed) {
       document.getElementById('welcomeBanner').style.display = 'block';
+    } else {
+      // If they now have pregnancy info, clear the dismissed flag for future use
+      if (hasPregancyInfo) {
+        localStorage.removeItem('pregnancyBannerDismissed');
+      }
+      document.getElementById('welcomeBanner').style.display = 'none';
+    }
+
+    // Handle welcome parameter from URL (e.g., after registration)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('welcome') === 'true') {
+      // Remove welcome parameter from URL for cleaner URL
+      window.history.replaceState({}, document.title, window.location.pathname);
       
-      // Remove welcome parameter from URL (cleaner URL)
-      if (isNewUser) {
-        window.history.replaceState({}, document.title, window.location.pathname);
+      // Show banner if pregnancy info is missing
+      if (!hasPregancyInfo) {
+        document.getElementById('welcomeBanner').style.display = 'block';
       }
     }
 
-    // Dismiss banner
+    // Dismiss banner - store preference in localStorage
     document.getElementById('dismissWelcome')?.addEventListener('click', () => {
       document.getElementById('welcomeBanner').style.display = 'none';
+      localStorage.setItem('pregnancyBannerDismissed', 'true');
     });
 
   } catch (err) {
