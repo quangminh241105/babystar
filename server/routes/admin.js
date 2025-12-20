@@ -3,13 +3,18 @@ const router = express.Router();
 const User = require('../models/user');
 const { requireAdmin } = require('../middleware/auth');
 
-// Render admin user management page
+// Render main admin dashboard
 router.get('/', requireAdmin, async (req, res) => {
+  res.render('pages/admin-main', { title: 'Admin Dashboard' });
+});
+
+// Render the admin user management page
+router.get('/users', requireAdmin, async (req, res) => {
   res.render('pages/admin-users', { title: 'Admin: Manage Users' });
 });
 
 // API: List all users (for frontend JS)
-router.get('/users', requireAdmin, async (req, res) => {
+router.get('/api/users', requireAdmin, async (req, res) => {
   try {
     // Load all users except deleted, sorted by name
     const users = await User.find({ deletedAt: null })

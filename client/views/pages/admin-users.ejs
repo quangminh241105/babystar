@@ -2,6 +2,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <main class="container admin-users-main">
+  <div style="margin-bottom: 16px;">
+    <a href="/admin" style="color: #D91E8F; text-decoration: none; font-weight: 600;">← Back to Admin Dashboard</a>
+  </div>
+  
   <header>
     <h1>Admin: Manage Users</h1>
     <p>Activate or deactivate users. No deletion allowed.</p>
@@ -44,7 +48,7 @@
   async function fetchUsers() {
     userTableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
     try {
-      const resp = await fetch('/admin/users', { credentials: 'include' });
+      const resp = await fetch('/admin/api/users', { credentials: 'include' });
       const data = await resp.json();
       if (!data.success || !Array.isArray(data.users)) {
         userTableBody.innerHTML = '<tr><td colspan="5">Failed to load users.</td></tr>';
