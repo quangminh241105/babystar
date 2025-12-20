@@ -16,12 +16,7 @@
 
 /* ===== Page Layout ===== */
 body {
-    min-height: 100vh;
     background-color: var(--color-primary-50);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 44px var(--log-page-gutter);
     color: var(--color-text);
 }
 

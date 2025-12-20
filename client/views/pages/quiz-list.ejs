@@ -236,15 +236,6 @@
   background: #FFE0B2;
 }
 
-.btn-add {
-  background: #E3F2FD;
-  color: #1565C0;
-}
-
-.btn-add:hover {
-  background: #BBDEFB;
-}
-
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -373,9 +364,6 @@
           <button class="btn-action btn-toggle" onclick="toggleQuiz('${quiz._id}', ${quiz.isActive})">
             ${quiz.isActive ? '🔴 Deactivate' : '🟢 Activate'}
           </button>
-          <button class="btn-action btn-add" onclick="addQuestions('${quiz._id}')">
-            ➕ Add Questions
-          </button>
         </div>
       </div>
     `).join('');
@@ -448,50 +436,5 @@
       showMessage('Network error', 'error');
     }
   };
-
-  window.addQuestions = function(quizId) {
-    const numQuestions = prompt('How many questions to add? (5-15)');
-    
-    if (!numQuestions) return;
-
-    const num = parseInt(numQuestions);
-    if (isNaN(num) || num < 5 || num > 15) {
-      alert('Please enter a number between 5 and 15');
-      return;
-    }
-
-    const difficulty = prompt('Difficulty level? (easy, medium, hard)');
-    if (!['easy', 'medium', 'hard'].includes(difficulty)) {
-      alert('Please enter: easy, medium, or hard');
-      return;
-    }
-
-    addQuestionsToQuiz(quizId, num, difficulty);
-  };
-
-  async function addQuestionsToQuiz(quizId, numQuestions, difficulty) {
-    showMessage('Generating questions... Please wait', 'success');
-
-    try {
-      const response = await fetch(`/admin/add-questions/${quizId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ numQuestions, difficulty })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        showMessage(result.message, 'success');
-        loadQuizzes(); // Reload
-      } else {
-        showMessage(result.error || 'Failed to add questions', 'error');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      showMessage('Network error', 'error');
-    }
-  }
 })();
 </script>

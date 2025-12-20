@@ -3,9 +3,31 @@ const router = express.Router();
 const { requireAuth, requireAuthRedirect } = require('../middleware');
 const { Quiz, QuizAttempt } = require('../models/quizzes');
 
-// Get overall quiz page
-router.get('/', requireAuthRedirect, (req, res) => {
-  res.render('pages/quiz', { title: 'Quiz' });
+// Get overall quiz page - Display all available quizzes
+router.get('/', requireAuthRedirect, async (req, res) => {
+  try {
+    // Fetch all active quizzes from database
+    const quizzes = await Quiz.find({ isActive: true })
+      .select('title description category questions')
+      .lean();
+    
+    // Add question count to each quiz
+    quizzes.forEach(quiz => {
+      quiz.questionCount = quiz.questions ? quiz.questions.length : 0;
+    });
+    
+    res.render('pages/quiz', { 
+      title: 'Quiz',
+      quizzes: quizzes
+    });
+  } catch (error) {
+    console.error('Error fetching quizzes:', error);
+    res.render('pages/quiz', { 
+      title: 'Quiz',
+      quizzes: [],
+      error: 'Failed to load quizzes'
+    });
+  }
 });
 
 // ============================================================================
@@ -39,25 +61,6 @@ router.post('/', async (req, res) => {
 	} catch (error) {
 		console.error('Error creating quiz:', error);
 		res.status(500).json({ error: 'Server error', details: error.message });
-	}
-});
-
-// GET /quiz - Get all quizzes
-router.get('/', async (req, res) => {
-	try {
-		const { category } = req.query;
-		
-		let quizzes;
-		if (category) {
-			quizzes = await Quiz.getByCategory(category);
-		} else {
-			quizzes = await Quiz.find({ isActive: true });
-		}
-		
-		res.json({ success: true, quizzes });
-	} catch (error) {
-		console.error('Error fetching quizzes:', error);
-		res.status(500).json({ error: 'Server error' });
 	}
 });
 
