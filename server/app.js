@@ -93,6 +93,7 @@ app.use('/admin', adminRouter);
 app.use('/quiz', quizRouter);
 app.use('/chatbot', require('./chatbot/routes'));
 app.use('/api/nutrition', require('./routes/nutrition'));
+app.use('/api/exercise', require('./routes/exercise'));
 app.use('/streak', streakRouter);
 
 // -----------------------------

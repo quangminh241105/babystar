@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const WeeklyReport = require('../models/weeklyreports');
 const HealthLog = require('../models/healthlogs');
 const User = require('../models/user');
+const { NutritionSuggestionService } = require('../personalized_suggestion');
+const { ExerciseSuggestionService } = require('../personalized_suggestion/exerciseIndex');
 
 /**
  * Calculate the start and end dates for the current week (Monday to Sunday)
@@ -362,6 +364,52 @@ async function generateWeeklyReportForUser(userId) {
 
 		await weeklyReport.save();
 		console.log(`Weekly report generated for user ${userId}, pregnancy week ${weekNumber}`);
+
+		// Generate AI-based diet and exercise plans
+		try {
+			// Initialize services
+			const nutritionService = new NutritionSuggestionService();
+			const exerciseService = new ExerciseSuggestionService();
+
+			// Prepare user data for AI
+			const userData = {
+				userId,
+				pregnancyWeek: weekNumber,
+				trimester,
+				healthLogs,
+				weeklyReport: weeklyReport.toObject()
+			};
+
+			// Generate diet plan
+			console.log(`Generating diet plan for user ${userId}...`);
+			try {
+				const dietPlan = await nutritionService.generateNutritionSuggestions(userData);
+				weeklyReport.aiOutputs = weeklyReport.aiOutputs || {};
+				weeklyReport.aiOutputs.dietPlan = dietPlan;
+				weeklyReport.aiOutputs.generatedAt = new Date();
+				console.log(`✅ Diet plan generated for user ${userId}`);
+			} catch (dietError) {
+				console.error(`❌ Failed to generate diet plan for user ${userId}:`, dietError.message);
+			}
+
+			// Generate exercise plan
+			console.log(`Generating exercise plan for user ${userId}...`);
+			try {
+				const exercisePlan = await exerciseService.generateExerciseSuggestions(userData);
+				weeklyReport.aiOutputs = weeklyReport.aiOutputs || {};
+				weeklyReport.aiOutputs.exercisePlan = exercisePlan;
+				console.log(`✅ Exercise plan generated for user ${userId}`);
+			} catch (exerciseError) {
+				console.error(`❌ Failed to generate exercise plan for user ${userId}:`, exerciseError.message);
+			}
+
+			// Save updated report with AI plans
+			await weeklyReport.save();
+			console.log(`Weekly report with AI plans saved for user ${userId}`);
+		} catch (aiError) {
+			console.error(`❌ Error generating AI plans for user ${userId}:`, aiError.message);
+			// Continue - report is still valid without AI plans
+		}
 
 		return weeklyReport;
 	} catch (error) {
