@@ -39,6 +39,30 @@
         <p id="pregnancyEmoji">🤰</p>
     </div>
 
+    <!-- Streak Popup -->
+    <div id="streakPopup" class="streak-popup">
+        <div class="streak-popup-overlay"></div>
+        <div class="streak-popup-content">
+            <div class="streak-popup-fire">🔥</div>
+            <h2 class="streak-popup-title">Amazing Streak!</h2>
+            <p class="streak-popup-days"><span id="popupStreakCount">0</span> Day<span id="streakPlural">s</span></p>
+            <p class="streak-popup-message">Keep up the great work logging your health every day!</p>
+            <button id="closeStreakPopup" class="streak-popup-button">Continue</button>
+        </div>
+    </div>
+
+    <!-- Streak Loss Popup -->
+    <div id="streakLossPopup" class="streak-popup">
+        <div class="streak-popup-overlay"></div>
+        <div class="streak-popup-content streak-loss-content">
+            <div class="streak-popup-fire">💔</div>
+            <h2 class="streak-popup-title">Streak Lost</h2>
+            <p class="streak-popup-days">You lost your <span id="lostStreakCount">0</span> day streak</p>
+            <p class="streak-popup-message">Don't worry! Start a new streak today by logging your health.</p>
+            <button id="closeStreakLossPopup" class="streak-popup-button streak-loss-button">Start Fresh</button>
+        </div>
+    </div>
+
     <p class="sectionName">Quick Actions</p>
 
     <div id="quickActions">
@@ -262,3 +286,64 @@
         </a>
     </div>
 </div>
+
+<script>
+// Fetch and display streak
+async function fetchStreak() {
+    try {
+        const response = await fetch('/streak/getStreak');
+        if (!response.ok) {
+            throw new Error('Failed to fetch streak');
+        }
+        
+        const data = await response.json();
+        
+        // Show streak loss popup if applicable
+        if (data.streakLost && data.lastStreakCount > 0) {
+            document.getElementById('lostStreakCount').textContent = data.lastStreakCount;
+            document.getElementById('streakLossPopup').style.display = 'flex';
+        }
+        // Show streak popup if conditions are met
+        else if (data.showPopup) {
+            document.getElementById('popupStreakCount').textContent = data.currentStreak;
+            document.getElementById('streakPlural').textContent = data.currentStreak === 1 ? '' : 's';
+            document.getElementById('streakPopup').style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('Error fetching streak:', error);
+    }
+}
+
+// Close popup handler
+document.getElementById('closeStreakPopup')?.addEventListener('click', () => {
+    const popup = document.getElementById('streakPopup');
+    popup.classList.add('streak-popup-fadeout');
+    setTimeout(() => {
+        popup.style.display = 'none';
+        popup.classList.remove('streak-popup-fadeout');
+    }, 300);
+});
+
+// Close streak loss popup handler
+document.getElementById('closeStreakLossPopup')?.addEventListener('click', () => {
+    const popup = document.getElementById('streakLossPopup');
+    popup.classList.add('streak-popup-fadeout');
+    setTimeout(() => {
+        popup.style.display = 'none';
+        popup.classList.remove('streak-popup-fadeout');
+    }, 300);
+});
+
+// Close popup when clicking overlay
+document.querySelector('.streak-popup-overlay')?.addEventListener('click', () => {
+    document.getElementById('closeStreakPopup').click();
+});
+
+// Close streak loss popup when clicking its overlay
+document.querySelectorAll('.streak-popup-overlay')[1]?.addEventListener('click', () => {
+    document.getElementById('closeStreakLossPopup').click();
+});
+
+// Load streak on page load
+document.addEventListener('DOMContentLoaded', fetchStreak);
+</script>

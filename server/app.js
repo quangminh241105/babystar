@@ -83,7 +83,7 @@ require('./models/user');
 // -----------------------------
 
 // Importing routers from /server/routes
-const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter, quiz: quizRouter } = require('./routes/indexRouter');
+const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter, quiz: quizRouter, streak: streakRouter } = require('./routes/indexRouter');
 
 // Mount routers
 app.use('/', indexRouter);
@@ -93,6 +93,7 @@ app.use('/admin', adminRouter);
 app.use('/quiz', quizRouter);
 app.use('/chatbot', require('./chatbot/routes'));
 app.use('/api/nutrition', require('./routes/nutrition'));
+app.use('/streak', streakRouter);
 
 // -----------------------------
 // Render wrapper
