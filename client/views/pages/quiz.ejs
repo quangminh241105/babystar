@@ -3,28 +3,192 @@
 <div class="quiz-page">
 <main role="main" aria-labelledby="pageTitle" class="page">
     <header id="pageTitle" class="page-header">
-      <h1 class="title">Pregnancy quizzes</h1>
+      <h1 class="title">Pregnancy Quizzes</h1>
       <p class="subtitle">Test your knowledge and learn important facts about pregnancy</p>
     </header>
 
-    <section class="quiz-grid" aria-label="Quiz navigation">
-      <article class="quiz-card" aria-labelledby="quiz-nutrition">
-        <h2 id="quiz-nutrition">Nutrition quiz</h2>
-        <p>Test your knowledge about pregnancy nutrition and healthy eating.</p>
-        <a href="quiz/nutrition" role="button" aria-label="Start Nutrition quiz">Start quiz</a>
-      </article>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error-message">
+        <p>⚠️ <%= error %></p>
+      </div>
+    <% } %>
 
-      <article class="quiz-card" aria-labelledby="quiz-development">
-        <h2 id="quiz-development">Baby development quiz</h2>
-        <p>Learn about fetal milestones and important development facts.</p>
-        <a href="quiz/development" role="button" aria-label="Start Baby development quiz">Start quiz</a>
-      </article>
-
-      <article class="quiz-card" aria-labelledby="quiz-exercise">
-        <h2 id="quiz-exercise">Exercise quiz</h2>
-        <p>Understand safe pregnancy exercise routines and tips.</p>
-        <a href="quiz/exercise" role="button" aria-label="Start Exercise quiz">Start quiz</a>
-      </article>
-    </section>
+    <% if (quizzes && quizzes.length > 0) { %>
+      <section class="quiz-grid" aria-label="Quiz navigation">
+        <% quizzes.forEach(quiz => { %>
+          <article class="quiz-card" aria-labelledby="quiz-<%= quiz._id %>">
+            <div class="quiz-card-header">
+              <h2 id="quiz-<%= quiz._id %>"><%= quiz.title %></h2>
+              <span class="quiz-badge <%= quiz.category %>">
+                <%= quiz.category.replace('_', ' ') %>
+              </span>
+            </div>
+            
+            <p class="quiz-description">
+              <%= quiz.description || 'Test your knowledge about ' + quiz.title.toLowerCase() %>
+            </p>
+            
+            <div class="quiz-meta">
+              <span class="question-count">
+                📝 <%= quiz.questionCount %> questions
+              </span>
+            </div>
+            
+            <a href="/quiz/category/<%= quiz.category %>" 
+               class="quiz-start-btn" 
+               role="button" 
+               aria-label="Start <%= quiz.title %>">
+              Start Quiz
+            </a>
+          </article>
+        <% }); %>
+      </section>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h3>No Quizzes Available</h3>
+        <p>There are currently no active quizzes. Please check back later!</p>
+      </div>
+    <% } %>
   </main>
 </div>
+
+<style>
+.error-message {
+  background: #FFEBEE;
+  color: #C62828;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.quiz-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quiz-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(217, 30, 143, 0.2);
+}
+
+.quiz-card-header {
+  display: flex-column;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.quiz-card h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+  flex: 1;
+}
+
+.quiz-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.quiz-badge.nutrition {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.quiz-badge.exercise {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.quiz-badge.baby_development {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.quiz-description {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.quiz-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #999;
+  font-size: 14px;
+}
+
+.question-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-start-btn {
+  background: linear-gradient(135deg, #E00072 0%, #D91E8F 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.quiz-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 30, 143, 0.3);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  color: #333;
+  margin: 0 0 12px 0;
+  font-size: 24px;
+}
+
+.empty-state p {
+  color: #666;
+  margin: 0;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .quiz-card-header {
+    flex-direction: column;
+    align-items: start;
+  }
+  
+  .quiz-badge {
+    align-self: flex-start;
+  }
+}
+</style>

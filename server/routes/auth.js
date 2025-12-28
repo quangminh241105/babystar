@@ -573,12 +573,80 @@ router.put('/user-edit', requireAuth, async (req, res) => {
 
       const pp = pregnancyProfile;
 
-      // Dates
+      // Dates with validation and auto-calculation
       if (pp.lastMenstrualPeriod !== undefined) {
-        user.pregnancyProfile.lastMenstrualPeriod = pp.lastMenstrualPeriod ? new Date(pp.lastMenstrualPeriod) : undefined;
+        if (pp.lastMenstrualPeriod) {
+          const lmpDate = new Date(pp.lastMenstrualPeriod);
+          const now = new Date();
+          
+          // Validate LMP is not in the future
+          if (lmpDate > now) {
+            return res.status(400).json({ 
+              success: false, 
+              error: 'Last Menstrual Period cannot be in the future' 
+            });
+          }
+          
+          // Validate LMP is within reasonable range (not more than 42 weeks ago)
+          const weeksSinceLMP = Math.floor((now - lmpDate) / (1000 * 60 * 60 * 24 * 7));
+          if (weeksSinceLMP > 42) {
+            return res.status(400).json({ 
+              success: false, 
+              error: 'Last Menstrual Period is too far in the past (over 42 weeks ago). Please update your pregnancy status.' 
+            });
+          }
+          
+          user.pregnancyProfile.lastMenstrualPeriod = lmpDate;
+          
+          // Auto-calculate due date if not provided (LMP + 280 days)
+          if (!pp.dueDate) {
+            const calculatedDueDate = new Date(lmpDate.getTime() + 280 * 24 * 60 * 60 * 1000);
+            user.pregnancyProfile.dueDate = calculatedDueDate;
+          }
+        } else {
+          user.pregnancyProfile.lastMenstrualPeriod = undefined;
+        }
       }
+      
       if (pp.dueDate !== undefined) {
-        user.pregnancyProfile.dueDate = pp.dueDate ? new Date(pp.dueDate) : undefined;
+        if (pp.dueDate) {
+          const dueDateObj = new Date(pp.dueDate);
+          const now = new Date();
+          
+          // If due date is significantly in the past, warn about pregnancy status
+          const daysPastDue = Math.floor((now - dueDateObj) / (1000 * 60 * 60 * 24));
+          if (daysPastDue > 14 && user.pregnancyProfile.status === 'active') {
+            return res.status(400).json({ 
+              success: false, 
+              error: 'Due date is more than 2 weeks past. Please update your pregnancy status to "completed".' 
+            });
+          }
+          
+          // If both dates provided, ensure they're consistent (within ±14 days of 280-day calculation)
+          if (user.pregnancyProfile.lastMenstrualPeriod) {
+            const lmpDate = new Date(user.pregnancyProfile.lastMenstrualPeriod);
+            const expectedDueDate = new Date(lmpDate.getTime() + 280 * 24 * 60 * 60 * 1000);
+            const daysDiff = Math.abs((dueDateObj - expectedDueDate) / (1000 * 60 * 60 * 24));
+            
+            // Allow up to 14 days difference from calculated due date
+            if (daysDiff > 14) {
+              return res.status(400).json({ 
+                success: false, 
+                error: `Due date and LMP are inconsistent. Expected due date around ${expectedDueDate.toISOString().split('T')[0]} based on LMP (±14 days allowed)` 
+              });
+            }
+          }
+          
+          user.pregnancyProfile.dueDate = dueDateObj;
+          
+          // Auto-calculate LMP if not provided (Due Date - 280 days)
+          if (!pp.lastMenstrualPeriod && !user.pregnancyProfile.lastMenstrualPeriod) {
+            const calculatedLMP = new Date(dueDateObj.getTime() - 280 * 24 * 60 * 60 * 1000);
+            user.pregnancyProfile.lastMenstrualPeriod = calculatedLMP;
+          }
+        } else {
+          user.pregnancyProfile.dueDate = undefined;
+        }
       }
       if (pp.deliveryDate !== undefined) {
         user.pregnancyProfile.deliveryDate = pp.deliveryDate ? new Date(pp.deliveryDate) : undefined;

@@ -50,9 +50,29 @@ function emitLinkAccountUpdate(req, userId, data) {
 }
 
 // Homepage or Welcome page based on authentication
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   if (req.session && req.session.user) {
-      res.render('pages/home', { title: 'Home' });
+      try {
+        // Fetch user data to get pregnancy information
+        const user = await User.findById(req.session.user.id);
+        
+        // Get pregnancy week and days until due date
+        const pregnancyWeek = user?.currentPregnancyWeek;
+        const daysUntilDueDate = user?.daysUntilDueDate;
+        
+        res.render('pages/home', { 
+          title: 'Home',
+          pregnancyWeek,
+          daysUntilDueDate
+        });
+      } catch (error) {
+        console.error('Error fetching user data for home:', error);
+        res.render('pages/home', { 
+          title: 'Home',
+          pregnancyWeek: null,
+          daysUntilDueDate: null
+        });
+      }
       return;
   }
   else {
@@ -399,8 +419,28 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/diet-plan', requireAuthRedirect, (req, res) => {
-  res.render('pages/dietplanner', { title: 'Diet Planner' });
+// AI-Powered Diet Planner
+router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
+    const trimester = user?.currentTrimester || null;
+
+    res.render('pages/dietplanner', { 
+      title: 'AI Diet Planner',
+      pregnancyWeek,
+      trimester,
+      userName: user?.name || user?.username || 'there'
+    });
+  } catch (error) {
+    console.error('Error loading diet planner:', error);
+    res.render('pages/dietplanner', { 
+      title: 'AI Diet Planner',
+      pregnancyWeek: null,
+      trimester: null,
+      userName: 'there'
+    });
+  }
 });
 
 router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
@@ -917,17 +957,30 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     
     // Update sleep
     if (sleep !== undefined) {
-      // Convert time strings to null for bedTime and wakeTime
-      const bedTime = (sleep.bedTime && typeof sleep.bedTime === 'string' && sleep.bedTime.includes(':')) 
-        ? null 
-        : sleep.bedTime;
-      const wakeTime = (sleep.wakeTime && typeof sleep.wakeTime === 'string' && sleep.wakeTime.includes(':')) 
-        ? null 
-        : sleep.wakeTime;
+      // Helper function to convert time string to Date object
+      const parseTimeToDate = (timeString) => {
+        if (!timeString) return null;
+        if (timeString instanceof Date) return timeString;
+        
+        // If it's a time string like "22:51", convert to today's date with that time
+        if (typeof timeString === 'string' && timeString.match(/^\d{1,2}:\d{2}$/)) {
+          const [hours, minutes] = timeString.split(':');
+          const date = new Date();
+          date.setHours(parseInt(hours, 10));
+          date.setMinutes(parseInt(minutes, 10));
+          date.setSeconds(0);
+          date.setMilliseconds(0);
+          return date;
+        }
+        
+        // Try to parse as ISO date string
+        const parsed = new Date(timeString);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      };
       
       log.sleep = {
-        bedTime: bedTime || null,
-        wakeTime: wakeTime || null,
+        bedTime: parseTimeToDate(sleep.bedTime),
+        wakeTime: parseTimeToDate(sleep.wakeTime),
         totalHours: sleep.totalHours || null,
         quality: sleep.quality || null,
         timesAwakened: sleep.timesAwakened || 0,

@@ -9,6 +9,9 @@ const http = require('http');
 const { Server: IOServer } = require('socket.io');
 const cookieParser = require('cookie-parser');
 
+// Import the weekly report scheduler
+const { initializeWeeklyReportScheduler } = require('./jobs/weeklyReportScheduler');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -80,7 +83,7 @@ require('./models/user');
 // -----------------------------
 
 // Importing routers from /server/routes
-const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter, quiz: quizRouter } = require('./routes/indexRouter');
+const { index: indexRouter, auth: authRouter, partner: partnerRouter, admin: adminRouter, quiz: quizRouter, streak: streakRouter } = require('./routes/indexRouter');
 
 // Mount routers
 app.use('/', indexRouter);
@@ -89,6 +92,9 @@ app.use('/partner', partnerRouter);
 app.use('/admin', adminRouter);
 app.use('/quiz', quizRouter);
 app.use('/chatbot', require('./chatbot/routes'));
+app.use('/api/nutrition', require('./routes/nutrition'));
+app.use('/api/exercise', require('./routes/exercise'));
+app.use('/streak', streakRouter);
 
 // -----------------------------
 // Render wrapper
@@ -265,6 +271,9 @@ mongoose.connect(MONGO_URI, {
 	} catch (indexErr) {
 		console.warn('⚠️ Index sync warning:', indexErr.message);
 	}
+	
+	// Initialize the weekly report scheduler
+	initializeWeeklyReportScheduler();
 	
 	startServer();
 })

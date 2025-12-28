@@ -1,47 +1,134 @@
 <link rel="stylesheet" href="/css/question.css">
 
 <div class="question-page">
-<main role="main" aria-labelledby="quizTitle" class="page">
-      <header id="quizTitle" class="page-header">
-          <h1>Nutrition quiz</h1>
-      </header>
+  <main role="main" aria-labelledby="quizTitle" class="page">
+    <header id="quizTitle" class="page-header">
+      <h1><%= quiz.title %></h1>
+    </header>
 
-      <!-- the question -->
-      <form aria-labelledby="questionLabel" method="post" action="#">
-          <div id="progressLabel" aria-live="polite" class="header-progress">
-            <div>Question 1 of 3</div>
-            <div class="progress-wrap" aria-hidden="true">
-              <progress value="1" max="3">1 of 3</progress>
-            </div>
-          </div>
-        <fieldset>
-          <legend id="questionLabel">Which nutrient is most important for fetal neural tube (early brain & spinal cord) development?</legend>
+    <% const currentQuestion = quiz.questions[attempt.currentQuestionIndex]; %>
+    <% const questionNumber = attempt.currentQuestionIndex + 1; %>
+    <% const totalQuestions = attempt.totalQuestions; %>
+    <% const optionLabels = ['A', 'B', 'C', 'D']; %>
 
-          <div>
-            <input type="radio" id="opt-folic" name="answer" value="folic" required />
-            <label for="opt-folic">Folic acid (folate)</label>
-          </div>
+    <div id="progressLabel" aria-live="polite" class="header-progress">
+      <div>Question <%= questionNumber %> of <%= totalQuestions %></div>
+      <div class="progress-wrap" aria-hidden="true">
+        <progress value="<%= questionNumber %>" max="<%= totalQuestions %>"><%= questionNumber %> of <%= totalQuestions %></progress>
+      </div>
+    </div>
 
-          <div>
-            <input type="radio" id="opt-iron" name="answer" value="iron" />
-            <label for="opt-iron">Iron</label>
-          </div>
+    <div class="score-display">
+      Current Score: <span id="currentScore"><%= attempt.score %></span> / <span id="answeredCount"><%= attempt.answers.length %></span>
+    </div>
 
-          <div>
-            <input type="radio" id="opt-calcium" name="answer" value="calcium" />
-            <label for="opt-calcium">Calcium</label>
-          </div>
+    <fieldset id="questionFieldset">
+      <legend id="questionLabel"><%= currentQuestion.questionText %></legend>
 
-          <div>
-            <input type="radio" id="opt-vitD" name="answer" value="vitD" />
-            <label for="opt-vitD">Vitamin D</label>
-          </div>
-        </fieldset>
-
-        <div>
-          <button type="submit" aria-label="Submit answer">Submit answer</button>
+      <% currentQuestion.options.forEach((option, index) => { %>
+        <div class="option" data-index="<%= index %>">
+          <button 
+            type="button" 
+            class="option-btn"
+            data-index="<%= index %>"
+            aria-label="Option <%= optionLabels[index] %>: <%= option %>"
+          >
+            <span class="option-label"><%= optionLabels[index] %></span>
+            <span class="option-text"><%= option %></span>
+          </button>
         </div>
-      </form>
-    </section>
+      <% }); %>
+    </fieldset>
+
+    <!-- Feedback section (hidden initially) -->
+    <div id="feedback" class="feedback-section" style="display: none;">
+      <div id="feedbackMessage" class="feedback-message"></div>
+      <div id="explanation" class="explanation">
+        <strong>Explanation:</strong> <%= currentQuestion.explanation || 'No explanation provided.' %>
+      </div>
+      <button type="button" id="nextBtn" class="next-btn">
+        <%= questionNumber >= totalQuestions ? 'See Results' : 'Next Question' %>
+      </button>
+    </div>
   </main>
 </div>
+
+<script>
+  const quizId = '<%= quiz._id %>';
+  const quizCategory = '<%= quiz.category %>';
+  const attemptId = '<%= attempt._id %>';
+  const questionIndex = <%= attempt.currentQuestionIndex %>;
+  const correctAnswer = <%= quiz.questions[attempt.currentQuestionIndex].correctAnswer %>;
+  const totalQuestions = <%= attempt.totalQuestions %>;
+  const isLastQuestion = <%= (attempt.currentQuestionIndex + 1) >= attempt.totalQuestions %>;
+  
+  let answered = false;
+
+  // Handle option click
+  document.querySelectorAll('.option-btn').forEach( btn => {
+    btn.addEventListener('click', async function() {
+      if (answered) return; // Prevent multiple answers
+      answered = true;
+
+      const selectedIndex = parseInt(this.dataset.index);
+      const isCorrect = selectedIndex === correctAnswer;
+
+      // Highlight answers
+      document.querySelectorAll('.option-btn').forEach((optBtn, idx) => {
+        optBtn.disabled = true;
+        if (idx === correctAnswer) {
+          optBtn.classList.add('correct');
+        } else if (idx === selectedIndex && !isCorrect) {
+          optBtn.classList.add('incorrect');
+        }
+      });
+
+      // Show feedback
+      const feedbackEl = document.getElementById('feedback');
+      const feedbackMsg = document.getElementById('feedbackMessage');
+      
+      if (isCorrect) {
+        feedbackMsg.textContent = '✓ Correct!';
+        feedbackMsg.className = 'feedback-message correct';
+      } else {
+        feedbackMsg.textContent = '✗ Incorrect';
+        feedbackMsg.className = 'feedback-message incorrect';
+      }
+      
+      feedbackEl.style.display = 'block';
+
+      // Update score display
+      if (isCorrect) {
+        document.getElementById('currentScore').textContent = 
+          parseInt(document.getElementById('currentScore').textContent) + 1;
+      }
+      document.getElementById('answeredCount').textContent = 
+        parseInt(document.getElementById('answeredCount').textContent) + 1;
+
+      // Send answer to server
+      try {
+        await fetch(`/quiz/${quizId}/answer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attemptId,
+            questionIndex,
+            selectedAnswer: selectedIndex
+          })
+        });
+      } catch (error) {
+        console.error('Error saving answer:', error);
+      }
+    });
+  });
+
+  // Handle next button
+  document.getElementById('nextBtn').addEventListener('click', function() {
+    if (isLastQuestion) {
+      window.location.href = `/quiz/${quizId}/results`;
+    } else {
+      // Reload same category quiz to get next question
+      window.location.href = `/quiz/category/${quizCategory}`;
+    }
+  });
+</script>
