@@ -547,11 +547,19 @@ healthLogSchema.statics.getOrCreateToday = async function(userId, pregnancyWeek 
 
 // [IMPROVED] Get logs for date range
 healthLogSchema.statics.getByDateRange = function(userId, startDate, endDate) {
-	return this.find({
+	const query = {
 		userId,
-		logDate: { $gte: startDate, $lte: endDate },
 		deletedAt: null
-	}).sort({ logDate: 1 });
+	};
+	
+	// Add date range filter if provided
+	if (startDate || endDate) {
+		query.logDate = {};
+		if (startDate) query.logDate.$gte = startDate;
+		if (endDate) query.logDate.$lte = endDate;
+	}
+	
+	return this.find(query).sort({ logDate: -1 });
 };
 
 // [IMPROVED] Get logs for pregnancy week

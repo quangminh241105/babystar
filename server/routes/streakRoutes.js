@@ -108,7 +108,7 @@ router.get('/getStreak', async (req, res) => {
         console.log('Last popup shown timestamp:', lastPopupShown);
         console.log('Today timestamp:', todayTimestamp);
         
-        const showPopup = loggedToday && lastPopupShown < todayTimestamp && currentStreak > 0;
+        const showPopup = loggedToday && lastPopupShown < todayTimestamp && currentStreak > 2;
         console.log('Show popup:', showPopup);
 
         if (showPopup) {

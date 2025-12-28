@@ -6,24 +6,33 @@
       <p class="subtitle">View and edit your health history.</p>
     </header>
 
-    <!-- Filter / search controls (UI only) -->
+    <!-- Filter / search controls -->
     <section class="controls" aria-label="Filters">
-      <div class="filter-row">
+      <form method="GET" action="/past-health-records" class="filter-row">
         <label for="startDate">From</label>
-        <input id="startDate" type="date" aria-label="start date" />
+        <input id="startDate" name="startDate" type="date" aria-label="start date" value="<%= filters.startDate %>" />
 
         <label for="endDate">To</label>
-        <input id="endDate" type="date" aria-label="end date" />
+        <input id="endDate" name="endDate" type="date" aria-label="end date" value="<%= filters.endDate %>" />
+
+        <button type="submit" class="filter-btn">Apply</button>
 
         <div class="quick-filters" role="tablist" aria-label="Quick filters">
-          <button type="button" class="filter-btn" data-range="7">Last 7 days</button>
-          <button type="button" class="filter-btn" data-range="30">Last 30 days</button>
-          <button type="button" class="filter-btn" data-range="all">All</button>
+          <a href="/past-health-records?range=7" class="filter-btn">Last 7 days</a>
+          <a href="/past-health-records?range=30" class="filter-btn">Last 30 days</a>
+          <a href="/past-health-records?range=all" class="filter-btn">All</a>
         </div>
 
-        <button type="button" class="clear-btn">Clear</button>
-      </div>
+        <a href="/past-health-records?range=all" class="clear-btn">Clear</a>
+      </form>
     </section>
+
+    <!-- Results count -->
+    <% if (filters.activeFilter !== 'all') { %>
+      <div style="padding: 10px 20px; color: #666;">
+        Showing <%= filters.count %> log<%= filters.count !== 1 ? 's' : '' %>
+      </div>
+    <% } %>
 
     <!-- Logs list -->
     <section id="logsList" class="logs-list" aria-live="polite" aria-label="Daily health logs list">
@@ -45,7 +54,7 @@
 
               <div class="log-actions" role="group" aria-label="Log actions">
                 <% if (isToday) { %>
-                  <button type="button" class="btn edit" data-log-id="<%= logId %>" aria-label="Edit log <%= logId %>">Edit</button>
+                  <a href="/log-health" class="btn edit" aria-label="Edit log <%= logId %>">Edit</a>
                 <% } %>
                 <form method="POST" action="/past-health-records/<%= logId %>/delete" style="display: inline;">
                   <button type="submit" class="btn delete" aria-label="Delete log <%= logId %>");">Delete</button>
@@ -85,7 +94,7 @@
         <% }); %>
       <% } else { %>
         <div class="no-logs">
-          <p>No health logs found. Start logging your daily health data to see them here.</p>
+          <p>No health logs found<% if (filters.activeFilter !== 'all') { %> for the selected date range<% } %>. <% if (filters.activeFilter !== 'all') { %><a href="/past-health-records?range=all">View all logs</a><% } else { %>Start logging your daily health data to see them here.<% } %></p>
         </div>
       <% } %>
     </section>
@@ -93,4 +102,4 @@
     <footer class="page-footer" aria-hidden="false">
       <p class="hint">Tip: Use the date filters to quickly find past entries.</p>
     </footer>
-  </main>
+</main>

@@ -7,6 +7,24 @@
   <link rel="stylesheet" href="/css/share-report.css">
 </head>
 <body>
+  <%
+    // Helper function to format sleep quality
+    const formatSleepQuality = (quality) => {
+      if (!quality) return 'N/A';
+      if (quality >= 4) return 'Good';
+      if (quality >= 2.5) return 'Fair';
+      return 'Poor';
+    };
+    
+    // Helper functions handle falsy values (null, undefined, 0, NaN)
+    const formatEnergyLevel = (energy) => {
+      if (!energy) return 'N/A'; // Catches null, undefined, 0, NaN, false, ""
+      if (energy >= 4) return 'High';
+      if (energy >= 2.5) return 'Moderate';
+      return 'Low';
+    };
+  %>
+  
   <div class="pdf-preview">
     <!-- PDF Content -->
     <div class="pdf-content">
@@ -14,11 +32,11 @@
       <section class="pdf-title-section">
         <div class="pdf-title-left">
           <div class="pdf-label">PREGNANCY CHECK-IN REPORT</div>
-          <h1>Check-in — 2025-09-15</h1>
+          <h1>Check-in — <%= report.startDate ? new Date(report.startDate).toISOString().split('T')[0] : 'N/A' %></h1>
         </div>
         <div class="pdf-title-right">
           <div class="pdf-label">Report ID</div>
-          <div class="pdf-value">RPT-1001</div>
+          <div class="pdf-value"><%= report._id || 'N/A' %></div>
         </div>
       </section>
 
@@ -35,7 +53,7 @@
               </svg>
               <span>Check-in Date</span>
             </div>
-            <div class="pdf-info-value">2025-09-15</div>
+            <div class="pdf-info-value"><%= report.startDate ? new Date(report.startDate).toISOString().split('T')[0] : 'N/A' %></div>
           </div>
           <div class="pdf-info-item">
             <div class="pdf-info-label">
@@ -47,7 +65,7 @@
               </svg>
               <span>Report Generated</span>
             </div>
-            <div class="pdf-info-value">2025-11-01</div>
+            <div class="pdf-info-value"><%= report.createdAt ? new Date(report.createdAt).toISOString().split('T')[0] : 'N/A' %></div>
           </div>
         </div>
       </section>
@@ -63,35 +81,35 @@
         <div class="metrics-grid-extended">
           <div class="metric-card">
             <div class="metric-label">Average Weight</div>
-            <div class="metric-value">68.4 kg</div>
+            <div class="metric-value"><%= report.vitalsSummary?.avgWeightKg || 'N/A' %> kg</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Average Sleep</div>
-            <div class="metric-value">7.2 hrs/night</div>
+            <div class="metric-value"><%= report.activities?.avgSleepHours || 'N/A' %> hrs/night</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Sleep Quality</div>
-            <div class="metric-value">Good</div>
+            <div class="metric-value"><%= formatSleepQuality(report.activities?.avgSleepQuality) %></div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Avg Heart Rate</div>
-            <div class="metric-value">82 bpm</div>
+            <div class="metric-value"><%= report.vitalsSummary?.avgHeartRateBpm || 'N/A' %> bpm</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Avg Temperature</div>
-            <div class="metric-value">36.8°C</div>
+            <div class="metric-value"><%= report.vitalsSummary?.avgTemperatureC || 'N/A' %>°C</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Exercise Minutes</div>
-            <div class="metric-value">145 min/week</div>
+            <div class="metric-value"><%= report.activities?.totalExerciseMinutes || 'N/A' %> min/week</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Avg Water Intake</div>
-            <div class="metric-value">2.4 L/day</div>
+            <div class="metric-value"><%= report.activities?.avgWaterIntakeLiters || 'N/A' %> L/day</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Energy Level</div>
-            <div class="metric-value metric-value-tag energy-moderate">Moderate</div>
+            <div class="metric-value metric-value-tag energy-<%= (report.summary?.avgEnergyLevel >= 4 ? 'high' : (report.summary?.avgEnergyLevel >= 3 ? 'moderate' : 'low')) %>"><%= formatEnergyLevel(report.summary?.avgEnergyLevel) %></div>
           </div>
         </div>
       </section>
@@ -107,13 +125,13 @@
         <div class="bp-grid">
           <div class="bp-card">
             <div class="bp-label">Avg Systolic</div>
-            <div class="bp-value">118 <span class="bp-unit">mmHg</span></div>
-            <div class="bp-status normal">Normal</div>
+            <div class="bp-value"><%= report.vitalsSummary?.avgSystolic || 'N/A' %> <span class="bp-unit">mmHg</span></div>
+            <div class="bp-status <%= (report.vitalsSummary?.bloodPressureStatus || 'normal').toLowerCase() %>"><%= report.vitalsSummary?.bloodPressureStatus || 'N/A' %></div>
           </div>
           <div class="bp-card">
             <div class="bp-label">Avg Diastolic</div>
-            <div class="bp-value">76 <span class="bp-unit">mmHg</span></div>
-            <div class="bp-status normal">Normal</div>
+            <div class="bp-value"><%= report.vitalsSummary?.avgDiastolic || 'N/A' %> <span class="bp-unit">mmHg</span></div>
+            <div class="bp-status <%= (report.vitalsSummary?.bloodPressureStatus || 'normal').toLowerCase() %>"><%= report.vitalsSummary?.bloodPressureStatus || 'N/A' %></div>
           </div>
         </div>
       </section>
@@ -132,11 +150,11 @@
         <div class="mood-grid">
           <div class="mood-card">
             <div class="mood-label">Overall Mood</div>
-            <div class="mood-value">😊 Happy</div>
+            <div class="mood-value"><%= report.summary?.avgMood || 'N/A' %></div>
           </div>
           <div class="mood-card">
-            <div class="mood-label">Stress Level</div>
-            <div class="mood-value">Low</div>
+            <div class="mood-label">Concern Severity</div>
+            <div class="mood-value"><%= report.summary?.concernSeverity || 'N/A' %></div>
           </div>
         </div>
       </section>
@@ -152,16 +170,20 @@
           <h2>Concerns Detected</h2>
         </header>
         <div class="concerns-box">
-          <ul class="concerns-list">
-            <li class="concern-item low">
-              <span class="concern-indicator"></span>
-              <span class="concern-text">Mild fatigue — recommend more rest</span>
-            </li>
-            <li class="concern-item low">
-              <span class="concern-indicator"></span>
-              <span class="concern-text">Slight decrease in water intake</span>
-            </li>
-          </ul>
+          <% if (report.summary?.concernsDetected && report.summary.concernsDetected.length > 0) { %>
+            <ul class="concerns-list">
+              <% report.summary.concernsDetected.forEach(concern => { %>
+                <li class="concern-item <%= (report.summary?.concernSeverity || 'low').toLowerCase() %>">
+                  <span class="concern-indicator"></span>
+                  <span class="concern-text"><%= concern %></span>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <ul class="concerns-list">
+              <li>No concerns detected</li>
+            </ul>
+          <% } %>
           <div class="concerns-note">
             No critical issues detected during this check-in period.
           </div>
@@ -172,20 +194,23 @@
       <section class="pdf-symptoms-section">
         <h2>Reported Symptoms</h2>
         <div class="symptoms-box">
-          <ul class="symptoms-box-list">
-            <li>
-              <span class="symptom-bullet"></span>
-              Nausea
-            </li>
-            <li>
-              <span class="symptom-bullet"></span>
-              Fatigue
-            </li>
-            <li>
-              <span class="symptom-bullet"></span>
-              Back pain
-            </li>
-          </ul>
+          <% if (report.summary?.keySymptoms && report.summary.keySymptoms.length > 0) { %>
+            <ul class="symptoms-box-list">
+              <% report.summary.keySymptoms.forEach(symptom => { %>
+                <li>
+                  <span class="symptom-bullet"></span>
+                  <%= symptom %>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <ul class="symptoms-box-list">
+              <li>
+                <span class="symptom-bullet"></span>
+                No symptoms reported
+              </li>
+            </ul>
+          <% } %>
         </div>
       </section>
 
@@ -193,15 +218,25 @@
       <section class="pdf-summary-section">
         <h2>Summary</h2>
         <div class="summary-text">
-          <p>This check-in report provides a comprehensive overview of health metrics and symptoms recorded during this period of your pregnancy journey.</p>
-          <p>Regular monitoring of weight, sleep patterns, and symptoms helps ensure a healthy pregnancy and allows healthcare providers to track your progress effectively.</p>
-          <p>Please share this report with your healthcare provider during your next appointment for a detailed discussion of your pregnancy progress.</p>
+          <% if (report.aiOutputs?.advice?.generalRecommendations && report.aiOutputs.advice.generalRecommendations.length > 0) { %>
+            <% if (Array.isArray(report.aiOutputs.advice.generalRecommendations)) { %>
+              <% report.aiOutputs.advice.generalRecommendations.forEach(paragraph => { %>
+                <p><%= paragraph %></p>
+              <% }); %>
+            <% } else { %>
+              <p><%= report.aiOutputs.advice.generalRecommendations %></p>
+            <% } %>
+          <% } else { %>
+            <p>This check-in report provides a comprehensive overview of health metrics and symptoms recorded during this period of your pregnancy journey.</p>
+            <p>Regular monitoring of weight, sleep patterns, and symptoms helps ensure a healthy pregnancy and allows healthcare providers to track your progress effectively.</p>
+            <p>Please share this report with your healthcare provider during your next appointment for a detailed discussion of your pregnancy progress.</p>
+          <% } %>
         </div>
       </section>
 
       <!-- PDF Footer -->
       <footer class="pdf-footer">
-        <p>This report was automatically generated on December 5, 2025</p>
+        <p>This report was automatically generated on <%= report.createdAt ? new Date(report.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
         <p>For medical advice, please consult with your healthcare provider</p>
       </footer>
     </div>
