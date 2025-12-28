@@ -14,24 +14,11 @@ const foodIntakeSchema = new mongoose.Schema({
 		type: [{
 			name: { type: String, trim: true, required: true },
 			amount: { type: Number, min: 0, default: null },
-			unit: { type: String, enum: ['g', 'ml', 'serving', 'piece', 'cup', 'tbsp', 'tsp'], default: 'serving' },
-			calories: { type: Number, min: 0, default: null },
-			protein: { type: Number, min: 0, default: null },
-			carbs: { type: Number, min: 0, default: null },
-			fat: { type: Number, min: 0, default: null },
-			category: {
-				type: String,
-				enum: ['protein', 'dairy', 'grains', 'fruits', 'vegetables', 'fats', 'sweets', 'beverages', 'other', null],
-				default: null
-			}
+			unit: { type: String, enum: ['g', 'ml', 'serving', 'piece', 'cup', 'tbsp', 'tsp'], default: 'serving' }
 		}],
 		default: []
 	},
-	notes: { type: String, trim: true, maxlength: 200, default: null },
-	photoUrl: { type: String, trim: true, default: null },
-	// [IMPROVED] Skip meal tracking
-	skipped: { type: Boolean, default: false },
-	skipReason: { type: String, enum: ['nausea', 'no_appetite', 'busy', 'other', null], default: null }
+	notes: { type: String, trim: true, maxlength: 200, default: null }
 }, { _id: true, minimize: false });
 
 // ============================================================================
@@ -58,8 +45,6 @@ const exerciseSchema = new mongoose.Schema({
 		enum: ['light', 'moderate', 'vigorous'],
 		default: 'light'
 	},
-	// [IMPROVED] Calories burned (estimated)
-	caloriesBurned: { type: Number, min: 0, default: null },
 	// [IMPROVED] How user felt during/after
 	feeling: {
 		type: String,
@@ -100,17 +85,8 @@ const symptomSchema = new mongoose.Schema({
 		]
 	},
 	severity: { type: Number, min: 1, max: 10, default: 5 },
-	// [IMPROVED] Duration of symptom
-	duration: {
-		value: { type: Number, min: 0, default: null },
-		unit: { type: String, enum: ['minutes', 'hours', 'days'], default: 'hours' }
-	},
 	// [IMPROVED] Time symptom occurred
-	occurredAt: { type: Date, default: null },
-	// [IMPROVED] What triggered it (if known)
-	trigger: { type: String, trim: true, maxlength: 100, default: null },
-	// [IMPROVED] What helped relieve it
-	relief: { type: String, trim: true, maxlength: 100, default: null },
+	ocurredAt: { type: Date, default: null },
 	notes: { type: String, trim: true, maxlength: 200, default: null }
 }, { _id: true, minimize: false });
 
@@ -138,16 +114,6 @@ const sleepSchema = new mongoose.Schema({
 		enum: ['left_side', 'right_side', 'back', 'varied', null],
 		default: null
 	},
-	// [IMPROVED] Used pregnancy pillow
-	usedPregnancyPillow: { type: Boolean, default: null },
-	// [IMPROVED] Naps
-	naps: {
-		type: [{
-			startTime: { type: Date, default: null },
-			durationMinutes: { type: Number, min: 0, default: null }
-		}],
-		default: []
-	},
 	notes: { type: String, trim: true, maxlength: 200, default: null }
 }, { _id: false, minimize: false });
 
@@ -159,28 +125,6 @@ const fetalMovementSchema = new mongoose.Schema({
 	startTime: { type: Date, default: null },
 	endTime: { type: Date, default: null },
 	count: { type: Number, min: 0, default: null },
-	// [IMPROVED] Duration to reach 10 kicks (important metric)
-	minutesTo10Kicks: { type: Number, min: 0, default: null },
-	// [IMPROVED] Type of movement
-	movementTypes: {
-		type: [{
-			type: String,
-			enum: ['kick', 'punch', 'roll', 'hiccup', 'stretch', 'other']
-		}],
-		default: []
-	},
-	// [IMPROVED] Position when counting
-	motherPosition: {
-		type: String,
-		enum: ['lying_left', 'lying_right', 'sitting', 'standing', null],
-		default: null
-	},
-	// [IMPROVED] Time since last meal
-	timeSinceMeal: {
-		type: String,
-		enum: ['just_ate', '1_hour', '2_hours', '3_plus_hours', null],
-		default: null
-	},
 	notes: { type: String, trim: true, maxlength: 200, default: null }
 }, { _id: true, minimize: false });
 
@@ -229,20 +173,11 @@ const healthLogSchema = new mongoose.Schema({
 	
 	// ===== VITALS =====
 	weightKg: { type: Number, min: 20, max: 300, default: null },
-	// [IMPROVED] Weight change tracking
-	weightChangeKg: { type: Number, default: null },
 	
 	heartRateBpm: { 
 		type: Number, 
 		min: [40, 'Heart rate too low'],
 		max: [200, 'Heart rate too high'],
-		default: null
-	},
-	
-	temperatureC: { 
-		type: Number, 
-		min: [35, 'Temperature too low'],
-		max: [42, 'Temperature too high'],
 		default: null
 	},
 	
@@ -267,11 +202,6 @@ const healthLogSchema = new mongoose.Schema({
 	},
 	
 	// ===== MOOD & ENERGY =====
-	mood: { 
-		type: String, 
-		enum: ['very_happy', 'happy', 'neutral', 'anxious', 'sad', 'stressed', 'irritable', 'emotional', 'overwhelmed', null],
-		default: null
-	},
 	// [IMPROVED] Multiple mood entries throughout the day
 	moodLog: {
 		type: [{
@@ -297,8 +227,6 @@ const healthLogSchema = new mongoose.Schema({
 			timesAwakened: 0,
 			awakeningReasons: [],
 			primaryPosition: null,
-			usedPregnancyPillow: null,
-			naps: [],
 			notes: null
 		})
 	},
@@ -310,8 +238,6 @@ const healthLogSchema = new mongoose.Schema({
 	
 	// ===== EXERCISE =====
 	exercises: { type: [exerciseSchema], default: [] },
-	// [IMPROVED] Total exercise summary
-	totalExerciseMinutes: { type: Number, min: 0, default: 0 },
 	
 	// ===== NUTRITION =====
 	foodIntake: { type: [foodIntakeSchema], default: [] },
@@ -342,20 +268,11 @@ const healthLogSchema = new mongoose.Schema({
 			startTime: null,
 			endTime: null,
 			count: null,
-			minutesTo10Kicks: null,
-			movementTypes: [],
-			motherPosition: null,
-			timeSinceMeal: null,
 			notes: null
 		})
 	},
-	// [IMPROVED] Multiple kick count sessions per day
-	kickCountSessions: { type: [fetalMovementSchema], default: [] },
 	
-	// [IMPROVED] Contractions (for third trimester)
-	contractions: { type: [contractionSchema], default: [] },
-	
-	// ===== APPOINTMENTS & REMINDERS =====
+	// ===== APPOINTMENTS & REMINDERS ===
 	// [IMPROVED] Track doctor visits
 	doctorVisit: {
 		visited: { type: Boolean, default: false },
@@ -491,8 +408,8 @@ healthLogSchema.methods.updateCompletionPercentage = function() {
 // [IMPROVED] Calculate section completion
 healthLogSchema.methods.calculateSectionsCompleted = function() {
 	this.sectionsCompleted = {
-		vitals: !!(this.weightKg || this.heartRateBpm || this.temperatureC),
-		mood: !!(this.mood || this.energyLevel),
+		vitals: !!(this.weightKg || this.heartRateBpm || this.bloodPressure?.systolic || this.bloodPressure?.diastolic),
+		mood: !!(this.moodLog?.length > 0 || this.energyLevel),
 		sleep: !!(this.sleep?.totalHours || this.hoursSleept),
 		symptoms: this.symptoms?.length > 0,
 		exercise: this.exercises?.length > 0,
@@ -619,11 +536,15 @@ healthLogSchema.statics.getMoodHistory = function(userId, days = 30) {
 	
 	return this.find({
 		userId,
-		mood: { $exists: true, $ne: null },
+		$or: [
+			{ moodLog: { $exists: true, $ne: [] } },
+			{ energyLevel: { $exists: true, $ne: null } },
+			{ stressLevel: { $exists: true, $ne: null } }
+		],
 		logDate: { $gte: startDate },
 		deletedAt: null
 	})
-	.select('logDate mood energyLevel stressLevel')
+	.select('logDate moodLog energyLevel stressLevel')
 	.sort({ logDate: 1 });
 };
 

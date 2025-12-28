@@ -503,28 +503,8 @@
                 <label for="fmEndTime">End Time</label>
                 <input id="fmEndTime" type="time">
               </div>
-              <div class="field">
-                <label for="fmMotherPosition">Mother Position</label>
-                <select id="fmMotherPosition">
-                  <option value="">Select...</option>
-                  <option value="lying_left">Lying Left</option>
-                  <option value="lying_right">Lying Right</option>
-                  <option value="sitting">Sitting</option>
-                  <option value="standing">Standing</option>
-                </select>
-              </div>
             </div>
             <div class="row two">
-              <div class="field">
-                <label for="fmTimeSinceMeal">Time Since Meal</label>
-                <select id="fmTimeSinceMeal">
-                  <option value="">Select...</option>
-                  <option value="just_ate">Just Ate</option>
-                  <option value="1_hour">1 hour</option>
-                  <option value="2_hours">2 hours</option>
-                  <option value="3_plus_hours">3+ hours</option>
-                </select>
-              </div>
               <div class="field">
                 <label for="fmNotes">Notes</label>
                 <input id="fmNotes" type="text" placeholder="Notes">
@@ -547,7 +527,7 @@
             </div>
             <div class="field">
               <label for="visitType">Visit Type</label>
-              <select id="visitType">
+              <select id="visitType" disabled>
                 <option value="">Select...</option>
                 <option value="routine">Routine</option>
                 <option value="ultrasound">Ultrasound</option>
@@ -559,11 +539,11 @@
           </div>
           <div class="field">
             <label for="doctorVisitNotes">Doctor Visit Notes</label>
-            <input id="doctorVisitNotes" type="text" placeholder="Notes">
+            <input id="doctorVisitNotes" type="text" placeholder="Notes" disabled>
           </div>
           <div class="field">
             <label for="nextAppointment">Next Appointment</label>
-            <input id="nextAppointment" type="date">
+            <input id="nextAppointment" type="date" disabled>
           </div>
           <!-- Notes -->
           <div class="field">
@@ -698,6 +678,35 @@
 
     if (systolicBP) validateBloodPressure(systolicBP, 70, 200, 'Systolic BP');
     if (diastolicBP) validateBloodPressure(diastolicBP, 40, 130, 'Diastolic BP');
+
+    // ==================== DOCTOR VISIT TOGGLE ====================
+    function toggleDoctorVisitFields() {
+      const visitedDoctor = document.getElementById('visitedDoctor');
+      const visitType = document.getElementById('visitType');
+      const doctorVisitNotes = document.getElementById('doctorVisitNotes');
+      const nextAppointment = document.getElementById('nextAppointment');
+      
+      const isChecked = visitedDoctor?.checked || false;
+      
+      if (visitType) visitType.disabled = !isChecked;
+      if (doctorVisitNotes) doctorVisitNotes.disabled = !isChecked;
+      if (nextAppointment) nextAppointment.disabled = !isChecked;
+      
+      // Clear fields when unchecked
+      if (!isChecked) {
+        if (visitType) visitType.value = '';
+        if (doctorVisitNotes) doctorVisitNotes.value = '';
+        if (nextAppointment) nextAppointment.value = '';
+      }
+    }
+    
+    // Attach event listener to checkbox
+    const visitedDoctorCheckbox = document.getElementById('visitedDoctor');
+    if (visitedDoctorCheckbox) {
+      visitedDoctorCheckbox.addEventListener('change', toggleDoctorVisitFields);
+      // Initialize on page load
+      toggleDoctorVisitFields();
+    }
 
     // ==================== UTILITY FUNCTIONS ====================
     function isToday(dateString) {
@@ -1325,8 +1334,7 @@
           bedTime: document.getElementById('bedTime').value || null,
           wakeTime: document.getElementById('wakeTime').value || null,
           primaryPosition: document.getElementById('primaryPosition').value || null,
-          awakeningReasons: Array.from(selectedAwakeningReasons),
-          naps: []
+          awakeningReasons: Array.from(selectedAwakeningReasons)
         },
         symptoms: symptoms,
         exercises: exercises,
@@ -1341,8 +1349,6 @@
           startTime: document.getElementById('fmStartTime')?.value || null,
           endTime: document.getElementById('fmEndTime')?.value || null,
           count: parseInt(document.getElementById('fmKickCount')?.value) || null,
-          motherPosition: document.getElementById('fmMotherPosition')?.value || null,
-          timeSinceMeal: document.getElementById('fmTimeSinceMeal')?.value || null,
           notes: document.getElementById('fmNotes')?.value || null
         },
         doctorVisit: {
@@ -1531,14 +1537,15 @@
         if (fm.startTime && document.getElementById('fmStartTime')) document.getElementById('fmStartTime').value = fm.startTime;
         if (fm.endTime && document.getElementById('fmEndTime')) document.getElementById('fmEndTime').value = fm.endTime;
         if (fm.count && document.getElementById('fmKickCount')) document.getElementById('fmKickCount').value = fm.count;
-        if (fm.motherPosition && document.getElementById('fmMotherPosition')) document.getElementById('fmMotherPosition').value = fm.motherPosition;
-        if (fm.timeSinceMeal && document.getElementById('fmTimeSinceMeal')) document.getElementById('fmTimeSinceMeal').value = fm.timeSinceMeal;
         if (fm.notes && document.getElementById('fmNotes')) document.getElementById('fmNotes').value = fm.notes;
       }
 
       // Doctor Visit
       if (log.doctorVisit) {
         document.getElementById('visitedDoctor').checked = log.doctorVisit.visited || false;
+        // Toggle fields based on checkbox state
+        toggleDoctorVisitFields();
+        // Then populate the fields
         if (log.doctorVisit.visitType) document.getElementById('visitType').value = log.doctorVisit.visitType;
         if (log.doctorVisit.notes) document.getElementById('doctorVisitNotes').value = log.doctorVisit.notes;
         if (log.doctorVisit.nextAppointment) {
