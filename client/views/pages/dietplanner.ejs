@@ -40,6 +40,28 @@
       background: #ff5289;
     }
     .hidden { display: none; }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -50,17 +72,17 @@
     <div id="loadingState" class="loading-state">
       <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
       <h2>Loading Your Personalized Nutrition Plan...</h2>
-      <p>Analyzing your pregnancy data and generating custom recommendations</p>
+      <p>Preparing your diet plan for this week...</p>
     </div>
 
-    <!-- Error State -->
+    <!-- Error State (Only shown for critical errors) -->
     <div id="errorState" class="error-state hidden">
       <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-      <h2 id="errorTitle">Unable to Load Nutrition Plan</h2>
-      <p id="errorMessage">Please try again or generate a new plan.</p>
+      <h2 id="errorTitle">Notice</h2>
+      <p id="errorMessage">Please check your profile settings.</p>
       <div>
         <button class="btn-retry" onclick="loadNutritionPlan()">Try Again</button>
-        <button class="btn-generate" onclick="generateNewPlan()">Generate New Plan</button>
+        <button class="btn-generate" onclick="window.location.href='/profile'">Go to Profile</button>
       </div>
     </div>
 
@@ -80,9 +102,25 @@
 
       <!-- Page Header -->
       <header class="page-header">
-        <h1>Personalized Diet Plan</h1>
-        <p class="subtitle" id="pageSubtitle">AI-customized nutrition guide</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h1>Personalized Diet Plan</h1>
+            <p class="subtitle" id="pageSubtitle">AI-customized nutrition guide</p>
+          </div>
+          <button onclick="generateNewPlan()" style="background: #ff6b9d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+            🔄 Regenerate Plan
+          </button>
+        </div>
       </header>
+
+      <!-- Intake Summary (if available) -->
+      <section id="intakeSummarySection" class="intake-summary-section" style="display: none; margin-bottom: 30px;">
+        <h2 class="section-title">
+          <span class="title-icon">📊</span>
+          Your Nutrition Summary
+        </h2>
+        <div id="intakeSummaryContent"></div>
+      </section>
 
       <!-- Daily Nutrition Goals -->
       <section class="nutrition-goals">
@@ -141,7 +179,7 @@
           Hydration
         </h2>
         <p class="hydration-text">
-          Aim for <strong>8-10 glasses (64-80 oz)</strong> of water per day. Proper hydration helps prevent constipation, reduces swelling, and supports increased blood volume during pregnancy.
+          Aim for <strong>2.5-3 litres</strong> of water per day. Proper hydration helps prevent constipation, reduces swelling, and supports increased blood volume during pregnancy.
         </p>
 
         <div class="hydration-tips">

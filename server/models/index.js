@@ -17,6 +17,7 @@ const { Quiz, QuizAttempt } = require('./quizzes');
 const Appointment = require('./appointment');
 const { Article, UserArticleInteraction } = require('./article');
 const { Notification, NotificationPreferences, ScheduledNotification } = require('./notification');
+const DietPlan = require('./dietplan');
 
 module.exports = {
 	// User & Authentication
@@ -25,6 +26,7 @@ module.exports = {
 	// Health Tracking
 	HealthLog,
 	WeeklyReport,
+	DietPlan,
 	
 	// AI Chatbot
 	Conversation,

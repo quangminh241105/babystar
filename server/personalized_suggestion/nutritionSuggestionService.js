@@ -47,6 +47,11 @@ class NutritionSuggestionService {
 		let totalProtein = 0;
 		let totalCarbs = 0;
 		let totalFat = 0;
+		let totalCalcium = 0;
+		let totalIron = 0;
+		let totalFolicAcid = 0;
+		let totalOmega3 = 0;
+		let totalFiber = 0;
 		let nutritionDays = 0;
 
 		const symptoms = [];
@@ -64,6 +69,11 @@ class NutritionSuggestionService {
 							if (food.protein) totalProtein += food.protein;
 							if (food.carbs) totalCarbs += food.carbs;
 							if (food.fat) totalFat += food.fat;
+							if (food.calcium) totalCalcium += food.calcium;
+							if (food.iron) totalIron += food.iron;
+							if (food.folicAcid) totalFolicAcid += food.folicAcid;
+							if (food.omega3) totalOmega3 += food.omega3;
+							if (food.fiber) totalFiber += food.fiber;
 							
 							allFoods.push({
 								name: food.name,
@@ -104,6 +114,11 @@ class NutritionSuggestionService {
 		const avgProtein = nutritionDays > 0 ? Math.round(totalProtein / nutritionDays) : 0;
 		const avgCarbs = nutritionDays > 0 ? Math.round(totalCarbs / nutritionDays) : 0;
 		const avgFat = nutritionDays > 0 ? Math.round(totalFat / nutritionDays) : 0;
+		const avgCalcium = nutritionDays > 0 ? Math.round(totalCalcium / nutritionDays) : 0;
+		const avgIron = nutritionDays > 0 ? Math.round(totalIron / nutritionDays) : 0;
+		const avgFolicAcid = nutritionDays > 0 ? Math.round(totalFolicAcid / nutritionDays) : 0;
+		const avgOmega3 = nutritionDays > 0 ? parseFloat((totalOmega3 / nutritionDays).toFixed(2)) : 0;
+		const avgFiber = nutritionDays > 0 ? Math.round(totalFiber / nutritionDays) : 0;
 		const avgEnergy = energyLevels.length > 0 
 			? (energyLevels.reduce((a, b) => a + b, 0) / energyLevels.length).toFixed(1)
 			: 0;
@@ -134,7 +149,12 @@ class NutritionSuggestionService {
 				calories: avgCalories,
 				protein: avgProtein,
 				carbs: avgCarbs,
-				fat: avgFat
+				fat: avgFat,
+				calcium: avgCalcium,
+				iron: avgIron,
+				folicAcid: avgFolicAcid,
+				omega3: avgOmega3,
+				fiber: avgFiber
 			},
 			commonSymptoms,
 			averageEnergy: avgEnergy,
@@ -142,6 +162,94 @@ class NutritionSuggestionService {
 			foodCategories: categoryCounts,
 			totalFoodsLogged: allFoods.length,
 			daysWithNutritionData: nutritionDays
+		};
+	}
+
+	/**
+	 * Analyze user's nutrition intake vs targets
+	 */
+	analyzeNutritionIntake(healthSummary, dailyTargets) {
+		const doingWell = [];
+		const needsImprovement = [];
+		const recommendations = [];
+
+		const intake = healthSummary.averageNutrition || {};
+
+		// Compare each nutrient with target
+		if (dailyTargets.calories && intake.calories) {
+			const percentage = (intake.calories / dailyTargets.calories) * 100;
+			if (percentage >= 90 && percentage <= 110) {
+				doingWell.push(`Calories (${intake.calories} kcal/day - ${percentage.toFixed(0)}% of target)`);
+			} else if (percentage < 90) {
+				needsImprovement.push(`Calories (${intake.calories} kcal/day - only ${percentage.toFixed(0)}% of target)`);
+				recommendations.push('Increase calorie intake with nutrient-dense foods like nuts, avocados, and whole grains');
+			}
+		}
+
+		if (dailyTargets.proteinGrams && intake.protein) {
+			const percentage = (intake.protein / dailyTargets.proteinGrams) * 100;
+			if (percentage >= 90) {
+				doingWell.push(`Protein (${intake.protein}g/day - ${percentage.toFixed(0)}% of target)`);
+			} else {
+				needsImprovement.push(`Protein (${intake.protein}g/day - only ${percentage.toFixed(0)}% of target)`);
+				recommendations.push('Add more protein sources like lean meats, eggs, legumes, and dairy products');
+			}
+		}
+
+		if (dailyTargets.calciumMg && intake.calcium) {
+			const percentage = (intake.calcium / dailyTargets.calciumMg) * 100;
+			if (percentage >= 90) {
+				doingWell.push(`Calcium (${intake.calcium}mg/day - ${percentage.toFixed(0)}% of target)`);
+			} else {
+				needsImprovement.push(`Calcium (${intake.calcium}mg/day - only ${percentage.toFixed(0)}% of target)`);
+				recommendations.push('Increase calcium intake with dairy products, fortified plant milk, or leafy greens');
+			}
+		}
+
+		if (dailyTargets.ironMg && intake.iron) {
+			const percentage = (intake.iron / dailyTargets.ironMg) * 100;
+			if (percentage >= 90) {
+				doingWell.push(`Iron (${intake.iron}mg/day - ${percentage.toFixed(0)}% of target)`);
+			} else {
+				needsImprovement.push(`Iron (${intake.iron}mg/day - only ${percentage.toFixed(0)}% of target)`);
+				recommendations.push('Consume more iron-rich foods like lean red meat, spinach, lentils, and fortified cereals');
+			}
+		}
+
+		if (dailyTargets.folicAcidMcg && intake.folicAcid) {
+			const percentage = (intake.folicAcid / dailyTargets.folicAcidMcg) * 100;
+			if (percentage >= 90) {
+				doingWell.push(`Folic Acid (${intake.folicAcid}mcg/day - ${percentage.toFixed(0)}% of target)`);
+			} else {
+				needsImprovement.push(`Folic Acid (${intake.folicAcid}mcg/day - only ${percentage.toFixed(0)}% of target)`);
+				recommendations.push('Eat more folate-rich foods like leafy greens, citrus fruits, and fortified grains. Continue prenatal vitamins');
+			}
+		}
+
+		if (dailyTargets.omega3Grams && intake.omega3) {
+			const percentage = (intake.omega3 / dailyTargets.omega3Grams) * 100;
+			if (percentage >= 90) {
+				doingWell.push(`Omega-3 (${intake.omega3}g/day - ${percentage.toFixed(0)}% of target)`);
+			} else {
+				needsImprovement.push(`Omega-3 (${intake.omega3}g/day - only ${percentage.toFixed(0)}% of target)`);
+				recommendations.push('Include more omega-3 sources like fatty fish (salmon, sardines), walnuts, and chia seeds');
+			}
+		}
+
+		if (dailyTargets.fiberGrams && intake.fiber) {
+			const percentage = (intake.fiber / dailyTargets.fiberGrams) * 100;
+			if (percentage >= 90) {
+				doingWell.push(`Fiber (${intake.fiber}g/day - ${percentage.toFixed(0)}% of target)`);
+			} else {
+				needsImprovement.push(`Fiber (${intake.fiber}g/day - only ${percentage.toFixed(0)}% of target)`);
+				recommendations.push('Add more fiber through whole grains, fruits, vegetables, and legumes to aid digestion');
+			}
+		}
+
+		return {
+			doingWell,
+			needsImprovement,
+			recommendations
 		};
 	}
 
@@ -293,6 +401,11 @@ class NutritionSuggestionService {
   * Protein: ${healthSummary.averageNutrition?.protein || 'Not tracked'} g
   * Carbs: ${healthSummary.averageNutrition?.carbs || 'Not tracked'} g
   * Fat: ${healthSummary.averageNutrition?.fat || 'Not tracked'} g
+  * Calcium: ${healthSummary.averageNutrition?.calcium || 'Not tracked'} mg
+  * Iron: ${healthSummary.averageNutrition?.iron || 'Not tracked'} mg
+  * Folic Acid: ${healthSummary.averageNutrition?.folicAcid || 'Not tracked'} mcg
+  * Omega-3: ${healthSummary.averageNutrition?.omega3 || 'Not tracked'} g
+  * Fiber: ${healthSummary.averageNutrition?.fiber || 'Not tracked'} g
 - Average Hydration: ${healthSummary.averageHydration || 'Not tracked'} liters/day
 - Average Energy Level: ${healthSummary.averageEnergy || 'Not tracked'}/5
 - Common Symptoms: ${healthSummary.commonSymptoms.map(s => s.symptom).join(', ') || 'None reported'}
@@ -317,6 +430,8 @@ ${relevantFoods.folicAcid.map(f => `- ${f.food}: ${f.folicAcid}mcg folic acid, $
 **INSTRUCTIONS:**
 Generate a complete weekly nutrition plan in the following JSON format. Use ONLY foods from the database provided above or common pregnancy-safe foods. Be specific and practical. IMPORTANT: Use metric measurements (grams, ml) instead of imperial (oz, cups).
 
+**CRITICAL: For each meal, you MUST estimate and include detailed nutrient values based on the foods used. Use the database above as reference for nutrient content.**
+
 Return ONLY valid JSON (no markdown, no code blocks, no explanations):
 
 {
@@ -327,26 +442,50 @@ Return ONLY valid JSON (no markdown, no code blocks, no explanations):
         "meal": "Specific meal description",
         "portion": "Portion size in grams (e.g., '150g', '2 slices', '1 cup')",
         "alternatives": ["Alternative 1", "Alternative 2"],
-        "estimatedCalories": 350
+        "estimatedCalories": 350,
+        "proteinGrams": 15,
+        "calciumMg": 200,
+        "ironMg": 2.5,
+        "folicAcidMcg": 80,
+        "omega3Grams": 0.3,
+        "fiberGrams": 4
       },
       "lunch": {
         "meal": "Specific meal description",
         "portion": "Portion size in grams (e.g., '200g', '1 bowl')",
         "alternatives": ["Alternative 1", "Alternative 2"],
-        "estimatedCalories": 500
+        "estimatedCalories": 500,
+        "proteinGrams": 25,
+        "calciumMg": 150,
+        "ironMg": 4,
+        "folicAcidMcg": 100,
+        "omega3Grams": 0.5,
+        "fiberGrams": 6
       },
       "dinner": {
         "meal": "Specific meal description",
         "portion": "Portion size in grams (e.g., '180g chicken, 150g rice')",
         "alternatives": ["Alternative 1", "Alternative 2"],
-        "estimatedCalories": 550
+        "estimatedCalories": 550,
+        "proteinGrams": 30,
+        "calciumMg": 100,
+        "ironMg": 3.5,
+        "folicAcidMcg": 120,
+        "omega3Grams": 0.4,
+        "fiberGrams": 5
       },
       "snacks": [
         {
           "name": "Snack name",
           "time": "Mid-morning",
           "portion": "Portion size in grams (e.g., '30g almonds', '150g yogurt')",
-          "estimatedCalories": 150
+          "estimatedCalories": 150,
+          "proteinGrams": 5,
+          "calciumMg": 150,
+          "ironMg": 1,
+          "folicAcidMcg": 20,
+          "omega3Grams": 0.2,
+          "fiberGrams": 2
         }
       ]
     }
@@ -377,7 +516,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no explanations):
   "specialConsiderations": ["Consideration 1 based on symptoms", "Consideration 2"]
 }
 
-Generate all 7 days (Monday through Sunday) with varied, nutritious meals using the foods from the database. Ensure meals are practical, culturally appropriate, and address the identified nutritional needs.`;
+Generate all 7 days (Monday through Sunday) with varied, nutritious meals using the foods from the database. Ensure meals are practical, culturally appropriate, and address the identified nutritional needs. **IMPORTANT: Calculate realistic nutrient values for each meal based on the ingredients used.**`;
 	}
 
 	/**

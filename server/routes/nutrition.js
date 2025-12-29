@@ -14,6 +14,13 @@ router.use(requireAuth);
 router.post('/generate', nutritionController.generateNutritionSuggestions);
 
 /**
+ * @route   GET /api/nutrition/current
+ * @desc    Get current week's diet plan (auto-generates if none exists)
+ * @access  Private
+ */
+router.get('/current', nutritionController.getCurrentDietPlan);
+
+/**
  * @route   GET /api/nutrition/quick-advice
  * @desc    Get quick nutrition advice based on current pregnancy week
  * @access  Private
@@ -44,5 +51,20 @@ router.get('/search-foods', nutritionController.searchFoods);
  * @access  Private
  */
 router.get('/foods-by-nutrient', nutritionController.getFoodsByNutrient);
+
+/**
+ * @route   GET /api/nutrition/history
+ * @desc    Get user's diet plan history
+ * @query   limit (optional) - number of results (default: 10)
+ * @access  Private
+ */
+router.get('/history', nutritionController.getDietPlanHistory);
+
+/**
+ * @route   GET /api/nutrition/plan/:planId
+ * @desc    Get a specific diet plan by ID
+ * @access  Private
+ */
+router.get('/plan/:planId', nutritionController.getDietPlanById);
 
 module.exports = router;

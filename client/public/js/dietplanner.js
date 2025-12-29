@@ -29,16 +29,16 @@
     mainContent.classList.remove('hidden');
   }
 
-  // Load nutrition plan from weekly report
+  // Load current diet plan (auto-generates if needed)
   async function loadNutritionPlan() {
     showLoading();
     
     try {
-      const response = await fetch('/api/nutrition/weekly-plan');
+      const response = await fetch('/api/nutrition/current');
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 404 && data.message?.includes('due date')) {
+        if (response.status === 400 && data.message?.includes('due date')) {
           showError('Due Date Not Set', 'Please update your profile with your due date to generate a personalized nutrition plan.');
           return;
         }
@@ -48,29 +48,48 @@
       if (data.success && data.data) {
         renderNutritionPlan(data.data);
         showMainContent();
+        
+        // Show message if auto-generated
+        if (!data.fromCache) {
+          showSuccessMessage('New nutrition plan generated for this week!');
+        }
       } else {
         throw new Error('Invalid data format');
       }
     } catch (error) {
       console.error('Error loading nutrition plan:', error);
-      showError('Unable to Load Nutrition Plan', error.message || 'Please try again or generate a new plan.');
+      showError('Unable to Load Nutrition Plan', error.message || 'Please try again or contact support.');
     }
   }
 
-  // Generate new nutrition plan
+  // Show success message
+  function showSuccessMessage(message) {
+    const successDiv = document.createElement('div');
+    successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4caf50; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; animation: slideIn 0.3s ease;';
+    successDiv.innerHTML = `<strong>✓</strong> ${message}`;
+    document.body.appendChild(successDiv);
+    
+    setTimeout(() => {
+      successDiv.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => successDiv.remove(), 300);
+    }, 3000);
+  }
+
+  // Generate new nutrition plan (force regenerate)
   async function generateNewPlan() {
     showLoading();
     
     try {
       const response = await fetch('/api/nutrition/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ forceRegenerate: true })
       });
       
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 404 && data.message?.includes('due date')) {
+        if (response.status === 400 && data.message?.includes('due date')) {
           showError('Due Date Not Set', 'Please update your profile with your due date to generate a personalized nutrition plan.');
           return;
         }
@@ -80,6 +99,7 @@
       if (data.success && data.data) {
         renderNutritionPlan(data.data);
         showMainContent();
+        showSuccessMessage('New nutrition plan generated successfully!');
       } else {
         throw new Error('Invalid data format');
       }
@@ -106,6 +126,11 @@
     // Render daily targets
     renderDailyTargets(planData.dailyTargets);
 
+    // Render intake summary if available
+    if (planData.intakeSummary) {
+      renderIntakeSummary(planData.intakeSummary, planData.dailyTargets);
+    }
+
     // Render weekly meal plan
     renderWeeklyMealPlan(planData.weeklyMeals);
 
@@ -113,6 +138,75 @@
     if (planData.nutrientFocus && planData.nutrientFocus.length > 0) {
       renderNutrientFocus(planData.nutrientFocus);
     }
+  }
+
+  // Render intake summary
+  function renderIntakeSummary(summary, targets) {
+    const section = document.getElementById('intakeSummarySection');
+    const content = document.getElementById('intakeSummaryContent');
+    
+    console.log('📊 Rendering intake summary:', summary);
+    
+    if (!summary) {
+      console.log('⚠️ No summary data provided');
+      section.style.display = 'none';
+      return;
+    }
+
+    // Show section even if performanceAnalysis is missing
+    section.style.display = 'block';
+    const analysis = summary.performanceAnalysis || {};
+    
+    let summaryHTML = '<div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+    
+    // Days analyzed
+    if (summary.totalDaysAnalyzed > 0) {
+      summaryHTML += `<p style="color: #666; margin-bottom: 20px;">📊 Based on ${summary.totalDaysAnalyzed} days of logged nutrition data</p>`;
+    } else if (summary.analyzedPeriod) {
+      summaryHTML += `<p style="color: #666; margin-bottom: 20px;">📊 Analysis period: ${summary.analyzedPeriod}</p>`;
+    } else {
+      summaryHTML += `<p style="color: #666; margin-bottom: 20px;">📊 No nutrition logs available yet. Start tracking your meals to see personalized insights!</p>`;
+    }
+    
+    // Doing well section
+    if (analysis.doingWell && analysis.doingWell.length > 0) {
+      summaryHTML += '<div style="margin-bottom: 20px;"><h3 style="color: #4caf50; margin-bottom: 10px;">✅ Nutrients You\'re Meeting</h3><ul style="list-style: none; padding: 0;">';
+      analysis.doingWell.forEach(item => {
+        summaryHTML += `<li style="padding: 8px 0; color: #555; border-bottom: 1px solid #f0f0f0;"><strong>✓</strong> ${item}</li>`;
+      });
+      summaryHTML += '</ul></div>';
+    }
+    
+    // Needs improvement section
+    if (analysis.needsImprovement && analysis.needsImprovement.length > 0) {
+      summaryHTML += '<div style="margin-bottom: 20px;"><h3 style="color: #ff9800; margin-bottom: 10px;">⚠️ Nutrients to Focus On</h3><ul style="list-style: none; padding: 0;">';
+      analysis.needsImprovement.forEach(item => {
+        summaryHTML += `<li style="padding: 8px 0; color: #555; border-bottom: 1px solid #f0f0f0;"><strong>↑</strong> ${item}</li>`;
+      });
+      summaryHTML += '</ul></div>';
+    }
+    
+    // Recommendations section
+    if (analysis.recommendations && analysis.recommendations.length > 0) {
+      summaryHTML += '<div><h3 style="color: #2196f3; margin-bottom: 10px;">💡 Recommendations</h3><ul style="padding-left: 20px;">';
+      analysis.recommendations.forEach(rec => {
+        summaryHTML += `<li style="padding: 5px 0; color: #555;">${rec}</li>`;
+      });
+      summaryHTML += '</ul></div>';
+    }
+    
+    // If no data at all, show helpful message
+    if (!analysis.doingWell?.length && !analysis.needsImprovement?.length && !analysis.recommendations?.length) {
+      if (summary.totalDaysAnalyzed === 0) {
+        summaryHTML += '<div style="text-align: center; padding: 20px; color: #666;">';
+        summaryHTML += '<p style="font-size: 18px; margin-bottom: 10px;">📝 Start tracking your meals!</p>';
+        summaryHTML += '<p>Log your daily food intake in the Health Log section to receive personalized nutrition insights and track your progress toward your daily targets.</p>';
+        summaryHTML += '</div>';
+      }
+    }
+    
+    summaryHTML += '</div>';
+    content.innerHTML = summaryHTML;
   }
 
   // Render daily nutrition targets
@@ -221,6 +315,27 @@
               `;
             }
 
+            // Build nutrient details
+            let nutrientDetails = '';
+            const nutrients = [];
+            if (meal.proteinGrams) nutrients.push(`Protein: ${meal.proteinGrams}g`);
+            if (meal.calciumMg) nutrients.push(`Calcium: ${meal.calciumMg}mg`);
+            if (meal.ironMg) nutrients.push(`Iron: ${meal.ironMg}mg`);
+            if (meal.folicAcidMcg) nutrients.push(`Folate: ${meal.folicAcidMcg}mcg`);
+            if (meal.omega3Grams) nutrients.push(`Omega-3: ${meal.omega3Grams}g`);
+            if (meal.fiberGrams) nutrients.push(`Fiber: ${meal.fiberGrams}g`);
+            
+            if (nutrients.length > 0) {
+              nutrientDetails = `
+                <div style="margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                  <div style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px;">NUTRIENTS:</div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; font-size: 12px; color: #555;">
+                    ${nutrients.map(n => `<span>• ${n}</span>`).join('')}
+                  </div>
+                </div>
+              `;
+            }
+
             mealCard.innerHTML = `
               <div class="${mealType === 'snacks' ? 'snack' : 'meal'}-option-name" style="font-weight: 600; margin-bottom: 10px; color: #333;">
                 ${meal.food}
@@ -231,6 +346,7 @@
                 ${meal.calories ? `<span class="${mealType === 'snacks' ? 'snack' : 'meal'}-option-cal" style="color: #ff6b9d; font-weight: 600;">${meal.calories} cal</span>` : ''}
                 ${meal.keyNutrients && meal.keyNutrients.length > 0 ? `<span class="${mealType === 'snacks' ? 'snack' : 'meal'}-option-tags" style="color: #666; font-size: 13px;">${meal.keyNutrients.join(', ')}</span>` : ''}
               </div>
+              ${nutrientDetails}
               ${alternatives}
             `;
             mealsGrid.appendChild(mealCard);
