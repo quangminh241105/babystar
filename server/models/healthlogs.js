@@ -9,7 +9,6 @@ const foodIntakeSchema = new mongoose.Schema({
 		enum: ['breakfast', 'lunch', 'dinner', 'snack', 'other'],
 		required: true
 	},
-	time: { type: Date, default: null },
 	foods: {
 		type: [{
 			name: { type: String, trim: true, required: true },
@@ -51,8 +50,6 @@ const exerciseSchema = new mongoose.Schema({
 		enum: ['great', 'good', 'okay', 'tired', 'uncomfortable', 'painful', null],
 		default: null
 	},
-	// [IMPROVED] Time of exercise
-	time: { type: Date, default: null },
 	notes: { type: String, trim: true, maxlength: 200, default: null }
 }, { _id: true, minimize: false });
 

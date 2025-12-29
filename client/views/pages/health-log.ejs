@@ -9,7 +9,6 @@
         <div class="subtitle">Quick, optional entries to personalize your AI insights</div>
       </div>
     </header>
-
     <!-- Sticky action bar with tab navigation -->
     <nav class="card healthlog-actionbar">
       <button type="button" class="step-label tab-btn active" id="tabBasicsBtn">1. Today’s Basics</button>
@@ -20,6 +19,7 @@
         <button type="button" class="btn-primary" id="saveCompleteBtn">Save & Mark Complete</button>
       </div>
     </nav>
+    <div id="message" class="msg" hidden></div>
 
     <div class="healthlog-grid">
       <!-- Main Form -->
@@ -36,19 +36,19 @@
             <div class="vitals-form">
               <div class="row two">
                 <div class="field">
-                  <label for="weightKg">💪 Weight</label>
+                  <label for="weightKg">💪 Weight <span class="required-badge">Required</span></label>
                   <div class="input-with-unit">
-                    <input id="weightKg" type="number" step="0.1" min="20" max="300" placeholder="e.g., 65.5" class="input-primary">
+                    <input id="weightKg" type="number" step="0.1" min="20" max="300" placeholder="e.g., 65.5" class="input-primary" required>
                     <span class="input-unit">kg</span>
                   </div>
                 </div>
                 <div class="field">
-                  <label for="heartRateBpm">❤️ Heart Rate</label>
+                  <label for="heartRateBpm">❤️ Heart Rate <span class="required-badge">Required</span></label>
                   <div class="heart-rate-display">
                     <span class="heart-value" id="heartRateDisplay">—</span>
                     <span class="heart-label">bpm</span>
                   </div>
-                  <input id="heartRateBpm" type="range" min="50" max="160" step="1" class="custom-range">
+                  <input id="heartRateBpm" type="range" min="50" max="160" step="1" class="custom-range" required>
                   <div class="range-labels">
                     <span>50</span>
                     <span>105</span>
@@ -77,11 +77,11 @@
                     </select>
                   </div>
                   <div class="field">
-                    <label>💉 Blood Pressure <span class="optional-badge">Optional</span></label>
+                    <label>💉 Blood Pressure <span class="required-badge">Required</span></label>
                     <div class="blood-pressure-inputs">
-                      <input id="systolicBP" type="number" min="70" max="200" placeholder="120" class="input-primary bp-input">
+                      <input id="systolicBP" type="number" min="70" max="200" placeholder="120" class="input-primary bp-input" required>
                       <span class="bp-separator">/</span>
-                      <input id="diastolicBP" type="number" min="40" max="130" placeholder="80" class="input-primary bp-input">
+                      <input id="diastolicBP" type="number" min="40" max="130" placeholder="80" class="input-primary bp-input" required>
                       <span class="bp-unit">mmHg</span>
                     </div>
                     <div class="bp-hint">Normal: 90-120 / 60-80</div>
@@ -410,11 +410,7 @@
                 </div>
               </div>
 
-              <div class="row two">
-                <div class="field">
-                  <label for="exerciseTime">Time of Exercise</label>
-                  <input id="exerciseTime" type="time" class="input-primary">
-                </div>
+              <div class="row one">
                 <div class="field">
                   <label for="exerciseNotes">Additional Notes</label>
                   <input id="exerciseNotes" type="text" placeholder="Any other details..." class="input-primary">
@@ -436,7 +432,7 @@
             </div>
             <div class="nutrition-form">
               <div class="meal-header">
-                <div class="row two">
+                <div class="row one">
                   <div class="field">
                     <label for="mealType">Meal Type</label>
                     <select id="mealType" class="input-primary">
@@ -447,10 +443,6 @@
                       <option value="snack">🍎 Snack</option>
                       <option value="other">Other</option>
                     </select>
-                  </div>
-                  <div class="field">
-                    <label for="mealTime">Time</label>
-                    <input id="mealTime" type="time" class="input-primary">
                   </div>
                 </div>
               </div>
@@ -551,7 +543,6 @@
             <textarea id="notes" rows="4" placeholder="Anything notable about today..."></textarea>
           </div>
         </section>
-        <div id="message" class="msg" hidden></div>
       </form>
 
       <!-- Sidebar -->
@@ -1067,15 +1058,13 @@
       const durationMinutes = document.getElementById('exerciseMinutes').value ? Number(document.getElementById('exerciseMinutes').value) : null;
       const intensity = document.getElementById('exerciseIntensity').value || 'light';
       const feeling = document.getElementById('exerciseFeeling').value || null;
-      const time = document.getElementById('exerciseTime').value || null;
       const notes = document.getElementById('exerciseNotes').value || null;
       if (!type) return;
-      exercises.push({ type, durationMinutes, intensity, feeling, time, notes });
+      exercises.push({ type, durationMinutes, intensity, feeling, notes });
       renderExerciseList();
       document.getElementById('exerciseType').value = '';
       document.getElementById('exerciseMinutes').value = '';
       document.getElementById('exerciseFeeling').value = '';
-      document.getElementById('exerciseTime').value = '';
       document.getElementById('exerciseNotes').value = '';
       updateLogStatus();
     });
@@ -1196,16 +1185,14 @@
     document.getElementById('addMealBtn').addEventListener('click', () => {
       if (isReadOnly) return;
       const mealType = document.getElementById('mealType').value;
-      const time = document.getElementById('mealTime').value || null;
       const notes = document.getElementById('mealNotes').value || null;
       if (!mealType) return;
 
-      meals.push({ mealType, time, foods: [...currentFoodList], notes });
+      meals.push({ mealType, foods: [...currentFoodList], notes });
       renderMealList();
       currentFoodList = [];
       renderFoodList();
       document.getElementById('mealType').value = '';
-      document.getElementById('mealTime').value = '';
       document.getElementById('mealNotes').value = '';
       updateLogStatus();
     });
