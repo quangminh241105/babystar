@@ -113,9 +113,12 @@ function renderAIExercisePlan(plan, container) {
 			totalActiveDays++;
 			day.exercises.forEach(ex => {
 				if (ex.category) exerciseTypes.add(ex.category);
-				// Parse duration (e.g., "20min" -> 20)
-				if (ex.duration) {
-					const match = ex.duration.match(/(\d+)/);
+				// Use durationMinutes from database or parse duration string
+				const duration = ex.durationMinutes || ex.duration;
+				if (typeof duration === 'number') {
+					totalMinutes += duration;
+				} else if (duration) {
+					const match = String(duration).match(/(\d+)/);
 					if (match) totalMinutes += parseInt(match[1]);
 				}
 			});
@@ -159,9 +162,11 @@ function renderAIExercisePlan(plan, container) {
 		let exercisesHTML = '';
 		
 		if (dayPlan && !dayPlan.restDay && dayPlan.exercises?.length > 0) {
-			exercisesHTML = dayPlan.exercises.map(ex => 
-				`<div class="activity-item">${ex.duration ? ex.duration + ' ' : ''}${ex.name}</div>`
-			).join('');
+			exercisesHTML = dayPlan.exercises.map(ex => {
+				const duration = ex.durationMinutes || ex.duration;
+				const durationText = duration ? (typeof duration === 'number' ? `${duration} min` : duration) : '';
+				return `<div class="activity-item">${durationText ? durationText + ' ' : ''}${ex.name}</div>`;
+			}).join('');
 		} else if (dayPlan && dayPlan.restDay) {
 			exercisesHTML = '<div class="activity-item">Rest Day or Gentle Stretching</div>';
 		} else {
@@ -202,14 +207,17 @@ function renderAIExercisePlan(plan, container) {
 			tips.push(ex.modifications);
 		}
 		
+		const duration = ex.durationMinutes || ex.duration;
+		const durationText = duration ? (typeof duration === 'number' ? `${duration} min` : duration) : '';
+		
 		recommendedHTML += `
 			<div class="exercise-card">
 				<div class="exercise-header">
 					<div class="exercise-title-group">
 						<h3>${ex.name}</h3>
 						<div class="exercise-meta">
-							${ex.duration ? `<span class="exercise-duration">${ex.duration}</span>` : ''}
-							${ex.duration && ex.sets ? '<span class="exercise-separator">•</span>' : ''}
+							${durationText ? `<span class="exercise-duration">${durationText}</span>` : ''}
+							${durationText && ex.sets ? '<span class="exercise-separator">•</span>' : ''}
 							${ex.sets && ex.reps ? `<span class="exercise-frequency">${ex.sets} sets × ${ex.reps} reps</span>` : ''}
 						</div>
 					</div>
