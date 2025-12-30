@@ -1,0 +1,234 @@
+<!-- Vitals Section -->
+<% if (log.weightKg || log.heartRateBpm || (log.bloodPressure && (log.bloodPressure.systolic || log.bloodPressure.diastolic)) || (log.bloodSugar && log.bloodSugar.value)) { %>
+  <div class="detail-section">
+    <h4 class="section-title">📊 Health Metrics</h4>
+    <div class="metrics-grid">
+      <% if (log.weightKg) { %>
+        <div class="metric-card">
+          <div class="metric-label">Average Weight</div>
+          <div class="metric-value"><%= log.weightKg %> kg</div>
+        </div>
+      <% } %>
+      <% if (log.heartRateBpm) { %>
+        <div class="metric-card">
+          <div class="metric-label">Avg Heart Rate</div>
+          <div class="metric-value"><%= log.heartRateBpm %> bpm</div>
+        </div>
+      <% } %>
+      <% if (log.bloodPressure && (log.bloodPressure.systolic || log.bloodPressure.diastolic)) { %>
+        <div class="metric-card">
+          <div class="metric-label">Average Sleep</div>
+          <div class="metric-value"><%= log.bloodPressure.systolic || '-' %>/<%= log.bloodPressure.diastolic || '-' %> mmHg</div>
+          <div class="metric-status normal">Normal</div>
+        </div>
+      <% } %>
+      <% if (log.bloodSugar && log.bloodSugar.value) { %>
+        <div class="metric-card">
+          <div class="metric-label">Blood Sugar</div>
+          <div class="metric-value"><%= log.bloodSugar.value %> <%= log.bloodSugar.unit %></div>
+          <% if (log.bloodSugar.timing) { %>
+            <div class="metric-note"><%= log.bloodSugar.timing.replace(/_/g, ' ') %></div>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<!-- Sleep Section -->
+<% if (log.sleep && (log.sleep.totalHours || log.sleep.quality)) { %>
+  <div class="detail-section">
+    <h4 class="section-title">😴 Sleep</h4>
+    <div class="metrics-grid">
+      <% if (log.sleep.totalHours) { %>
+        <div class="metric-card">
+          <div class="metric-label">Total Hours</div>
+          <div class="metric-value"><%= log.sleep.totalHours %> hrs</div>
+        </div>
+      <% } %>
+      <% if (log.sleep.quality) { %>
+        <div class="metric-card">
+          <div class="metric-label">Sleep Quality</div>
+          <div class="metric-value"><%= log.sleep.quality %>/5</div>
+        </div>
+      <% } %>
+      <% if (log.sleep.timesAwakened !== undefined && log.sleep.timesAwakened !== null) { %>
+        <div class="metric-card">
+          <div class="metric-label">Times Awakened</div>
+          <div class="metric-value"><%= log.sleep.timesAwakened %></div>
+        </div>
+      <% } %>
+      <% if (log.sleep.primaryPosition) { %>
+        <div class="metric-card">
+          <div class="metric-label">Position</div>
+          <div class="metric-value"><%= log.sleep.primaryPosition.replace(/_/g, ' ') %></div>
+        </div>
+      <% } %>
+    </div>
+    <% if (log.sleep.awakeningReasons && log.sleep.awakeningReasons.length > 0) { %>
+      <p class="detail-note"><strong>Awakening Reasons:</strong> <%= log.sleep.awakeningReasons.map(r => r.replace(/_/g, ' ')).join(', ') %></p>
+    <% } %>
+  </div>
+<% } %>
+
+<!-- Mood & Wellbeing -->
+<% if ((log.moodLog && log.moodLog.length > 0) || log.energyLevel || log.stressLevel) { %>
+  <div class="detail-section">
+    <h4 class="section-title">😊 Mood & Wellbeing</h4>
+    <% if (log.moodLog && log.moodLog.length > 0) { %>
+      <div class="mood-items">
+        <% log.moodLog.forEach(mood => { %>
+          <div class="mood-item">
+            <span class="mood-badge"><%= mood.mood.replace(/_/g, ' ') %></span>
+            <% if (mood.trigger) { %><span class="mood-trigger"><%= mood.trigger %></span><% } %>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+    <div class="metrics-grid">
+      <% if (log.energyLevel) { %>
+        <div class="metric-card">
+          <div class="metric-label">Energy Level</div>
+          <div class="metric-value"><%= log.energyLevel %>/5</div>
+        </div>
+      <% } %>
+      <% if (log.stressLevel) { %>
+        <div class="metric-card">
+          <div class="metric-label">Stress Level</div>
+          <div class="metric-value"><%= log.stressLevel %>/5</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<!-- Symptoms -->
+<% if (log.symptoms && log.symptoms.length > 0) { %>
+  <div class="detail-section">
+    <h4 class="section-title">🩺 Symptoms</h4>
+    <ul class="symptom-list">
+      <% log.symptoms.forEach(symptom => { %>
+        <li class="symptom-item">
+          <div class="symptom-header">
+            <strong><%= symptom.symptom.replace(/_/g, ' ') %></strong>
+            <span class="severity-badge">Severity: <%= symptom.severity %>/10</span>
+          </div>
+          <% if (symptom.notes) { %>
+            <p class="symptom-note"><%= symptom.notes %></p>
+          <% } %>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+<% } %>
+
+<!-- Exercise -->
+<% if (log.exercises && log.exercises.length > 0) { %>
+  <div class="detail-section">
+    <h4 class="section-title">🏃 Exercise</h4>
+    <ul class="exercise-list">
+      <% log.exercises.forEach(exercise => { %>
+        <li class="exercise-item">
+          <div class="exercise-header">
+            <strong><%= exercise.type.replace(/_/g, ' ') %></strong>
+            <% if (exercise.durationMinutes) { %>
+              <span class="exercise-duration"><%= exercise.durationMinutes %> min</span>
+            <% } %>
+          </div>
+          <div class="exercise-details">
+            <% if (exercise.intensity) { %>
+              <span class="exercise-tag">Intensity: <%= exercise.intensity %></span>
+            <% } %>
+            <% if (exercise.feeling) { %>
+              <span class="exercise-tag">Feeling: <%= exercise.feeling %></span>
+            <% } %>
+          </div>
+          <% if (exercise.notes) { %>
+            <p class="exercise-note"><%= exercise.notes %></p>
+          <% } %>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+<% } %>
+
+<!-- Nutrition -->
+<% if (log.foodIntake && log.foodIntake.length > 0) { %>
+  <div class="detail-section">
+    <h4 class="section-title">🍽️ Nutrition</h4>
+    <% log.foodIntake.forEach(meal => { %>
+      <div class="meal-item">
+        <div class="meal-header"><%= meal.mealType.replace(/_/g, ' ') %></div>
+        <% if (meal.foods && meal.foods.length > 0) { %>
+          <ul class="food-list">
+            <% meal.foods.forEach(food => { %>
+              <li><%= food.name %><% if (food.amount) { %> - <%= food.amount %> <%= food.unit %><% } %></li>
+            <% }); %>
+          </ul>
+        <% } %>
+        <% if (meal.notes) { %>
+          <p class="meal-note"><%= meal.notes %></p>
+        <% } %>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<!-- Hydration -->
+<% if (log.hydration && (log.hydration.waterLiters > 0 || log.hydration.otherFluidsLiters > 0)) { %>
+  <div class="detail-section">
+    <h4 class="section-title">💧 Hydration</h4>
+    <div class="metrics-grid">
+      <% if (log.hydration.waterLiters > 0) { %>
+        <div class="metric-card">
+          <div class="metric-label">Avg Water Intake</div>
+          <div class="metric-value"><%= log.hydration.waterLiters %> L/day</div>
+        </div>
+      <% } %>
+      <% if (log.hydration.otherFluidsLiters > 0) { %>
+        <div class="metric-card">
+          <div class="metric-label">Other Fluids</div>
+          <div class="metric-value"><%= log.hydration.otherFluidsLiters %> L</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<!-- Fetal Movement -->
+<% if (log.fetalMovement && log.fetalMovement.count) { %>
+  <div class="detail-section">
+    <h4 class="section-title">👶 Fetal Movement</h4>
+    <div class="metric-card">
+      <div class="metric-label">Kick Count</div>
+      <div class="metric-value"><%= log.fetalMovement.count %></div>
+    </div>
+    <% if (log.fetalMovement.notes) { %>
+      <p class="detail-note"><%= log.fetalMovement.notes %></p>
+    <% } %>
+  </div>
+<% } %>
+
+<!-- Doctor Visit -->
+<% if (log.doctorVisit && log.doctorVisit.visited) { %>
+  <div class="detail-section">
+    <h4 class="section-title">👨‍⚕️ Doctor Visit</h4>
+    <% if (log.doctorVisit.visitType) { %>
+      <p><strong>Type:</strong> <%= log.doctorVisit.visitType.replace(/_/g, ' ') %></p>
+    <% } %>
+    <% if (log.doctorVisit.notes) { %>
+      <p><strong>Notes:</strong> <%= log.doctorVisit.notes %></p>
+    <% } %>
+    <% if (log.doctorVisit.nextAppointment) { %>
+      <p><strong>Next Appointment:</strong> <%= new Date(log.doctorVisit.nextAppointment).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %></p>
+    <% } %>
+  </div>
+<% } %>
+
+<!-- General Notes -->
+<% if (log.notes) { %>
+  <div class="detail-section">
+    <h4 class="section-title">📝 General Notes</h4>
+    <p class="general-notes"><%= log.notes %></p>
+  </div>
+<% } %>

@@ -1,105 +1,135 @@
 <link rel="stylesheet" href="/css/past-health-log.css">
 
-<main role="main" aria-labelledby="pageTitle" class="page">
-    <header class="page-header" id="pageTitle">
-      <h1 class="title">Daily health logs</h1>
-      <p class="subtitle">View and edit your health history.</p>
+<div class="page-container">
+  <div class="content-wrapper">
+    <!-- Header -->
+    <header class="page-header">
+      <h1>Past Health Logs</h1>
+      <p>View and manage your daily health records</p>
     </header>
 
-    <!-- Filter / search controls -->
-    <section class="controls" aria-label="Filters">
-      <form method="GET" action="/past-health-records" class="filter-row">
-        <label for="startDate">From</label>
-        <input id="startDate" name="startDate" type="date" aria-label="start date" value="<%= filters.startDate %>" />
-
-        <label for="endDate">To</label>
-        <input id="endDate" name="endDate" type="date" aria-label="end date" value="<%= filters.endDate %>" />
-
-        <button type="submit" class="filter-btn">Apply</button>
-
-        <div class="quick-filters" role="tablist" aria-label="Quick filters">
-          <a href="/past-health-records?range=7" class="filter-btn">Last 7 days</a>
-          <a href="/past-health-records?range=30" class="filter-btn">Last 30 days</a>
-          <a href="/past-health-records?range=all" class="filter-btn">All</a>
-        </div>
-
-        <a href="/past-health-records?range=all" class="clear-btn">Clear</a>
-      </form>
-    </section>
-
-    <!-- Results count -->
-    <% if (filters.activeFilter !== 'all') { %>
-      <div style="padding: 10px 20px; color: #666;">
-        Showing <%= filters.count %> log<%= filters.count !== 1 ? 's' : '' %>
-      </div>
-    <% } %>
-
-    <!-- Logs list -->
-    <section id="logsList" class="logs-list" aria-live="polite" aria-label="Daily health logs list">
-      <% if (logs && logs.length > 0) { %>
-        <% logs.forEach(log => { 
-          const logDate = new Date(log.logDate);
-          const formattedDate = logDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-          const isoDate = logDate.toISOString().split('T')[0];
-          const logId = log._id || log.id;
-          const today = new Date().toISOString().split('T')[0];
-          const isToday = isoDate === today;
-        %>
-          <article class="log-card" aria-labelledby="log-<%= isoDate %>">
-            <header class="log-header">
-              <div class="log-meta">
-                <h2 id="log-<%= isoDate %>" class="log-date"><%= formattedDate %></h2>
-                <div class="log-sub">Entry date: <%= isoDate %> • ID #<%= logId %></div>
-              </div>
-
-              <div class="log-actions" role="group" aria-label="Log actions">
-                <% if (isToday) { %>
-                  <a href="/log-health" class="btn edit" aria-label="Edit log <%= logId %>">Edit</a>
-                <% } %>
-                <form method="POST" action="/past-health-records/<%= logId %>/delete" style="display: inline;">
-                  <button type="submit" class="btn delete" aria-label="Delete log <%= logId %>");">Delete</button>
-                </form>
-              </div>
-            </header>
-
-            <div class="log-vitals">
-              <% if (log.weightKg) { %>
-                <div class="vital"><strong>Weight</strong><span><%= log.weightKg %> kg</span></div>
-              <% } %>
-              <% if (log.bloodPressure) { %>
-                <div class="vital"><strong>Blood pressure</strong><span><%= log.bloodPressure %> mmHg</span></div>
-              <% } %>
-              <% if (log.sleep && log.sleep.totalHours) { %>
-                <div class="vital"><strong>Sleep</strong><span><%= log.sleep.totalHours %> h</span></div>
-              <% } %>
-              <% if (log.mood) { %>
-                <div class="vital"><strong>Mood</strong><span><%= log.mood.replace(/_/g, ' ') %></span></div>
-              <% } %>
+    <div class="main-grid">
+      <!-- Left Side - Health Log Cards -->
+      <div class="left-column">
+        <!-- Filter Controls -->
+        <section class="filter-section">
+          <div class="filter-row">
+            <div class="filter-group">
+              <label for="startDate">From</label>
+              <input id="startDate" type="date" aria-label="start date" />
             </div>
+            <div class="filter-group">
+              <label for="endDate">To</label>
+              <input id="endDate" type="date" aria-label="end date" />
+            </div>
+          </div>
+          <div class="quick-filters">
+            <button type="button" class="filter-btn" data-range="7">Last 7 days</button>
+            <button type="button" class="filter-btn" data-range="30">Last 30 days</button>
+            <button type="button" class="filter-btn" data-range="all">All</button>
+          </div>
+        </section>
 
-            <% if (log.symptoms && log.symptoms.length > 0) { %>
-              <div class="log-symptom" aria-label="Main symptom">
-                <strong>Main symptom</strong>
-                <p><%= log.symptoms[0].symptom.replace(/_/g, ' ') %><% if (log.symptoms[0].notes) { %>; <%= log.symptoms[0].notes %><% } %></p>
+        <!-- Available Health Logs Section -->
+        <section class="logs-section">
+          <h2>Available Health Logs</h2>
+          <div id="logsList" class="logs-container">
+            <% if (logs && logs.length > 0) { %>
+              <% logs.forEach((log, index) => { 
+                const logDate = new Date(log.logDate);
+                const formattedDate = logDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                const isoDate = logDate.toISOString().split('T')[0];
+                const logId = log._id || log.id;
+                
+                // Get top 3 symptoms
+                const topSymptoms = log.symptoms && log.symptoms.length > 0 
+                  ? log.symptoms.slice(0, 3).map(s => s.symptom.replace(/_/g, ' '))
+                  : [];
+              %>
+                <article class="log-card <%= index === 0 ? 'selected' : '' %>" data-log-id="<%= logId %>" data-log-date="<%= isoDate %>" data-log-index="<%= index %>">
+                  <div class="log-card-inner">
+                    <div class="checkbox-area">
+                      <input type="radio" name="log-select" id="log-<%= logId %>" <%= index === 0 ? 'checked' : '' %>>
+                    </div>
+                    <div class="log-content">
+                      <header class="log-header">
+                        <h2 class="log-title"><%= formattedDate %></h2>
+                      </header>
+                      <dl class="log-meta">
+                        <% if (log.pregnancyWeek) { %>
+                          <div>
+                            <dt>Week</dt>
+                            <dd><%= log.pregnancyWeek %></dd>
+                          </div>
+                        <% } %>
+                        <div>
+                          <dt>Log ID</dt>
+                          <dd>#<%= logId.toString().slice(-6) %></dd>
+                        </div>
+                        <% if (log.weightKg) { %>
+                          <div>
+                            <dt>Weight</dt>
+                            <dd><%= log.weightKg %> kg</dd>
+                          </div>
+                        <% } %>
+                        <% if (log.sleep && log.sleep.totalHours) { %>
+                          <div>
+                            <dt>Sleep</dt>
+                            <dd><%= log.sleep.totalHours %> hrs</dd>
+                          </div>
+                        <% } %>
+                      </dl>
+                      <% if (topSymptoms.length > 0) { %>
+                        <div class="log-symptoms">
+                          <div class="symptoms-title">Symptoms</div>
+                          <ul class="symptoms-list">
+                            <% topSymptoms.forEach(symptom => { %>
+                              <li><%= symptom %></li>
+                            <% }); %>
+                          </ul>
+                        </div>
+                      <% } %>
+                    </div>
+                  </div>
+                </article>
+              <% }); %>
+            <% } else { %>
+              <div class="no-logs">
+                <p>No health logs found. Start logging your daily health data to see them here.</p>
               </div>
             <% } %>
+          </div>
+        </section>
+      </div>
 
-            <% if (log.notes) { %>
-              <div class="log-note" aria-label="User note">
-                <strong>Note</strong>
-                <p><%= log.notes %></p>
+      <!-- Right Side - Detail View -->
+      <div class="right-column">
+        <div class="preview-container">
+          <div class="preview-header">
+            <h2>Health Log Details</h2>
+            <span id="previewPageInfo" class="page-info">Select a log to view details</span>
+          </div>
+          
+          <div id="detailContent" class="detail-content">
+            <% if (logs && logs.length > 0) { %>
+              <div class="loading-detail">
+                <p>Loading details...</p>
+              </div>
+            <% } else { %>
+              <div class="empty-detail">
+                <p>No logs available. Start logging your health data!</p>
               </div>
             <% } %>
-          </article>
-        <% }); %>
-      <% } else { %>
-        <div class="no-logs">
-          <p>No health logs found<% if (filters.activeFilter !== 'all') { %> for the selected date range<% } %>. <% if (filters.activeFilter !== 'all') { %><a href="/past-health-records?range=all">View all logs</a><% } else { %>Start logging your daily health data to see them here.<% } %></p>
+          </div>
         </div>
-      <% } %>
-    </section>
-    
-    <footer class="page-footer" aria-hidden="false">
-      <p class="hint">Tip: Use the date filters to quickly find past entries.</p>
-    </footer>
-</main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden log data for JavaScript -->
+<script id="logsData" type="application/json">
+  <%- JSON.stringify(logs || []) %>
+</script>
+
+<script src="/js/pasthealthlog.js"></script>
