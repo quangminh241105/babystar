@@ -589,15 +589,49 @@ router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
   res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
 });
 
-router.get('/share-records', requireAuthRedirect, (req, res) => {
-  res.render('pages/share-report', { title: 'Share Records' });
+router.get('/share-records', requireAuthRedirect, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    // Fetch weekly reports for the user
+    const reports = await WeeklyReport.find({
+      userId,
+      deletedAt: null,
+      status: 'complete'
+    })
+    .sort({ weekNumber: -1 });
+
+    
+    res.render('pages/share-report', { 
+      title: 'Share Records',
+      reports: reports || [],
+    });
+  } catch (err) {
+    console.error('Get share records error:', err);
+    res.render('pages/share-report', { 
+      title: 'Share Records',
+      reports: [],
+      currentPregnancyWeek: null,
+      currentTrimester: null
+    });
+  }
 });
 
-// GET /download-report-pdf - Generate and download PDF using Puppeteer
-router.get('/download-report-pdf', requireAuth, async (req, res) => {
+// GET /download-report-pdf/:reportId - Generate and download PDF using Puppeteer
+router.get('/download-report-pdf/:reportId', requireAuth, async (req, res) => {
   let browser;
   try {
-    console.log('Starting PDF generation...');
+    console.log('Starting PDF generation for report:', req.params.reportId);
+    
+    // Fetch the weekly report from database
+    const report = await WeeklyReport.findOne({
+      _id: req.params.reportId,
+      userId: req.session.user.id,
+      deletedAt: null
+    }).populate('healthLogIds');
+    
+    
+    console.log('Report found:', report._id, 'Week:', report.weekNumber);
     
     // Launch Puppeteer browser
     browser = await puppeteer.launch({
@@ -622,9 +656,12 @@ router.get('/download-report-pdf', requireAuth, async (req, res) => {
     
     console.log('Rendering HTML template...');
     
-    // Render the report-pdf.ejs template to HTML string
+    // Render the report-pdf.ejs template to HTML string with report data
     const html = await new Promise((resolve, reject) => {
-      res.app.render('report-pdf', { title: 'Health Report PDF' }, (err, html) => {
+      res.app.render('report-pdf', { 
+        title: `Week ${report.weekNumber} Health Report`,
+        report: report 
+      }, (err, html) => {
         if (err) {
           console.error('Template render error:', err);
           reject(err);
@@ -682,7 +719,7 @@ router.get('/download-report-pdf', requireAuth, async (req, res) => {
     console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
     
     // Set headers for PDF download
-    const fileName = `pregnancy-report-${new Date().toISOString().split('T')[0]}.pdf`;
+    const fileName = `pregnancy-report-week${report.weekNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBuffer.length);
@@ -746,19 +783,85 @@ router.get('/log-health', requireAuthRedirect, async (req, res) => {
 
 router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
   try {
-    const logs = await HealthLog.getAllLogs(req.session.user.id);
-    res.render('pages/past-health-log', { title: 'Past Health Records', logs });
+    const { startDate, endDate, range } = req.query;
+    const userId = req.session.user.id;
+    
+    let start = null;
+    let end = null;
+    let activeFilter = 'all';
+    
+    // Handle quick filters (7 days, 30 days, all)
+    if (range && range !== 'all') {
+      const days = parseInt(range);
+      if (!isNaN(days) && days > 0) {
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+        
+        start = new Date();
+        start.setDate(start.getDate() - days);
+        start.setHours(0, 0, 0, 0);
+        
+        activeFilter = range;
+      }
+    } else if (range === 'all') {
+      activeFilter = 'all';
+    } else if (startDate || endDate) {
+      // Handle custom date range
+      activeFilter = 'custom';
+      if (startDate) {
+        start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+      }
+      if (endDate) {
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+      }
+    }
+    
+    // Get filtered logs
+    const logs = await HealthLog.getByDateRange(userId, start, end);
+    
+    res.render('pages/past-health-log', { 
+      title: 'Past Health Records', 
+      logs,
+      filters: {
+        activeFilter,
+        startDate: startDate || '',
+        endDate: endDate || '',
+        count: logs.length
+      }
+    });
   } catch (err) {
-    res.render('pages/past-health-log', { title: 'Past Health Records', logs: [] });
+    console.error('Get past health records error:', err);
+    res.render('pages/past-health-log', { 
+      title: 'Past Health Records', 
+      logs: [],
+      filters: {
+        activeFilter: 'all',
+        startDate: '',
+        endDate: '',
+        count: 0
+      }
+    });
   }
 });
 
+// POST /past-health-records/:id/delete - Soft delete health log
 router.post('/past-health-records/:id/delete', requireAuth, async (req, res) => {
   try {
-    const log = await HealthLog.findById(req.params.id);
+    const log = await HealthLog.findOne({
+      _id: req.params.id,
+      userId: req.session.user.id,
+      deletedAt: null
+    });
     
     if (!log) {
       return res.status(404).json({ success: false, error: 'Health log not found' });
+    }
+    
+    // Check if user owns this log
+    if (log.userId.toString() !== req.session.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
     }
     
     log.deletedAt = new Date();
