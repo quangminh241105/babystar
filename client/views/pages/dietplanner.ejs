@@ -75,7 +75,7 @@
       <p>Preparing your diet plan for this week...</p>
     </div>
 
-    <!-- Error State (Only shown for critical errors) -->
+    <!-- Error State (Only shown for critical errors - Own Plan) -->
     <div id="errorState" class="error-state hidden">
       <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
       <h2 id="errorTitle">Notice</h2>
@@ -84,6 +84,15 @@
         <button class="btn-retry" onclick="loadNutritionPlan()">Try Again</button>
         <button class="btn-generate" onclick="window.location.href='/profile'">Go to Profile</button>
       </div>
+    </div>
+
+    <!-- Error State (Partner has no plan) -->
+    <div id="partnerErrorState" class="error-state hidden" style="background: #e3f2fd;">
+      <div style="font-size: 64px; margin-bottom: 20px;">👥</div>
+      <h2 style="color: #1565c0; margin-bottom: 15px;">Partner Has No Nutrition Plan</h2>
+      <p style="color: #1565c0; margin-bottom: 30px;">
+        Your partner hasn't generated a nutrition plan yet. They need to log in and create their personalized plan first.
+      </p>
     </div>
 
     <!-- Main Content (Hidden until loaded) -->
@@ -107,9 +116,11 @@
             <h1>Personalized Diet Plan</h1>
             <p class="subtitle" id="pageSubtitle">AI-customized nutrition guide</p>
           </div>
-          <button onclick="generateNewPlan()" style="background: #ff6b9d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;">
-            🔄 Regenerate Plan
-          </button>
+          <% if (!isPartnerView) { %>
+            <button onclick="generateNewPlan()" style="background: #ff6b9d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+              🔄 Regenerate Plan
+            </button>
+          <% } %>
         </div>
       </header>
 

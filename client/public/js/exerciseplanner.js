@@ -1,24 +1,35 @@
 // DOM Elements - accessed globally
-let loadingState, errorState, mainContent;
+let loadingState, errorState, partnerErrorState, mainContent;
+let currentViewUserId = null; // Track whose plan we're viewing
+let isViewingPartner = false; // Track if viewing partner's plan
 
 // Show loading
 function showLoading() {
 	loadingState.classList.remove('hidden');
 	errorState.classList.add('hidden');
+	partnerErrorState.classList.add('hidden');
 	mainContent.classList.add('hidden');
 }
 
 // Show error/no plan
-function showError() {
+function showError(viewingPartner = false) {
 	loadingState.classList.add('hidden');
-	errorState.classList.remove('hidden');
 	mainContent.classList.add('hidden');
+	
+	if (viewingPartner) {
+		partnerErrorState.classList.remove('hidden');
+		errorState.classList.add('hidden');
+	} else {
+		errorState.classList.remove('hidden');
+		partnerErrorState.classList.add('hidden');
+	}
 }
 
 // Show main content
 function showMainContent() {
 	loadingState.classList.add('hidden');
 	errorState.classList.add('hidden');
+	partnerErrorState.classList.add('hidden');
 	mainContent.classList.remove('hidden');
 }
 
@@ -36,7 +47,7 @@ async function generateNewPlan() {
 
 		if (response.ok && result.success && result.data) {
 			console.log('✅ Exercise plan generated successfully');
-			renderAIExercisePlan(result.data, mainContent);
+			renderAIExercisePlan(result.data, mainContent, isViewingPartner);
 			showMainContent();
 		} else {
 			throw new Error(result.message || 'Failed to generate exercise plan');
@@ -53,13 +64,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 	// Initialize DOM elements
 	loadingState = document.getElementById('loadingState');
 	errorState = document.getElementById('errorState');
+	partnerErrorState = document.getElementById('partnerErrorState');
 	mainContent = document.getElementById('mainContent');
 	
 	showLoading();
 	
 	try {
+		// Get partnerId from URL query params
+		const urlParams = new URLSearchParams(window.location.search);
+		const partnerId = urlParams.get('partnerId');
+		
+		let targetUserId = partnerId || null;
+		isViewingPartner = !!partnerId;
+		
+		if (partnerId) {
+			currentViewUserId = partnerId;
+			console.log(`👥 Viewing partner's exercise plan (Partner ID: ${partnerId})`);
+		} else {
+			console.log('👤 Viewing own exercise plan');
+		}
+		
+		// Build API URL with optional userId parameter
+		const apiUrl = targetUserId 
+			? `/api/exercise/weekly-plan?userId=${targetUserId}` 
+			: '/api/exercise/weekly-plan';
+		
 		// Try to load AI exercise plan
-		const response = await fetch('/api/exercise/weekly-plan');
+		const response = await fetch(apiUrl);
 		const result = await response.json();
 
 		if (response.ok && result.success && result.data) {
@@ -72,26 +103,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 			
 			if (!hasExercises) {
 				console.warn('⚠️ Plan has no exercises');
-				showError();
+				showError(isViewingPartner);
 				return;
 			}
 			
-			renderAIExercisePlan(result.data, mainContent);
+			renderAIExercisePlan(result.data, mainContent, isViewingPartner);
 			showMainContent();
 		} else {
 			console.log('⚠️ No AI plan found');
-			showError();
+			showError(isViewingPartner);
 		}
 	} catch (error) {
 		console.error('Error loading exercise plan:', error);
-		showError();
+		showError(isViewingPartner);
 	}
 });
 
 /**
  * Render AI-generated exercise plan in original static format
  */
-function renderAIExercisePlan(plan, container) {
+function renderAIExercisePlan(plan, container, isViewingPartner = false) {
 	// Check if plan has any actual exercises
 	const hasExercises = plan.dailyExercisePlan?.some(day => 
 		!day.restDay && day.exercises?.length > 0
@@ -244,6 +275,24 @@ function renderAIExercisePlan(plan, container) {
 		'Consult your healthcare provider before starting any new routine'
 	]).map(tip => `<div class="safety-item">⚠️ ${tip}</div>`).join('');
 	
+	// Build regenerate button HTML (only show if viewing own plan)
+	const regenerateButtonHTML = !isViewingPartner ? `
+		<button onclick="generateNewPlan()" style="
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			padding: 12px 30px;
+			font-size: 16px;
+			border-radius: 8px;
+			cursor: pointer;
+			box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+			transition: transform 0.2s;
+			margin-top: 15px;
+		" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+			🔄 Regenerate Exercise Plan
+		</button>
+	` : '';
+	
 	container.innerHTML = `
 		<!-- AI Weekly Summary -->
 		${weeklySummaryHTML}
@@ -252,20 +301,7 @@ function renderAIExercisePlan(plan, container) {
 		<header class="page-header">
 			<h1>Personalized Exercise Plan</h1>
 			<p class="subtitle">Safe and effective workouts for your pregnancy</p>
-			<button onclick="generateNewPlan()" style="
-				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-				color: white;
-				border: none;
-				padding: 12px 30px;
-				font-size: 16px;
-				border-radius: 8px;
-				cursor: pointer;
-				box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-				transition: transform 0.2s;
-				margin-top: 15px;
-			" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-				🔄 Regenerate Exercise Plan
-			</button>
+			${regenerateButtonHTML}
 		</header>
 
 		<!-- Weekly Goal -->

@@ -106,29 +106,51 @@
             <div id="receivedInvitations" class="linked-list">
                 <% if (receivedInvitations && receivedInvitations.length > 0) { %>
                     <% receivedInvitations.forEach(function(inv) { %>
-                        <div class="linked-item received" data-owner="<%= inv.ownerId %>" data-status="<%= inv.status %>">
-                            <div class="linked-main">
-                                <% if (inv.ownerImage) { %>
-                                    <img src="<%= inv.ownerImage %>" alt="" class="linked-avatar">
-                                <% } else { %>
-                                    <div class="linked-avatar placeholder"><%= inv.ownerName?.charAt(0) || '?' %></div>
-                                <% } %>
-                                <div class="linked-details">
-                                    <span class="linked-name"><%= inv.ownerName || inv.ownerEmail %></span>
-                                    <span class="linked-relationship">You are their: <%= inv.relationship?.replace('_', ' ') || 'N/A' %></span>
+                        <% if (inv.status === 'accepted') { %>
+                            <a href="/partner/<%= inv.ownerId %>" class="linked-item-link">
+                                <div class="linked-item received" data-owner="<%= inv.ownerId %>" data-status="<%= inv.status %>">
+                                    <div class="linked-main">
+                                        <% if (inv.ownerImage) { %>
+                                            <img src="<%= inv.ownerImage %>" alt="" class="linked-avatar">
+                                        <% } else { %>
+                                            <div class="linked-avatar placeholder"><%= inv.ownerName?.charAt(0) || '?' %></div>
+                                        <% } %>
+                                        <div class="linked-details">
+                                            <span class="linked-name"><%= inv.ownerName || inv.ownerEmail %></span>
+                                            <span class="linked-relationship">You are their: <%= inv.relationship?.replace('_', ' ') || 'N/A' %></span>
+                                        </div>
+                                    </div>
+                                    <div class="linked-status-actions">
+                                        <span class="status-badge <%= inv.status %>"><%= inv.status %></span>
+                                        <div class="linked-actions">
+                                            <button class="action-btn leave" onclick="event.preventDefault(); event.stopPropagation(); handleReceiverAction('leave', '<%= inv.ownerId %>')">Leave</button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="linked-status-actions">
-                                <span class="status-badge <%= inv.status %>"><%= inv.status %></span>
-                                <div class="linked-actions">
-                                    <% if (inv.status === 'pending') { %>
-                                        <button class="action-btn cancel" onclick="handleReceiverAction('cancel', '<%= inv.ownerId %>')">Cancel Request</button>
-                                    <% } else if (inv.status === 'accepted') { %>
-                                        <button class="action-btn leave" onclick="handleReceiverAction('leave', '<%= inv.ownerId %>')">Leave</button>
+                            </a>
+                        <% } else { %>
+                            <div class="linked-item received" data-owner="<%= inv.ownerId %>" data-status="<%= inv.status %>">
+                                <div class="linked-main">
+                                    <% if (inv.ownerImage) { %>
+                                        <img src="<%= inv.ownerImage %>" alt="" class="linked-avatar">
+                                    <% } else { %>
+                                        <div class="linked-avatar placeholder"><%= inv.ownerName?.charAt(0) || '?' %></div>
                                     <% } %>
+                                    <div class="linked-details">
+                                        <span class="linked-name"><%= inv.ownerName || inv.ownerEmail %></span>
+                                        <span class="linked-relationship">You are their: <%= inv.relationship?.replace('_', ' ') || 'N/A' %></span>
+                                    </div>
+                                </div>
+                                <div class="linked-status-actions">
+                                    <span class="status-badge <%= inv.status %>"><%= inv.status %></span>
+                                    <div class="linked-actions">
+                                        <% if (inv.status === 'pending') { %>
+                                            <button class="action-btn cancel" onclick="handleReceiverAction('cancel', '<%= inv.ownerId %>')">Cancel Request</button>
+                                        <% } %>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        <% } %>
                     <% }); %>
                 <% } else { %>
                     <p class="no-links">You haven't connected to anyone yet. Enter an invitation code above!</p>

@@ -56,124 +56,112 @@ function getTrimester(weekNumber) {
 function calculateSummary(healthLogs) {
 	if (!healthLogs || healthLogs.length === 0) {
 		return {
-			overallStatus: 'Stable',
-			statusScore: 5,
+			keySymptoms: [],
+			mostFrequentSymptoms: [],
+			avgEnergyLevel: null,
+			avgStressLevel: null,
+			dominantMoods: [],
+			aiFlags: [],
 			daysLogged: 0,
-			logCompletionRate: 0
+			avgCompletionPercentage: 0
 		};
 	}
 
 	const daysLogged = healthLogs.length;
-	const logCompletionRate = Math.round((daysLogged / 7) * 100);
 
-	// Collect all symptoms
-	const keySymptoms = [];
-	const symptomCounts = {};
+	// Collect all symptoms with frequency and severity
+	const symptomData = {};
 	healthLogs.forEach(log => {
 		log.symptoms?.forEach(s => {
-			symptomCounts[s.symptom] = (symptomCounts[s.symptom] || 0) + 1;
-			// Add symptom if not already in list
-			if (!keySymptoms.includes(s.symptom)) {
-				keySymptoms.push(s.symptom);
+			if (!symptomData[s.symptom]) {
+				symptomData[s.symptom] = {
+					symptom: s.symptom,
+					frequency: 0,
+					totalSeverity: 0,
+					count: 0
+				};
 			}
+			symptomData[s.symptom].frequency++;
+			symptomData[s.symptom].totalSeverity += s.severity || 0;
+			symptomData[s.symptom].count++;
 		});
 	});
 
-	// Weight tracking
-	const weights = healthLogs.map(l => l.weightKg).filter(w => w != null);
-	const startWeightKg = weights.length > 0 ? weights[0] : null;
-	const endWeightKg = weights.length > 0 ? weights[weights.length - 1] : null;
-	const weightChangeKg = startWeightKg && endWeightKg ? endWeightKg - startWeightKg : null;
+	// Calculate average severity and sort by frequency
+	const mostFrequentSymptoms = Object.values(symptomData)
+		.map(s => ({
+			symptom: s.symptom,
+			frequency: s.frequency,
+			avgSeverity: s.count > 0 ? Math.round((s.totalSeverity / s.count) * 10) / 10 : 0
+		}))
+		.sort((a, b) => b.frequency - a.frequency)
+		.slice(0, 10);
 
-	// Determine weight change status
-	let weightChangeStatus = 'on_target';
-	if (weightChangeKg !== null) {
-		if (weightChangeKg > 1) weightChangeStatus = 'above_target';
-		else if (weightChangeKg < -0.5) weightChangeStatus = 'below_target';
-		else if (weightChangeKg < -1) weightChangeStatus = 'concerning';
-	}
+	const keySymptoms = mostFrequentSymptoms.map(s => s.symptom);
 
-	// Energy level average
+	// Energy and stress level averages
 	const energyLevels = healthLogs.map(l => l.energyLevel).filter(e => e != null);
 	const avgEnergyLevel = energyLevels.length > 0 
-		? Math.round(energyLevels.reduce((a, b) => a + b, 0) / energyLevels.length) 
+		? Math.round((energyLevels.reduce((a, b) => a + b, 0) / energyLevels.length) * 10) / 10
 		: null;
 
-	// Mood analysis
-	const moods = healthLogs.map(l => l.mood).filter(m => m != null);
-	const moodCounts = {};
-	moods.forEach(m => { moodCounts[m] = (moodCounts[m] || 0) + 1; });
-	const avgMood = Object.keys(moodCounts).length > 0 
-		? Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0][0] 
-		: 'neutral';
+	const stressLevels = healthLogs.map(l => l.stressLevel).filter(s => s != null);
+	const avgStressLevel = stressLevels.length > 0 
+		? Math.round((stressLevels.reduce((a, b) => a + b, 0) / stressLevels.length) * 10) / 10
+		: null;
 
-	// Detect concerns
-	const concernsDetected = [];
-	const concerningSymptoms = ['bleeding', 'spotting', 'decreased_fetal_movement', 'contractions', 'fainting', 'severe_headache'];
+	// Aggregate moods from moodLog arrays
+	const moodCounts = {};
 	healthLogs.forEach(log => {
-		log.symptoms?.forEach(s => {
-			if (concerningSymptoms.includes(s.symptom) || s.severity >= 8) {
-				const concern = `${s.symptom} (severity: ${s.severity})`;
-				if (!concernsDetected.includes(concern)) {
-					concernsDetected.push(concern);
-				}
-			}
+		log.moodLog?.forEach(m => {
+			moodCounts[m.mood] = (moodCounts[m.mood] || 0) + 1;
 		});
 	});
 
-	// Determine concern severity
-	let concernSeverity = 'none';
-	const hasHighSeverity = healthLogs.some(log => 
-		log.symptoms?.some(s => s.severity >= 8 || concerningSymptoms.includes(s.symptom))
-	);
-	const hasModerateSeverity = healthLogs.some(log => 
-		log.symptoms?.some(s => s.severity >= 6)
-	);
-	
-	if (hasHighSeverity) concernSeverity = 'high';
-	else if (hasModerateSeverity) concernSeverity = 'moderate';
-	else if (concernsDetected.length > 0) concernSeverity = 'low';
+	const dominantMoods = Object.entries(moodCounts)
+		.map(([mood, frequency]) => ({ mood, frequency }))
+		.sort((a, b) => b.frequency - a.frequency)
+		.slice(0, 5);
 
-	// Positive highlights
-	const positiveHighlights = [];
-	if (avgEnergyLevel >= 4) positiveHighlights.push('High energy levels maintained');
-	if (avgMood === 'happy' || avgMood === 'very_happy') positiveHighlights.push('Positive mood throughout the week');
-	if (logCompletionRate >= 80) positiveHighlights.push('Excellent logging consistency');
+	// Aggregate AI flags from health logs
+	const aiFlagsMap = {};
+	healthLogs.forEach(log => {
+		log.aiFlags?.forEach(flag => {
+			const key = `${flag.type}_${flag.category}_${flag.severity}`;
+			if (!aiFlagsMap[key]) {
+				aiFlagsMap[key] = {
+					type: flag.type,
+					message: flag.message,
+					severity: flag.severity,
+					category: flag.category,
+					count: 0
+				};
+			}
+			aiFlagsMap[key].count++;
+		});
+	});
 
-	// Calculate overall status
-	let overallStatus = 'Stable';
-	let statusScore = 5;
-	
-	if (concernSeverity === 'high') {
-		overallStatus = 'Needs Attention';
-		statusScore = 3;
-	} else if (concernSeverity === 'moderate') {
-		overallStatus = 'Stable';
-		statusScore = 5;
-	} else if (avgEnergyLevel >= 4 && (avgMood === 'happy' || avgMood === 'very_happy')) {
-		overallStatus = 'Excellent';
-		statusScore = 9;
-	} else if (avgEnergyLevel >= 3) {
-		overallStatus = 'Good';
-		statusScore = 7;
-	}
+	const aiFlags = Object.values(aiFlagsMap)
+		.sort((a, b) => {
+			const severityOrder = { high: 3, medium: 2, low: 1 };
+			return (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
+		});
+
+	// Completion percentage
+	const completionPercentages = healthLogs.map(l => l.completionPercentage || 0);
+	const avgCompletionPercentage = completionPercentages.length > 0
+		? Math.round(completionPercentages.reduce((a, b) => a + b, 0) / completionPercentages.length)
+		: 0;
 
 	return {
-		overallStatus,
-		statusScore,
-		keySymptoms: keySymptoms.slice(0, 10),
-		startWeightKg,
-		endWeightKg,
-		weightChangeKg,
-		weightChangeStatus,
+		keySymptoms,
+		mostFrequentSymptoms,
 		avgEnergyLevel,
-		avgMood,
-		moodPattern: moods.length >= 3 ? 'Stable' : null, // Schema expects specific patterns or null
-		concernsDetected,
-		concernSeverity,
-		positiveHighlights,
-		logCompletionRate,
-		daysLogged
+		avgStressLevel,
+		dominantMoods,
+		aiFlags,
+		daysLogged,
+		avgCompletionPercentage
 	};
 }
 
@@ -185,36 +173,90 @@ function calculateVitalsSummary(healthLogs) {
 		return {};
 	}
 
-	// Blood pressure (if available from symptoms or notes - simplified)
-	const weights = healthLogs.map(l => l.weightKg).filter(w => w != null);
-	const heartRates = healthLogs.map(l => l.heartRateBpm).filter(h => h != null);
-	const temperatures = healthLogs.map(l => l.temperatureC).filter(t => t != null);
+	// Blood Pressure
+	const bpReadings = healthLogs
+		.filter(l => l.bloodPressure?.systolic != null && l.bloodPressure?.diastolic != null)
+		.map(l => l.bloodPressure);
 
-	// Fetal movement
-	const fetalMovements = healthLogs
-		.map(l => l.fetalMovement?.count || 0)
-		.filter(c => c > 0);
-	const totalFetalMovements = fetalMovements.reduce((a, b) => a + b, 0);
-	const avgFetalMovementCount = fetalMovements.length > 0 
-		? Math.round(totalFetalMovements / fetalMovements.length) 
+	const avgSystolic = bpReadings.length > 0
+		? Math.round(bpReadings.reduce((sum, bp) => sum + bp.systolic, 0) / bpReadings.length)
+		: null;
+	const avgDiastolic = bpReadings.length > 0
+		? Math.round(bpReadings.reduce((sum, bp) => sum + bp.diastolic, 0) / bpReadings.length)
+		: null;
+	const maxSystolic = bpReadings.length > 0 ? Math.max(...bpReadings.map(bp => bp.systolic)) : null;
+	const maxDiastolic = bpReadings.length > 0 ? Math.max(...bpReadings.map(bp => bp.diastolic)) : null;
+	const minSystolic = bpReadings.length > 0 ? Math.min(...bpReadings.map(bp => bp.systolic)) : null;
+	const minDiastolic = bpReadings.length > 0 ? Math.min(...bpReadings.map(bp => bp.diastolic)) : null;
+
+	// Weight
+	const weights = healthLogs.map(l => l.weightKg).filter(w => w != null);
+	const avgWeightKg = weights.length > 0 
+		? Math.round((weights.reduce((a, b) => a + b, 0) / weights.length) * 10) / 10 
+		: null;
+	const minWeightKg = weights.length > 0 ? Math.min(...weights) : null;
+	const maxWeightKg = weights.length > 0 ? Math.max(...weights) : null;
+	const weightChangeKg = (weights.length > 0 && maxWeightKg && minWeightKg) 
+		? Math.round((maxWeightKg - minWeightKg) * 10) / 10 
 		: null;
 
+	// Heart Rate
+	const heartRates = healthLogs.map(l => l.heartRateBpm).filter(h => h != null);
+	const avgHeartRateBpm = heartRates.length > 0 
+		? Math.round(heartRates.reduce((a, b) => a + b, 0) / heartRates.length) 
+		: null;
+	const maxHeartRateBpm = heartRates.length > 0 ? Math.max(...heartRates) : null;
+	const minHeartRateBpm = heartRates.length > 0 ? Math.min(...heartRates) : null;
+
+	// Blood Sugar
+	const bloodSugarReadings = healthLogs
+		.filter(l => l.bloodSugar?.value != null)
+		.map(l => l.bloodSugar);
+
+	const avgBloodSugarValue = bloodSugarReadings.length > 0
+		? Math.round((bloodSugarReadings.reduce((sum, bs) => sum + bs.value, 0) / bloodSugarReadings.length) * 10) / 10
+		: null;
+	const maxBloodSugarValue = bloodSugarReadings.length > 0 
+		? Math.max(...bloodSugarReadings.map(bs => bs.value))
+		: null;
+	const minBloodSugarValue = bloodSugarReadings.length > 0 
+		? Math.min(...bloodSugarReadings.map(bs => bs.value))
+		: null;
+	const bloodSugarUnit = bloodSugarReadings.length > 0 ? bloodSugarReadings[0].unit : 'mg/dL';
+
+	// Fetal Movement
+	const fetalMovements = healthLogs
+		.filter(l => l.fetalMovement?.count != null)
+		.map(l => l.fetalMovement);
+
+	const avgFetalMovementCount = fetalMovements.length > 0
+		? Math.round((fetalMovements.reduce((sum, fm) => sum + fm.count, 0) / fetalMovements.length) * 10) / 10
+		: null;
+	const totalFetalMovements = fetalMovements.reduce((sum, fm) => sum + (fm.count || 0), 0);
+	const fetalMovementSessions = fetalMovements.length;
+
 	return {
-		avgWeightKg: weights.length > 0 
-			? Math.round((weights.reduce((a, b) => a + b, 0) / weights.length) * 10) / 10 
-			: null,
-		avgHeartRateBpm: heartRates.length > 0 
-			? Math.round(heartRates.reduce((a, b) => a + b, 0) / heartRates.length) 
-			: null,
-		maxHeartRateBpm: heartRates.length > 0 ? Math.max(...heartRates) : null,
-		minHeartRateBpm: heartRates.length > 0 ? Math.min(...heartRates) : null,
-		avgTemperatureC: temperatures.length > 0 
-			? Math.round((temperatures.reduce((a, b) => a + b, 0) / temperatures.length) * 10) / 10 
-			: null,
+		avgSystolic,
+		avgDiastolic,
+		maxSystolic,
+		maxDiastolic,
+		minSystolic,
+		minDiastolic,
+		avgWeightKg,
+		weightChangeKg,
+		minWeightKg,
+		maxWeightKg,
+		avgHeartRateBpm,
+		maxHeartRateBpm,
+		minHeartRateBpm,
+		avgBloodSugarValue,
+		maxBloodSugarValue,
+		minBloodSugarValue,
+		bloodSugarUnit,
+		bloodSugarReadings: bloodSugarReadings.length,
 		avgFetalMovementCount,
 		totalFetalMovements,
-		fetalMovementTrend: fetalMovements.length >= 3 ? 'stable' : 'insufficient_data',
-		bloodPressureStatus: 'normal'
+		fetalMovementSessions
 	};
 }
 
@@ -225,36 +267,61 @@ function calculateActivitiesSummary(healthLogs) {
 	if (!healthLogs || healthLogs.length === 0) {
 		return {
 			totalExerciseMinutes: 0,
-			exerciseDaysCount: 0,
-			exerciseGoalMet: false,
-			recommendedMinutes: 150
+			avgExerciseMinutesPerDay: 0,
+			exercisesByType: [],
+			avgSleepHours: null,
+			totalSleepHours: 0,
+			avgSleepQuality: null,
+			avgWaterIntakeLiters: null,
+			totalWaterIntakeLiters: 0,
+			avgCaffeineIntakeMg: null,
+			totalCaffeineIntakeMg: 0,
+			daysWithCaffeine: 0,
+			totalMealsLogged: 0,
+			avgMealsPerDay: 0,
+			mealsByType: []
 		};
 	}
 
 	// Exercise summary
 	let totalExerciseMinutes = 0;
-	let exerciseDaysCount = 0;
 	const exerciseTypes = {};
 
 	healthLogs.forEach(log => {
-		if (log.exercises?.length > 0) {
-			exerciseDaysCount++;
-			log.exercises.forEach(ex => {
-				totalExerciseMinutes += ex.durationMinutes || 0;
-				exerciseTypes[ex.type] = (exerciseTypes[ex.type] || 0) + (ex.durationMinutes || 0);
-			});
-		}
+		log.exercises?.forEach(ex => {
+			const duration = ex.durationMinutes || 0;
+			totalExerciseMinutes += duration;
+
+			if (!exerciseTypes[ex.type]) {
+				exerciseTypes[ex.type] = {
+					type: ex.type,
+					totalMinutes: 0,
+					sessionsCount: 0,
+					intensities: []
+				};
+			}
+			exerciseTypes[ex.type].totalMinutes += duration;
+			exerciseTypes[ex.type].sessionsCount++;
+			if (ex.intensity) {
+				exerciseTypes[ex.type].intensities.push(ex.intensity);
+			}
+		});
 	});
 
-	const mostCommonExercise = Object.keys(exerciseTypes).length > 0 
-		? Object.entries(exerciseTypes).sort((a, b) => b[1] - a[1])[0][0] 
-		: null;
-
-	const exercisesByType = Object.entries(exerciseTypes).map(([type, minutes]) => ({
-		type,
-		totalMinutes: minutes,
-		sessionsCount: healthLogs.filter(l => l.exercises?.some(e => e.type === type)).length
+	const exercisesByType = Object.values(exerciseTypes).map(et => ({
+		type: et.type,
+		totalMinutes: et.totalMinutes,
+		sessionsCount: et.sessionsCount,
+		avgIntensity: et.intensities.length > 0 
+			? et.intensities.sort((a, b) => 
+				et.intensities.filter(v => v === a).length - et.intensities.filter(v => v === b).length
+			).pop()
+			: null
 	}));
+
+	const avgExerciseMinutesPerDay = healthLogs.length > 0 
+		? Math.round((totalExerciseMinutes / healthLogs.length) * 10) / 10
+		: 0;
 
 	// Sleep summary
 	const sleepHours = healthLogs
@@ -273,29 +340,81 @@ function calculateActivitiesSummary(healthLogs) {
 		: null;
 
 	// Hydration summary
-	const waterIntakes = healthLogs
-		.map(l => l.hydration?.waterLiters || 0)
-		.filter(w => w > 0);
+	const waterIntakes = healthLogs.map(l => l.hydration?.waterLiters || 0);
 	const avgWaterIntakeLiters = waterIntakes.length > 0 
 		? Math.round((waterIntakes.reduce((a, b) => a + b, 0) / waterIntakes.length) * 10) / 10 
 		: null;
-	const totalWaterIntakeLiters = waterIntakes.reduce((a, b) => a + b, 0);
+	const totalWaterIntakeLiters = Math.round(waterIntakes.reduce((a, b) => a + b, 0) * 10) / 10;
+
+	// Caffeine summary
+	const caffeineIntakes = healthLogs.map(l => l.caffeineIntakeMg || 0);
+	const daysWithCaffeine = caffeineIntakes.filter(c => c > 0).length;
+	const totalCaffeineIntakeMg = Math.round(caffeineIntakes.reduce((a, b) => a + b, 0));
+	const avgCaffeineIntakeMg = daysWithCaffeine > 0
+		? Math.round(totalCaffeineIntakeMg / daysWithCaffeine)
+		: null;
+
+	// Nutrition summary
+	const mealTypeCounts = {};
+	let totalMealsLogged = 0;
+
+	healthLogs.forEach(log => {
+		log.foodIntake?.forEach(meal => {
+			totalMealsLogged++;
+			mealTypeCounts[meal.mealType] = (mealTypeCounts[meal.mealType] || 0) + 1;
+		});
+	});
+
+	const mealsByType = Object.entries(mealTypeCounts).map(([mealType, count]) => ({
+		mealType,
+		count
+	}));
+
+	const avgMealsPerDay = healthLogs.length > 0
+		? Math.round((totalMealsLogged / healthLogs.length) * 10) / 10
+		: 0;
 
 	return {
 		totalExerciseMinutes,
-		exerciseDaysCount,
-		mostCommonExercise,
+		avgExerciseMinutesPerDay,
 		exercisesByType,
-		exerciseGoalMet: totalExerciseMinutes >= 150,
-		recommendedMinutes: 150,
 		avgSleepHours,
 		totalSleepHours,
 		avgSleepQuality,
-		sleepPattern: 'consistent',
 		avgWaterIntakeLiters,
 		totalWaterIntakeLiters,
-		hydrationGoalMet: avgWaterIntakeLiters >= 2.0,
-		recommendedWaterLiters: 2.5
+		avgCaffeineIntakeMg,
+		totalCaffeineIntakeMg,
+		daysWithCaffeine,
+		totalMealsLogged,
+		avgMealsPerDay,
+		mealsByType
+	};
+}
+
+/**
+ * Calculate contractions summary from health logs
+ */
+function calculateContractionsSummary(healthLogs) {
+	if (!healthLogs || healthLogs.length === 0) {
+		return {
+			totalContractions: 0,
+			avgDurationSeconds: null,
+			avgIntervalMinutes: null,
+			avgIntensity: null,
+			contractionsByType: []
+		};
+	}
+
+	// Note: The current healthlogs schema doesn't have a contractions field
+	// This function is prepared for future implementation
+	// For now, return empty data
+	return {
+		totalContractions: 0,
+		avgDurationSeconds: null,
+		avgIntervalMinutes: null,
+		avgIntensity: null,
+		contractionsByType: []
 	};
 }
 
@@ -344,6 +463,7 @@ async function generateWeeklyReportForUser(userId) {
 		const summary = calculateSummary(healthLogs);
 		const vitalsSummary = calculateVitalsSummary(healthLogs);
 		const activities = calculateActivitiesSummary(healthLogs);
+		const contractions = calculateContractionsSummary(healthLogs);
 
 		// Create the weekly report
 		const weeklyReport = new WeeklyReport({
@@ -355,11 +475,9 @@ async function generateWeeklyReportForUser(userId) {
 			summary,
 			vitalsSummary,
 			activities,
+			contractions,
 			healthLogIds,
-			status: 'complete',
-			sharingSettings: {
-				isPublicToAssociated: true
-			}
+			status: 'complete'
 		});
 
 		await weeklyReport.save();
@@ -471,5 +589,6 @@ module.exports = {
 	getTrimester,
 	calculateSummary,
 	calculateVitalsSummary,
-	calculateActivitiesSummary
+	calculateActivitiesSummary,
+	calculateContractionsSummary
 };

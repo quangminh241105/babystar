@@ -268,22 +268,27 @@ function transformDietPlanForResponse(dietPlan) {
 
 /**
  * Get current diet plan (auto-generates if none exists)
- * GET /api/nutrition/current
+ * GET /api/nutrition/current?userId=<userId>
+ * Can fetch for current user or another user (if userId provided in query)
  */
 async function getCurrentDietPlan(req, res) {
 	try {
-		const userId = req.session?.user?.id;
+		const sessionUserId = req.session?.user?.id;
 
-		if (!userId) {
+		if (!sessionUserId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Unauthorized. Please login.'
 			});
 		}
 
+		// Allow fetching for another user via query param, default to session user
+		const targetUserId = req.query.userId || sessionUserId;
+		const isViewingOther = targetUserId !== sessionUserId;
+
 		// Check for existing active diet plan
-		console.log(`🔍 Checking for existing diet plan for user: ${userId}`);
-		const existingPlan = await DietPlan.getActivePlan(userId);
+		console.log(`🔍 Checking for existing diet plan for user: ${targetUserId}`);
+		const existingPlan = await DietPlan.getActivePlan(targetUserId);
 		
 		if (existingPlan && existingPlan.isValid()) {
 			console.log('✅ Found valid existing diet plan');
@@ -291,19 +296,31 @@ async function getCurrentDietPlan(req, res) {
 				success: true,
 				message: 'Retrieved existing nutrition plan',
 				fromCache: true,
-				data: transformDietPlanForResponse(existingPlan)
+				data: transformDietPlanForResponse(existingPlan),
+				userId: targetUserId
 			});
 		}
 
-		// No valid plan exists - auto-generate one
+		// No valid plan exists
+		// Only auto-generate for own plan, not for viewing others
+		if (isViewingOther) {
+			console.log('⚠️ No plan found for other user, cannot auto-generate');
+			return res.status(404).json({
+				success: false,
+				message: 'No nutrition plan found for this user.',
+				userId: targetUserId
+			});
+		}
+
 		console.log('📝 No valid plan found, auto-generating...');
 		
 		// Get user data
-		const user = await User.findById(userId);
+		const user = await User.findById(targetUserId);
 		if (!user) {
 			return res.status(404).json({
 				success: false,
-				message: 'User not found'
+				message: 'User not found',
+				userId: targetUserId
 			});
 		}
 
@@ -327,7 +344,7 @@ async function getCurrentDietPlan(req, res) {
 		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
 		const healthLogs = await HealthLog.find({
-			userId,
+			userId:targetUserId,
 			logDate: { $gte: sevenDaysAgo },
 			deletedAt: null
 		}).sort({ logDate: -1 });
@@ -335,7 +352,7 @@ async function getCurrentDietPlan(req, res) {
 		// Generate suggestions
 		const nutritionService = new NutritionSuggestionService();
 		const suggestions = await nutritionService.generateNutritionSuggestions({
-			userId,
+			userId: targetUserId,
 			pregnancyWeek,
 			trimester,
 			healthLogs,
@@ -355,7 +372,7 @@ async function getCurrentDietPlan(req, res) {
 
 		// Save diet plan to database
 		const dietPlan = new DietPlan({
-			userId,
+			userId: targetUserId,
 			pregnancyWeek,
 			trimester,
 			dailyTargets: suggestions.dailyTargets || {},
@@ -387,7 +404,8 @@ async function getCurrentDietPlan(req, res) {
 			success: true,
 			message: 'Nutrition plan auto-generated successfully',
 			fromCache: false,
-			data: transformDietPlanForResponse(dietPlan)
+			data: transformDietPlanForResponse(dietPlan),
+			userId: targetUserId
 		});
 
 	} catch (error) {

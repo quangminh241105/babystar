@@ -428,6 +428,7 @@ router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
 
     res.render('pages/dietplanner', { 
       title: 'AI Diet Planner',
+      isPartnerView: false,
       pregnancyWeek,
       trimester,
       userName: user?.name || user?.username || 'there'
@@ -436,6 +437,7 @@ router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
     console.error('Error loading diet planner:', error);
     res.render('pages/dietplanner', { 
       title: 'AI Diet Planner',
+      isPartnerView: false,
       pregnancyWeek: null,
       trimester: null,
       userName: 'there'
@@ -824,6 +826,7 @@ router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
     res.render('pages/past-health-log', { 
       title: 'Past Health Records', 
       logs,
+      canDelete: true,
       filters: {
         activeFilter,
         startDate: startDate || '',

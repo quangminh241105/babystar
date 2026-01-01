@@ -172,33 +172,38 @@ exports.generateExerciseSuggestions = async (req, res) => {
 
 /**
  * Get weekly exercise plan from database or generate if needed
+ * Can fetch for current user or another user (if userId provided in query)
  */
 exports.getWeeklyExercisePlan = async (req, res) => {
 	try {
-		const userId = req.session?.user?.id;
+		const sessionUserId = req.session?.user?.id;
 
-		if (!userId) {
+		if (!sessionUserId) {
 			return res.status(401).json({ 
 				success: false, 
 				message: 'User not authenticated' 
 			});
 		}
 
+		// Allow fetching for another user via query param, default to session user
+		const targetUserId = req.query.userId || sessionUserId;
+
 		// Try to get from database first
-		let exercisePlan = await ExercisePlan.getActivePlan(userId);
+		let exercisePlan = await ExercisePlan.getActivePlan(targetUserId);
 
 		if (exercisePlan && exercisePlan.isValid()) {
 			return res.json({
 				success: true,
 				data: exercisePlan.toObject(),
 				generatedAt: exercisePlan.createdAt,
-				fromCache: true
+				fromCache: true,
+				userId: targetUserId
 			});
 		}
 
 		// If no plan found, try weekly report (backward compatibility)
 		const weeklyReport = await WeeklyReport.findOne({ 
-			userId,
+			userId: targetUserId,
 			'aiOutputs.exercisePlan': { $exists: true }
 		})
 		.sort({ startDate: -1 })
@@ -213,7 +218,8 @@ exports.getWeeklyExercisePlan = async (req, res) => {
 					start: weeklyReport.startDate,
 					end: weeklyReport.endDate
 				},
-				fromCache: true
+				fromCache: true,
+				userId: targetUserId
 			});
 		}
 
@@ -221,7 +227,8 @@ exports.getWeeklyExercisePlan = async (req, res) => {
 		return res.status(404).json({
 			success: false,
 			message: 'No exercise plan found. Generate one first.',
-			hasExercisePlan: false
+			hasExercisePlan: false,
+			userId: targetUserId
 		});
 	} catch (error) {
 		console.error('❌ Error retrieving exercise plan:', error);

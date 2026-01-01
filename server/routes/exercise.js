@@ -20,8 +20,9 @@ router.post('/generate', exerciseController.generateExerciseSuggestions);
 router.get('/current', exerciseController.getCurrentExercisePlan);
 
 /**
- * GET /api/exercise/weekly-plan
+ * GET /api/exercise/weekly-plan?userId=<userId>
  * Get current weekly exercise plan from latest report
+ * Optional userId query param to view another user's plan (defaults to current user)
  */
 router.get('/weekly-plan', exerciseController.getWeeklyExercisePlan);
 

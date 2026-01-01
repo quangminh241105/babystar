@@ -4,7 +4,7 @@
     text-align: center;
     padding: 60px 20px;
   }
-  .error-state {
+  .error-state, .partner-error-state {
     min-height: 400px;
     display: flex;
     align-items: center;
@@ -43,7 +43,7 @@
     <p style="color: #666;">Fetching your personalized plan</p>
   </div>
 
-  <!-- Error/No Plan State -->
+  <!-- Error/No Plan State (Own Plan) -->
   <div id="errorState" class="error-state hidden">
     <div style="
       background: white;
@@ -64,6 +64,25 @@
       <p style="color: #999; font-size: 13px; margin-top: 20px;">
         Takes about 10-15 seconds
       </p>
+    </div>
+  </div>
+
+  <!-- Error/No Plan State (Partner's Plan) -->
+  <div id="partnerErrorState" class="partner-error-state hidden">
+    <div style="
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      max-width: 500px;
+      text-align: center;
+    ">
+      <div style="font-size: 64px; margin-bottom: 20px;">👥</div>
+      <h2 style="color: #333; margin-bottom: 15px; font-size: 24px;">Partner Has No Exercise Plan</h2>
+      <p style="color: #666; font-size: 16px; margin-bottom: 30px; line-height: 1.6;">
+        Your partner hasn't generated an exercise plan yet. They need to log in and create their personalized plan first.
+      </p>
+
     </div>
   </div>
 

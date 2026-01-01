@@ -696,3 +696,35 @@ html {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== Clickable Link Hover Effect ===== */
+.linked-item-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: var(--transition-fast);
+}
+
+.linked-item-link:hover {
+    transform: translateY(-2px);
+}
+
+.linked-item-link:active {
+    transform: translateY(0);
+}
+
+.linked-item-link .linked-item.received {
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: var(--transition-fast);
+}
+
+.linked-item-link:hover .linked-item.received {
+    background-color: #dbeafe;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.linked-item-link:active .linked-item.received {
+    background-color: #bfdbfe;
+}
