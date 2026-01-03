@@ -76,8 +76,8 @@ async function generateAIResponse(prompt, context = {}) {
     }
 
     try {
-        // Use gemini-2.0-flash model
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        // Use gemini-2.5-flash model
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         
         // Build conversation context from previous messages
         let conversationContext = '';
