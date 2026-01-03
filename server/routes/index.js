@@ -428,7 +428,6 @@ router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
 
     res.render('pages/dietplanner', { 
       title: 'AI Diet Planner',
-      isPartnerView: false,
       pregnancyWeek,
       trimester,
       userName: user?.name || user?.username || 'there'
@@ -437,7 +436,6 @@ router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
     console.error('Error loading diet planner:', error);
     res.render('pages/dietplanner', { 
       title: 'AI Diet Planner',
-      isPartnerView: false,
       pregnancyWeek: null,
       trimester: null,
       userName: 'there'
@@ -766,6 +764,13 @@ router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
 router.get('/log-health', requireAuthRedirect, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
+    
+    // Check if user has set their Last Menstrual Period (LMP)
+    if (!user.pregnancyProfile?.lastMenstrualPeriod) {
+      // Redirect to profile page with message to set LMP
+      return res.redirect('/auth/profile?error=lmp_required&message=Please+set+your+Last+Menstrual+Period+to+use+health+log+features');
+    }
+    
     const currentWeek = user?.currentPregnancyWeek?.weeks || null;
     const trimester = user?.currentTrimester || null;
     
@@ -775,6 +780,7 @@ router.get('/log-health', requireAuthRedirect, async (req, res) => {
       currentTrimester: trimester
     });
   } catch (err) {
+    console.error('Health log page error:', err);
     res.render('pages/health-log', { 
       title: 'Health Log',
       currentPregnancyWeek: null,
@@ -826,7 +832,6 @@ router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
     res.render('pages/past-health-log', { 
       title: 'Past Health Records', 
       logs,
-      canDelete: true,
       filters: {
         activeFilter,
         startDate: startDate || '',
@@ -884,9 +889,22 @@ router.post('/past-health-records/:id/delete', requireAuth, async (req, res) => 
 router.get('/api/health-log/today', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
+    
+    // Validate user has set Last Menstrual Period
+    if (!user.pregnancyProfile?.lastMenstrualPeriod) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Last Menstrual Period not set',
+        requiresProfile: true,
+        message: 'Please set your Last Menstrual Period in your profile to use health log features.',
+        redirectUrl: '/auth/profile'
+      });
+    }
+    
     const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
     const trimester = user?.currentTrimester || null;
     
+    // Create log with calculated pregnancy week
     const log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
     
     res.json({ 
@@ -966,10 +984,56 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     console.log('Request body keys:', Object.keys(req.body));
     
     const user = await User.findById(req.session.user.id);
-    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
-    const trimester = user?.currentTrimester || null;
     
-    // Get or create today's log
+    // CRITICAL VALIDATION: Check if user has set Last Menstrual Period
+    if (!user.pregnancyProfile?.lastMenstrualPeriod) {
+      console.log('ERROR: User has not set LMP');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Last Menstrual Period not set',
+        requiresProfile: true,
+        message: 'Please set your Last Menstrual Period in your profile before logging health data.',
+        redirectUrl: '/auth/profile'
+      });
+    }
+    
+    // DEBUG: Check pregnancyProfile structure
+    console.log('=== PREGNANCY PROFILE DEBUG ===');
+    console.log('Full pregnancyProfile:', JSON.stringify(user.pregnancyProfile, null, 2));
+    console.log('LMP:', user.pregnancyProfile.lastMenstrualPeriod);
+    console.log('LMP type:', typeof user.pregnancyProfile.lastMenstrualPeriod);
+    console.log('Due Date:', user.pregnancyProfile.dueDate);
+    
+    // Calculate pregnancy week and trimester from LMP
+    console.log('=== CALCULATING PREGNANCY WEEK ===');
+    console.log('Calling user.currentPregnancyWeek...');
+    const currentPregnancyWeekObj = user.currentPregnancyWeek;
+    console.log('currentPregnancyWeek result:', currentPregnancyWeekObj);
+    
+    // FIX: Use nullish coalescing (??) instead of || to handle week 0 correctly
+    // Week 0 is a valid value, but 0 || null returns null (falsy issue)
+    const pregnancyWeek = currentPregnancyWeekObj?.weeks ?? null;
+    const trimester = user?.currentTrimester ?? null;
+    
+    console.log('Extracted pregnancyWeek (weeks):', pregnancyWeek);
+    console.log('Calculated Trimester:', trimester);
+    
+    // Manual calculation for debugging
+    if (user.pregnancyProfile.lastMenstrualPeriod) {
+      const lmp = new Date(user.pregnancyProfile.lastMenstrualPeriod);
+      const now = new Date();
+      const diffTime = now - lmp;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const manualWeeks = Math.floor(diffDays / 7);
+      console.log('=== MANUAL CALCULATION ===');
+      console.log('LMP Date object:', lmp);
+      console.log('Today:', now);
+      console.log('Difference in ms:', diffTime);
+      console.log('Difference in days:', diffDays);
+      console.log('Manual weeks calculation:', manualWeeks);
+    }
+    
+    // Get or create today's log with calculated pregnancy week
     let log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
     
     console.log('Existing log ID:', log._id);
@@ -986,6 +1050,128 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       return res.status(403).json({ 
         success: false, 
         error: 'Cannot edit health logs from previous days. You can only edit today\'s log.' 
+      });
+    }
+    
+    // SERVER-SIDE VALIDATION: Validate numeric boundaries
+    const validationErrors = [];
+    
+    // Validate weight (20-300 kg)
+    if (req.body.weightKg !== undefined && req.body.weightKg !== null) {
+      const weight = parseFloat(req.body.weightKg);
+      if (weight < 20 || weight > 300) {
+        validationErrors.push('Weight must be between 20-300 kg');
+      }
+    }
+    
+    // Validate heart rate (40-200 bpm)
+    if (req.body.heartRateBpm !== undefined && req.body.heartRateBpm !== null) {
+      const hr = parseInt(req.body.heartRateBpm);
+      if (hr < 40 || hr > 200) {
+        validationErrors.push('Heart rate must be between 40-200 bpm');
+      }
+    }
+    
+    // Validate blood pressure
+    if (req.body.bloodPressure) {
+      if (req.body.bloodPressure.systolic !== undefined && req.body.bloodPressure.systolic !== null) {
+        const systolic = parseInt(req.body.bloodPressure.systolic);
+        if (systolic < 70 || systolic > 200) {
+          validationErrors.push('Systolic blood pressure must be between 70-200 mmHg');
+        }
+      }
+      if (req.body.bloodPressure.diastolic !== undefined && req.body.bloodPressure.diastolic !== null) {
+        const diastolic = parseInt(req.body.bloodPressure.diastolic);
+        if (diastolic < 40 || diastolic > 130) {
+          validationErrors.push('Diastolic blood pressure must be between 40-130 mmHg');
+        }
+      }
+    }
+    
+    // Validate energy and stress levels (1-5)
+    if (req.body.energyLevel !== undefined && req.body.energyLevel !== null) {
+      const energy = parseInt(req.body.energyLevel);
+      if (energy < 1 || energy > 5) {
+        validationErrors.push('Energy level must be between 1-5');
+      }
+    }
+    if (req.body.stressLevel !== undefined && req.body.stressLevel !== null) {
+      const stress = parseInt(req.body.stressLevel);
+      if (stress < 1 || stress > 5) {
+        validationErrors.push('Stress level must be between 1-5');
+      }
+    }
+    
+    // Validate sleep (0-24 hours, quality 1-5)
+    if (req.body.sleep) {
+      if (req.body.sleep.totalHours !== undefined && req.body.sleep.totalHours !== null) {
+        const sleepHours = parseFloat(req.body.sleep.totalHours);
+        if (sleepHours < 0 || sleepHours > 24) {
+          validationErrors.push('Sleep hours must be between 0-24');
+        }
+      }
+      if (req.body.sleep.quality !== undefined && req.body.sleep.quality !== null) {
+        const quality = parseInt(req.body.sleep.quality);
+        if (quality < 1 || quality > 5) {
+          validationErrors.push('Sleep quality must be between 1-5');
+        }
+      }
+    }
+    
+    // Validate hydration (0-10 liters)
+    if (req.body.hydration) {
+      if (req.body.hydration.waterLiters !== undefined && req.body.hydration.waterLiters !== null) {
+        const water = parseFloat(req.body.hydration.waterLiters);
+        if (water < 0 || water > 10) {
+          validationErrors.push('Water intake must be between 0-10 liters');
+        }
+      }
+      if (req.body.hydration.otherFluidsLiters !== undefined && req.body.hydration.otherFluidsLiters !== null) {
+        const fluids = parseFloat(req.body.hydration.otherFluidsLiters);
+        if (fluids < 0 || fluids > 10) {
+          validationErrors.push('Other fluids must be between 0-10 liters');
+        }
+      }
+    }
+    
+    // Validate caffeine (>= 0)
+    if (req.body.caffeineIntakeMg !== undefined && req.body.caffeineIntakeMg !== null) {
+      const caffeine = parseInt(req.body.caffeineIntakeMg);
+      if (caffeine < 0) {
+        validationErrors.push('Caffeine cannot be negative');
+      }
+    }
+    
+    // Validate exercises
+    if (req.body.exercises && Array.isArray(req.body.exercises)) {
+      req.body.exercises.forEach((ex, i) => {
+        if (ex.durationMinutes !== undefined && ex.durationMinutes !== null) {
+          const duration = parseInt(ex.durationMinutes);
+          if (duration < 0 || duration > 300) {
+            validationErrors.push(`Exercise ${i + 1}: Duration must be 0-300 minutes`);
+          }
+        }
+      });
+    }
+    
+    // Validate symptoms
+    if (req.body.symptoms && Array.isArray(req.body.symptoms)) {
+      req.body.symptoms.forEach((sym, i) => {
+        if (sym.severity !== undefined && sym.severity !== null) {
+          const severity = parseInt(sym.severity);
+          if (severity < 1 || severity > 10) {
+            validationErrors.push(`Symptom ${i + 1}: Severity must be 1-10`);
+          }
+        }
+      });
+    }
+    
+    // Return validation errors if any
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Validation failed: ' + validationErrors.join('; '),
+        validationErrors
       });
     }
     
@@ -1033,6 +1219,10 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       // Status
       isComplete
     } = req.body;
+    
+    // Update pregnancy week and trimester (ensure they're always current)
+    log.pregnancyWeek = pregnancyWeek;
+    log.trimester = trimester;
     
     // Update vitals
     if (weightKg !== undefined) log.weightKg = weightKg || null;
@@ -1177,6 +1367,8 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     
     console.log('Log saved successfully! ID:', log._id);
     console.log('Updated fields:', {
+      pregnancyWeek: log.pregnancyWeek,
+      trimester: log.trimester,
       weightKg: log.weightKg,
       heartRateBpm: log.heartRateBpm,
       bloodPressure: log.bloodPressure,
@@ -1186,6 +1378,7 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       exercisesCount: log.exercises?.length,
       mealsCount: log.foodIntake?.length
     });
+    console.log('=== PREGNANCY WEEK SAVED:', log.pregnancyWeek, '===');
     
     res.json({ success: true, log, message: isComplete ? 'Log saved and marked complete' : 'Log saved' });
   } catch (err) {

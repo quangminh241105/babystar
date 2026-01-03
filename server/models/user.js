@@ -267,11 +267,16 @@ userSchema.virtual('currentPregnancyWeek').get(function() {
 		
 		const diffTime = now - lmp;
 		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-		const weeks = Math.floor(diffDays / 7);
+		let weeks = Math.floor(diffDays / 7);
 		const days = diffDays % 7;
 		
-		// Valid pregnancy range: 0-42 weeks
-		if (weeks >= 0 && weeks <= 42) {
+		// Pregnancy weeks start at 1, not 0
+		if (weeks === 0) {
+			weeks = 1;
+		}
+		
+		// Valid pregnancy range: 1-42 weeks
+		if (weeks >= 1 && weeks <= 42) {
 			return { weeks, days, totalDays: diffDays };
 		}
 	}

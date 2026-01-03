@@ -1297,6 +1297,128 @@
       if (el) el.addEventListener('change', updateLogStatus);
     });
 
+    // ==================== VALIDATION ====================
+    function validateFormData() {
+      const errors = [];
+      
+      // Validate weight (20-300 kg)
+      const weight = parseFloat(document.getElementById('weightKg').value);
+      if (weight && (weight < 20 || weight > 300)) {
+        errors.push('Weight must be between 20-300 kg');
+        document.getElementById('weightKg').style.borderColor = '#d91e8f';
+      } else if (document.getElementById('weightKg').value) {
+        document.getElementById('weightKg').style.borderColor = '';
+      }
+      
+      // Validate heart rate (40-200 bpm)
+      const heartRate = parseInt(document.getElementById('heartRateBpm').value);
+      if (heartRate && (heartRate < 40 || heartRate > 200)) {
+        errors.push('Heart rate must be between 40-200 bpm');
+      }
+      
+      // Validate blood pressure
+      const systolic = parseInt(document.getElementById('systolicBP')?.value);
+      const diastolic = parseInt(document.getElementById('diastolicBP')?.value);
+      if (systolic && (systolic < 70 || systolic > 200)) {
+        errors.push('Systolic blood pressure must be between 70-200 mmHg');
+        document.getElementById('systolicBP').style.borderColor = '#d91e8f';
+      } else if (document.getElementById('systolicBP')?.value) {
+        document.getElementById('systolicBP').style.borderColor = '';
+      }
+      if (diastolic && (diastolic < 40 || diastolic > 130)) {
+        errors.push('Diastolic blood pressure must be between 40-130 mmHg');
+        document.getElementById('diastolicBP').style.borderColor = '#d91e8f';
+      } else if (document.getElementById('diastolicBP')?.value) {
+        document.getElementById('diastolicBP').style.borderColor = '';
+      }
+      
+      // Validate blood sugar
+      const bloodSugar = parseFloat(document.getElementById('bloodSugarValue').value);
+      if (bloodSugar && bloodSugar < 0) {
+        errors.push('Blood sugar cannot be negative');
+        document.getElementById('bloodSugarValue').style.borderColor = '#d91e8f';
+      } else if (document.getElementById('bloodSugarValue').value) {
+        document.getElementById('bloodSugarValue').style.borderColor = '';
+      }
+      
+      // Validate sleep hours (0-24)
+      const sleepHours = parseFloat(document.getElementById('sleepHours').value);
+      if (sleepHours && (sleepHours < 0 || sleepHours > 24)) {
+        errors.push('Sleep hours must be between 0-24');
+      }
+      
+      // Validate energy level (1-5)
+      const energy = parseInt(document.getElementById('energyLevel').value);
+      if (energy && (energy < 1 || energy > 5)) {
+        errors.push('Energy level must be between 1-5');
+      }
+      
+      // Validate stress level (1-5)
+      const stress = parseInt(document.getElementById('stressLevel').value);
+      if (stress && (stress < 1 || stress > 5)) {
+        errors.push('Stress level must be between 1-5');
+      }
+      
+      // Validate water intake (0-10 L)
+      const water = parseFloat(document.getElementById('waterLiters').value);
+      if (water && (water < 0 || water > 10)) {
+        errors.push('Water intake must be between 0-10 liters');
+      }
+      
+      // Validate other fluids (0-10 L)
+      const fluids = parseFloat(document.getElementById('otherFluidsLiters').value);
+      if (fluids && (fluids < 0 || fluids > 10)) {
+        errors.push('Other fluids intake must be between 0-10 liters');
+      }
+      
+      // Validate caffeine (0-500 mg, with warning > 200)
+      const caffeine = parseInt(document.getElementById('caffeineIntakeMg').value);
+      if (caffeine && caffeine < 0) {
+        errors.push('Caffeine intake cannot be negative');
+      }
+      
+      // Validate exercises
+      exercises.forEach((ex, i) => {
+        if (ex.durationMinutes && (ex.durationMinutes < 0 || ex.durationMinutes > 300)) {
+          errors.push(`Exercise ${i + 1}: Duration must be between 0-300 minutes`);
+        }
+      });
+      
+      // Validate symptoms
+      symptoms.forEach((sym, i) => {
+        if (sym.severity && (sym.severity < 1 || sym.severity > 10)) {
+          errors.push(`Symptom ${i + 1}: Severity must be between 1-10`);
+        }
+      });
+      
+      // Validate mood log triggers (max length 100)
+      moodLog.forEach((mood, i) => {
+        if (mood.trigger && mood.trigger.length > 100) {
+          errors.push(`Mood entry ${i + 1}: Trigger text too long (max 100 characters)`);
+        }
+      });
+      
+      // Validate notes length (max 2000)
+      const notes = document.getElementById('notes').value;
+      if (notes && notes.length > 2000) {
+        errors.push('Notes too long (max 2000 characters)');
+        document.getElementById('notes').style.borderColor = '#d91e8f';
+      } else if (notes) {
+        document.getElementById('notes').style.borderColor = '';
+      }
+      
+      // Validate doctor visit notes (max 500)
+      const doctorNotes = document.getElementById('doctorVisitNotes').value;
+      if (doctorNotes && doctorNotes.length > 500) {
+        errors.push('Doctor visit notes too long (max 500 characters)');
+        document.getElementById('doctorVisitNotes').style.borderColor = '#d91e8f';
+      } else if (doctorNotes) {
+        document.getElementById('doctorVisitNotes').style.borderColor = '';
+      }
+      
+      return errors;
+    }
+
     // ==================== COLLECT FORM DATA ====================
     function collectFormData() {
       return {
@@ -1571,6 +1693,12 @@
           }
 
           populateForm(result.log);
+        } else if (result.requiresProfile) {
+          // User needs to set LMP in profile
+          showMsg(result.message || 'Please complete your pregnancy profile', 'error');
+          setTimeout(() => {
+            window.location.href = result.redirectUrl || '/auth/profile?error=lmp_required';
+          }, 2000);
         }
       } catch (err) {
         console.error('Failed to load health log:', err);
@@ -1582,6 +1710,17 @@
     async function saveLog(markComplete = false) {
       if (isReadOnly) {
         showMsg('Cannot edit logs from previous days', 'error');
+        return;
+      }
+
+      // Validate form data before saving
+      const validationErrors = validateFormData();
+      if (validationErrors.length > 0) {
+        const errorMsg = 'Please fix the following errors:\n• ' + validationErrors.join('\n• ');
+        showMsg(validationErrors[0], 'error');
+        console.error('Validation errors:', validationErrors);
+        // Show detailed errors in console
+        console.warn('Validation errors:', errorMsg);
         return;
       }
 
@@ -1619,6 +1758,12 @@
             updateLastSavedTime(result.log.updatedAt || new Date().toISOString());
           }
           updateLogStatus();
+        } else if (result.requiresProfile) {
+          // User needs to set LMP in profile
+          showMsg(result.message || 'Please complete your pregnancy profile to log health data', 'error');
+          setTimeout(() => {
+            window.location.href = result.redirectUrl || '/auth/profile?error=lmp_required';
+          }, 2500);
         } else {
           showMsg(result.error || 'Failed to save log', 'error');
           console.error('Save failed:', result.error);

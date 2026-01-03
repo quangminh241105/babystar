@@ -454,6 +454,15 @@ healthLogSchema.statics.getOrCreateToday = async function(userId, pregnancyWeek 
 			trimester
 		});
 		await log.save();
+	} else {
+		// Update pregnancy week and trimester on existing log
+		// This ensures the values are always current based on user's LMP
+		if (pregnancyWeek !== null) {
+			log.pregnancyWeek = pregnancyWeek;
+		}
+		if (trimester !== null) {
+			log.trimester = trimester;
+		}
 	}
 	
 	return log;

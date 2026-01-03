@@ -1,5 +1,12 @@
 <link rel="stylesheet" href="/css/user-edit.css">
 
+<style>
+  @keyframes highlightField {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(251, 191, 36, 0.2); }
+  }
+</style>
+
 <main class="container" role="main">
   <header>
     <div class="logo">BS</div>
@@ -8,6 +15,19 @@
       <div class="subtitle">Manage your profile and pregnancy information</div>
     </div>
   </header>
+
+  <!-- LMP Required Alert -->
+  <div id="lmpRequiredAlert" class="alert-banner" style="display: none; background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 20px; border-radius: 8px;">
+    <div style="display: flex; align-items: start; gap: 12px;">
+      <svg style="flex-shrink: 0; width: 24px; height: 24px; color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <div>
+        <strong style="color: #92400e; display: block; margin-bottom: 4px;">Last Menstrual Period Required</strong>
+        <p style="color: #78350f; margin: 0; font-size: 14px;">Please set your Last Menstrual Period (LMP) below to enable health log features and track your pregnancy week accurately.</p>
+      </div>
+    </div>
+  </div>
 
   <form id="profileForm" novalidate autocomplete="off">
     <!-- Hidden fields to trick browser autofill -->
@@ -54,8 +74,8 @@
       <h2 class="card-title">Pregnancy Information</h2>
 
       <div class="row two">
-        <div class="field">
-          <label for="pp_lastMenstrualPeriod">Last Menstrual Period (LMP)</label>
+        <div class="field" id="lmpField">
+          <label for="pp_lastMenstrualPeriod">Last Menstrual Period (LMP) <span style="color: #dc2626;">*</span></label>
           <input id="pp_lastMenstrualPeriod" name="pregnancyProfile.lastMenstrualPeriod" type="date" autocomplete="nope" data-lpignore="true" />
           <div class="helper">First day of your last period • Auto-calculates due date</div>
         </div>
@@ -265,6 +285,31 @@
   (function () {
     // Clear all form fields on page load to prevent autofill
     window.addEventListener('load', function() {
+      // Check if redirected from health log due to missing LMP
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('error') === 'lmp_required') {
+        const alertBanner = document.getElementById('lmpRequiredAlert');
+        if (alertBanner) {
+          alertBanner.style.display = 'block';
+          // Scroll to pregnancy section and highlight LMP field
+          setTimeout(() => {
+            const lmpField = document.getElementById('lmpField');
+            const lmpInput = document.getElementById('pp_lastMenstrualPeriod');
+            if (lmpField && lmpInput) {
+              lmpField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Add highlight animation
+              lmpField.style.animation = 'highlightField 2s ease-in-out';
+              lmpInput.focus();
+              
+              // Remove animation after it completes
+              setTimeout(() => {
+                lmpField.style.animation = '';
+              }, 2000);
+            }
+          }, 500);
+        }
+      }
+      
       setTimeout(function() {
         document.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])').forEach(function(input) {
           if (input.name !== 'fakeusernameremembered' && input.name !== 'fakepasswordremembered') {
