@@ -9,6 +9,7 @@ const { Notification } = require('../models/notification');
 const axios = require('axios');
 const puppeteer = require('puppeteer');
 const path = require('path');
+const { generateWeeklyReportForUser } = require('../services/weeklyReportService');
 
 // Helper function to emit real-time notification via Socket.IO
 function emitNotification(req, userId, notification) {
@@ -428,6 +429,7 @@ router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
 
     res.render('pages/dietplanner', { 
       title: 'AI Diet Planner',
+      isPartnerView: false,
       pregnancyWeek,
       trimester,
       userName: user?.name || user?.username || 'there'
@@ -831,6 +833,7 @@ router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
     
     res.render('pages/past-health-log', { 
       title: 'Past Health Records', 
+      canDelete: true,
       logs,
       filters: {
         activeFilter,
@@ -1782,35 +1785,28 @@ router.get('/api/weekly-report/current', requireAuth, async (req, res) => {
 router.get('/api/weekly-report/week/:offset', requireAuth, async (req, res) => {
   try {
     const offset = parseInt(req.params.offset) || 0;
-    const user = await User.findById(req.session.user.id);
     
     const { startDate, endDate } = getWeekDateRange(offset);
     
-    // Calculate pregnancy week for that period
-    let pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
-    if (pregnancyWeek && offset > 0) {
-      pregnancyWeek = Math.max(1, pregnancyWeek - offset);
-    }
-    const trimester = pregnancyWeek ? (pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3) : null;
+    const report = await WeeklyReport.findOne({
+      userId: req.session.user.id,
+      startDate: { $gte: startDate, $lte: startDate },
+      endDate: { $gte: endDate, $lte: endDate },
+      deletedAt: null,
+      status: 'complete'
+    });
     
-    const stats = await aggregateWeeklyStats(
-      req.session.user.id,
-      startDate,
-      endDate,
-      pregnancyWeek,
-      trimester
-    );
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'No completed weekly report found for the requested week (offset: ${offset})',
+        error: 'Weekly reports are generated at the end of each week on Sunday.'
+      });
+    }
     
     res.json({
       success: true,
-      report: {
-        weekNumber: pregnancyWeek,
-        trimester,
-        startDate,
-        endDate,
-        weekOffset: offset,
-        ...stats
-      }
+      report
     });
   } catch (err) {
     console.error('Get weekly report error:', err);
@@ -1863,38 +1859,31 @@ router.get('/api/weekly-report/history', requireAuth, async (req, res) => {
 // GET /api/weekly-report/trends - Get trends across multiple weeks
 router.get('/api/weekly-report/trends', requireAuth, async (req, res) => {
   try {
-    const weeksToAnalyze = parseInt(req.query.weeks) || 4;
-    const user = await User.findById(req.session.user.id);
+    const weeksToAnalyze = parseInt(req.query.weeks) || 2;
     
-    const weeklyData = [];
+    // Fetch completed weekly reports, sorted by week number descending, limit to requested weeks
+    const reports = await WeeklyReport.find({
+      userId: req.session.user.id,
+      deletedAt: null,
+      status: 'complete'
+    })
+    .sort({ weekNumber: -1 })
+    .limit(weeksToAnalyze);
     
-    for (let i = weeksToAnalyze - 1; i >= 0; i--) {
-      const { startDate, endDate } = getWeekDateRange(i);
-      
-      const logs = await HealthLog.find({
-        userId: req.session.user.id,
-        logDate: { $gte: startDate, $lte: endDate },
-        deletedAt: null
-      });
-      
-      const weights = logs.map(l => l.weightKg).filter(w => w != null);
-      const sleeps = logs.map(l => l.sleep?.totalHours || l.hoursSleept).filter(s => s != null);
-      const energies = logs.map(l => l.energyLevel).filter(e => e != null);
-      const waters = logs.map(l => l.hydration?.waterLiters || 0);
-      
-      weeklyData.push({
-        weekOffset: i,
-        weekLabel: i === 0 ? 'This Week' : `Week -${i}`,
-        startDate,
-        avgWeight: weights.length ? weights.reduce((a, b) => a + b, 0) / weights.length : null,
-        avgSleep: sleeps.length ? sleeps.reduce((a, b) => a + b, 0) / sleeps.length : null,
-        avgEnergy: energies.length ? energies.reduce((a, b) => a + b, 0) / energies.length : null,
-        avgWater: waters.length ? waters.reduce((a, b) => a + b, 0) / waters.length : 0,
-        daysLogged: logs.length
+    if (!reports || reports.length === 0) {
+      return res.json({ 
+        success: true, 
+        trends: [],
+        count: 0,
+        message: 'No completed weekly reports found. Reports are generated automatically every Sunday.'
       });
     }
     
-    res.json({ success: true, trends: weeklyData });
+    res.json({ 
+      success: true, 
+      trends: reports.reverse(), // Reverse to show oldest to newest
+      count: reports.length
+    });
   } catch (err) {
     console.error('Get trends error:', err);
     res.status(500).json({ success: false, error: 'Failed to get trends' });
@@ -1948,6 +1937,49 @@ router.get('/api/nearby-healthcare', async (req, res) => {
       success: false, 
       error: 'Failed to fetch nearby healthcare providers',
       details: error.message
+    });
+  }
+});
+
+// ==================== TEST ROUTE - Generate Weekly Report ====================
+// POST /test/generate-weekly-report - Manually trigger weekly report generation
+router.get('/test/generate-weekly-report', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    console.log(`[TEST] Manually generating weekly report for user: ${userId}`);
+    
+    const report = await generateWeeklyReportForUser(userId);
+    
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'No health logs found for this week. Cannot generate report.'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Weekly report generated successfully!',
+      report: {
+        _id: report._id,
+        weekNumber: report.weekNumber,
+        trimester: report.trimester,
+        startDate: report.startDate,
+        endDate: report.endDate,
+        status: report.status,
+        daysLogged: report.summary?.daysLogged,
+        avgWeight: report.vitalsSummary?.avgWeightKg,
+        avgSleep: report.activities?.avgSleepHours,
+        totalExercise: report.activities?.totalExerciseMinutes
+      }
+    });
+  } catch (error) {
+    console.error('[TEST] Error generating weekly report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate weekly report',
+      error: error.message
     });
   }
 });

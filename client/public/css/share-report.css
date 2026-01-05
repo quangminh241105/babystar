@@ -491,9 +491,19 @@ body {
   font-size: 0.75rem;
 }
 
-.metric-value-tag.energy-moderate {
+.metric-value-tag.energy-Moderate {
   background: #fef3c7;
   color: #92400e;
+}
+
+.metric-value-tag.energy-High {
+  background: lightgreen;
+  color: green; 
+}
+
+.metric-value-tag.energy-Low {
+  background: #fef3c7;
+  color: red;
 }
 
 /* Blood Pressure Grid */

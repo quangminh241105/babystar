@@ -419,6 +419,112 @@ function calculateContractionsSummary(healthLogs) {
 }
 
 /**
+ * Calculate comparison with previous week
+ */
+async function calculateComparisonWithPreviousWeek(userId, currentWeekNumber, currentSummaries) {
+	try {
+		// Find previous week's report (by pregnancy week number)
+		const previousReport = await WeeklyReport.findOne({
+			userId,
+			weekNumber: currentWeekNumber - 1,
+			deletedAt: null,
+			status: 'complete'
+		});
+
+		// If no previous report exists, return 'no_data' for all trends
+		if (!previousReport) {
+			return {
+				weightTrend: 'no_data',
+				energyTrend: 'no_data',
+				sleepTrend: 'no_data',
+				exerciseTrend: 'no_data',
+				symptomsTrend: 'no_data'
+			};
+		}
+
+		const comparison = {};
+
+		// Weight Trend
+		const currentWeight = currentSummaries.vitalsSummary?.avgWeightKg;
+		const previousWeight = previousReport.vitalsSummary?.avgWeightKg;
+		
+		if (currentWeight != null && previousWeight != null) {
+			const weightDiff = currentWeight - previousWeight;
+			if (weightDiff > 0.5) comparison.weightTrend = 'up';
+			else if (weightDiff < -0.5) comparison.weightTrend = 'down';
+			else comparison.weightTrend = 'stable';
+		} else {
+			comparison.weightTrend = 'no_data';
+		}
+
+		// Energy Trend
+		const currentEnergy = currentSummaries.summary?.avgEnergyLevel;
+		const previousEnergy = previousReport.summary?.avgEnergyLevel;
+		
+		if (currentEnergy != null && previousEnergy != null) {
+			const energyDiff = currentEnergy - previousEnergy;
+			if (energyDiff > 0.5) comparison.energyTrend = 'up';
+			else if (energyDiff < -0.5) comparison.energyTrend = 'down';
+			else comparison.energyTrend = 'stable';
+		} else {
+			comparison.energyTrend = 'no_data';
+		}
+
+		// Sleep Trend
+		const currentSleep = currentSummaries.activities?.avgSleepHours;
+		const previousSleep = previousReport.activities?.avgSleepHours;
+		
+		if (currentSleep != null && previousSleep != null) {
+			const sleepDiff = currentSleep - previousSleep;
+			if (sleepDiff > 0.5) comparison.sleepTrend = 'better';
+			else if (sleepDiff < -0.5) comparison.sleepTrend = 'worse';
+			else comparison.sleepTrend = 'stable';
+		} else {
+			comparison.sleepTrend = 'no_data';
+		}
+
+		// Exercise Trend
+		const currentExercise = currentSummaries.activities?.totalExerciseMinutes || 0;
+		const previousExercise = previousReport.activities?.totalExerciseMinutes || 0;
+		
+		if (currentExercise > 0 || previousExercise > 0) {
+			const exerciseDiff = currentExercise - previousExercise;
+			const percentChange = previousExercise > 0 ? (exerciseDiff / previousExercise) * 100 : 100;
+			
+			if (percentChange > 10) comparison.exerciseTrend = 'more';
+			else if (percentChange < -10) comparison.exerciseTrend = 'less';
+			else comparison.exerciseTrend = 'same';
+		} else {
+			comparison.exerciseTrend = 'no_data';
+		}
+
+		// Symptoms Trend
+		const currentSymptomCount = currentSummaries.summary?.keySymptoms?.length || 0;
+		const previousSymptomCount = previousReport.summary?.keySymptoms?.length || 0;
+		
+		if (currentSymptomCount > 0 || previousSymptomCount > 0) {
+			if (currentSymptomCount > previousSymptomCount) comparison.symptomsTrend = 'more';
+			else if (currentSymptomCount < previousSymptomCount) comparison.symptomsTrend = 'less';
+			else comparison.symptomsTrend = 'same';
+		} else {
+			comparison.symptomsTrend = 'no_data';
+		}
+
+		return comparison;
+	} catch (error) {
+		console.error('Error calculating comparison with previous week:', error);
+		// Return no_data on error
+		return {
+			weightTrend: 'no_data',
+			energyTrend: 'no_data',
+			sleepTrend: 'no_data',
+			exerciseTrend: 'no_data',
+			symptomsTrend: 'no_data'
+		};
+	}
+}
+
+/**
  * Generate weekly report for a specific user
  */
 async function generateWeeklyReportForUser(userId) {
@@ -428,15 +534,29 @@ async function generateWeeklyReportForUser(userId) {
 			throw new Error(`User not found: ${userId}`);
 		}
 
-		// Calculate pregnancy week from user's due date (nested in pregnancyProfile)
-		const dueDate = user.pregnancyProfile?.dueDate;
-		const weekNumber = calculatePregnancyWeek(dueDate);
-		if (!weekNumber) {
-			throw new Error('Cannot determine pregnancy week - no due date set');
+		const { startDate, endDate } = getWeekDateRange();
+
+		// Get health logs for the calendar week
+		const healthLogs = await HealthLog.find({
+			userId,
+			logDate: { $gte: startDate, $lte: endDate },
+			deletedAt: null
+		}).sort({ logDate: 1 });
+
+		if (healthLogs.length === 0) {
+			console.log(`No health logs found for user ${userId} for the week ${startDate} to ${endDate}`);
+			return null;
 		}
 
-		const trimester = getTrimester(weekNumber);
-		const { startDate, endDate } = getWeekDateRange();
+		// Extract weekNumber and trimester from the most recent health log
+		// (they're already calculated and stored when the log was created)
+		const latestLog = healthLogs[healthLogs.length - 1];
+		const weekNumber = latestLog.pregnancyWeek;
+		const trimester = latestLog.trimester;
+
+		if (!weekNumber || !trimester) {
+			throw new Error('Health logs missing pregnancy week or trimester data');
+		}
 
 		// Check if report already exists for this pregnancy week
 		const existingReport = await WeeklyReport.findOne({
@@ -450,13 +570,6 @@ async function generateWeeklyReportForUser(userId) {
 			return existingReport;
 		}
 
-		// Get health logs for the calendar week
-		const healthLogs = await HealthLog.find({
-			userId,
-			logDate: { $gte: startDate, $lte: endDate },
-			deletedAt: null
-		}).sort({ logDate: 1 });
-
 		const healthLogIds = healthLogs.map(log => log._id);
 
 		// Calculate summaries
@@ -464,6 +577,13 @@ async function generateWeeklyReportForUser(userId) {
 		const vitalsSummary = calculateVitalsSummary(healthLogs);
 		const activities = calculateActivitiesSummary(healthLogs);
 		const contractions = calculateContractionsSummary(healthLogs);
+
+		// Calculate comparison with previous week
+		const comparisonWithPreviousWeek = await calculateComparisonWithPreviousWeek(
+			userId,
+			weekNumber,
+			{ summary, vitalsSummary, activities, contractions }
+		);
 
 		// Create the weekly report
 		const weeklyReport = new WeeklyReport({
@@ -477,57 +597,12 @@ async function generateWeeklyReportForUser(userId) {
 			activities,
 			contractions,
 			healthLogIds,
+			comparisonWithPreviousWeek,
 			status: 'complete'
 		});
 
 		await weeklyReport.save();
 		console.log(`Weekly report generated for user ${userId}, pregnancy week ${weekNumber}`);
-
-		// Generate AI-based diet and exercise plans
-		try {
-			// Initialize services
-			const nutritionService = new NutritionSuggestionService();
-			const exerciseService = new ExerciseSuggestionService();
-
-			// Prepare user data for AI
-			const userData = {
-				userId,
-				pregnancyWeek: weekNumber,
-				trimester,
-				healthLogs,
-				weeklyReport: weeklyReport.toObject()
-			};
-
-			// Generate diet plan
-			console.log(`Generating diet plan for user ${userId}...`);
-			try {
-				const dietPlan = await nutritionService.generateNutritionSuggestions(userData);
-				weeklyReport.aiOutputs = weeklyReport.aiOutputs || {};
-				weeklyReport.aiOutputs.dietPlan = dietPlan;
-				weeklyReport.aiOutputs.generatedAt = new Date();
-				console.log(`✅ Diet plan generated for user ${userId}`);
-			} catch (dietError) {
-				console.error(`❌ Failed to generate diet plan for user ${userId}:`, dietError.message);
-			}
-
-			// Generate exercise plan
-			console.log(`Generating exercise plan for user ${userId}...`);
-			try {
-				const exercisePlan = await exerciseService.generateExerciseSuggestions(userData);
-				weeklyReport.aiOutputs = weeklyReport.aiOutputs || {};
-				weeklyReport.aiOutputs.exercisePlan = exercisePlan;
-				console.log(`✅ Exercise plan generated for user ${userId}`);
-			} catch (exerciseError) {
-				console.error(`❌ Failed to generate exercise plan for user ${userId}:`, exerciseError.message);
-			}
-
-			// Save updated report with AI plans
-			await weeklyReport.save();
-			console.log(`Weekly report with AI plans saved for user ${userId}`);
-		} catch (aiError) {
-			console.error(`❌ Error generating AI plans for user ${userId}:`, aiError.message);
-			// Continue - report is still valid without AI plans
-		}
 
 		return weeklyReport;
 	} catch (error) {
@@ -590,5 +665,6 @@ module.exports = {
 	calculateSummary,
 	calculateVitalsSummary,
 	calculateActivitiesSummary,
-	calculateContractionsSummary
+	calculateContractionsSummary,
+	calculateComparisonWithPreviousWeek
 };
