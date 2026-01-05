@@ -78,7 +78,7 @@
                     </svg>
                 </div>
                 <div class="header-text">
-                    <h1>Pregnancy Assistant</h1>
+                    <h1>Pregnancy Assistant</h1> 
                     <span class="status"><span class="status-dot"></span>Online & Ready to Help</span>
                 </div>
             </div>
@@ -384,22 +384,55 @@
         }
 
         // ===== Conversation List =====
-        function renderConversationList() {
-            if (conversations.length === 0) {
+        function renderConversationList(filter = '') {
+            const searchTerm = filter.toLowerCase();
+            let filteredConversations = conversations;
+            
+            if (searchTerm) {
+                filteredConversations = conversations.filter(c => 
+                    (c.title || '').toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (filteredConversations.length === 0) {
                 conversationList.innerHTML = `
                     <div class="empty-state">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                         </svg>
-                        <p>No conversations yet</p>
+                        <p>${searchTerm ? 'No matching conversations' : 'No conversations yet'}</p>
                         <span>Start a new chat!</span>
                     </div>
                 `;
                 return;
             }
 
-            conversationList.innerHTML = conversations.map(conv => `
-                <div class="conversation-item ${conv._id === conversationId ? 'active' : ''}" data-id="${conv._id}">
+            // Separate pinned and unpinned
+            const pinned = filteredConversations.filter(c => c.isPinned);
+            const unpinned = filteredConversations.filter(c => !c.isPinned);
+
+            let html = '';
+            
+            if (pinned.length > 0) {
+                html += `<div class="conv-section-label">📌 Pinned</div>`;
+                html += pinned.map(conv => createConversationItemHTML(conv)).join('');
+            }
+            
+            if (unpinned.length > 0) {
+                if (pinned.length > 0) {
+                    html += `<div class="conv-section-label">Recent</div>`;
+                }
+                html += unpinned.map(conv => createConversationItemHTML(conv)).join('');
+            }
+            
+            conversationList.innerHTML = html;
+            attachConversationListeners();
+        }
+        
+        function createConversationItemHTML(conv) {
+            return `
+                <div class="conversation-item ${conv._id === conversationId ? 'active' : ''} ${conv.isPinned ? 'pinned' : ''}" data-id="${conv._id}">
+                    ${conv.isPinned ? '<span class="pin-indicator">📌</span>' : ''}
                     <div class="conv-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -409,31 +442,164 @@
                         <span class="conv-title">${escapeHtml(conv.title || 'New Chat')}</span>
                         <span class="conv-meta">${formatDate(conv.lastMessageAt || conv.createdAt)} • ${conv.stats?.messageCount || 0} msgs</span>
                     </div>
-                    <button class="conv-delete" data-id="${conv._id}" title="Delete">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
+                    <div class="conv-actions">
+                        <button class="conv-action-btn conv-menu-btn" data-id="${conv._id}" title="More options">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="12" cy="5" r="1"></circle>
+                                <circle cx="12" cy="19" r="1"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="conv-context-menu" data-id="${conv._id}">
+                        <button class="context-menu-item" data-action="rename" data-id="${conv._id}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Rename
+                        </button>
+                        <button class="context-menu-item" data-action="pin" data-id="${conv._id}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v8"></path>
+                                <path d="m4.93 10.93 2.83-2.83"></path>
+                                <path d="M2 18h20"></path>
+                                <path d="m19.07 10.93-2.83-2.83"></path>
+                                <path d="M12 22v-4"></path>
+                            </svg>
+                            ${conv.isPinned ? 'Unpin' : 'Pin'}
+                        </button>
+                        <button class="context-menu-item danger" data-action="delete" data-id="${conv._id}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
                 </div>
-            `).join('');
-
+            `;
+        }
+        
+        function attachConversationListeners() {
+            // Click on conversation item to load it
             conversationList.querySelectorAll('.conversation-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    if (!e.target.closest('.conv-delete')) {
+                    if (!e.target.closest('.conv-actions') && !e.target.closest('.conv-context-menu')) {
+                        closeAllContextMenus();
                         loadConversation(item.dataset.id);
                         if (window.innerWidth <= 768) closeMobileSidebar();
                     }
                 });
             });
-
-            conversationList.querySelectorAll('.conv-delete').forEach(btn => {
+            
+            // Menu button click
+            conversationList.querySelectorAll('.conv-menu-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    deleteConversation(btn.dataset.id);
+                    const id = btn.dataset.id;
+                    toggleContextMenu(id);
+                });
+            });
+            
+            // Context menu actions
+            conversationList.querySelectorAll('.context-menu-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = item.dataset.action;
+                    const id = item.dataset.id;
+                    closeAllContextMenus();
+                    
+                    switch(action) {
+                        case 'rename': showRenameDialog(id); break;
+                        case 'pin': togglePin(id); break;
+                        case 'delete': deleteConversation(id); break;
+                    }
                 });
             });
         }
+        
+        function toggleContextMenu(id) {
+            const menu = document.querySelector(`.conv-context-menu[data-id="${id}"]`);
+            const wasOpen = menu?.classList.contains('show');
+            closeAllContextMenus();
+            if (!wasOpen && menu) {
+                menu.classList.add('show');
+            }
+        }
+        
+        function closeAllContextMenus() {
+            document.querySelectorAll('.conv-context-menu.show').forEach(m => m.classList.remove('show'));
+        }
+        
+        // Close context menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.conv-actions') && !e.target.closest('.conv-context-menu')) {
+                closeAllContextMenus();
+            }
+        });
+        
+        // ===== Rename Dialog =====
+        async function showRenameDialog(convId) {
+            const conv = conversations.find(c => c._id === convId);
+            if (!conv) return;
+            
+            const currentTitle = conv.title || 'New Chat';
+            const newTitle = await CustomModal.prompt('Enter new title:', currentTitle, { titleText: 'Rename Conversation' });
+            
+            if (newTitle !== null && newTitle.trim() !== '' && newTitle.trim() !== currentTitle) {
+                renameConversation(convId, newTitle.trim());
+            }
+        }
+        
+        async function renameConversation(id, newTitle) {
+            try {
+                const resp = await fetch(`/chatbot/conversations/${id}/rename`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ title: newTitle })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    const conv = conversations.find(c => c._id === id);
+                    if (conv) conv.title = data.title;
+                    renderConversationList(searchInput.value);
+                }
+            } catch (err) {
+                console.error('Error renaming conversation:', err);
+            }
+        }
+        
+        // ===== Pin/Unpin =====
+        async function togglePin(id) {
+            try {
+                const resp = await fetch(`/chatbot/conversations/${id}/pin`, {
+                    method: 'PUT',
+                    credentials: 'include'
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    const conv = conversations.find(c => c._id === id);
+                    if (conv) conv.isPinned = data.isPinned;
+                    // Re-sort: pinned first
+                    conversations.sort((a, b) => {
+                        if (a.isPinned && !b.isPinned) return -1;
+                        if (!a.isPinned && b.isPinned) return 1;
+                        return new Date(b.lastMessageAt || b.createdAt) - new Date(a.lastMessageAt || a.createdAt);
+                    });
+                    renderConversationList(searchInput.value);
+                }
+            } catch (err) {
+                console.error('Error toggling pin:', err);
+            }
+        }
+        
+        // ===== Search Conversations =====
+        const searchInput = document.getElementById('searchConversations');
+        searchInput.addEventListener('input', (e) => {
+            renderConversationList(e.target.value);
+        });
 
         // ===== API Functions =====
         async function checkSession() {
@@ -452,7 +618,7 @@
                 const data = await resp.json();
                 if (data.success) {
                     conversations = data.conversations;
-                    renderConversationList();
+                    renderConversationList(searchInput?.value || '');
                 }
             } catch (err) {
                 console.error('Error fetching conversations:', err);
@@ -473,7 +639,7 @@
                         if (msg.role === 'user') addUserMessage(msg.content, msg.createdAt);
                         else if (msg.role === 'assistant') addAIMessage(msg.content, msg.createdAt);
                     });
-                    renderConversationList();
+                    renderConversationList(searchInput?.value || '');
                 }
             } catch (err) {
                 console.error('Error loading conversation:', err);
@@ -485,13 +651,13 @@
         }
 
         async function deleteConversation(id) {
-            if (!confirm('Delete this conversation?')) return;
+            if (!await CustomModal.confirm('Delete this conversation?', { titleText: 'Delete Conversation', danger: true })) return;
             try {
                 const resp = await fetch(`/chatbot/conversations/${id}`, { method: 'DELETE', credentials: 'include' });
                 const data = await resp.json();
                 if (data.success) {
                     conversations = conversations.filter(c => c._id !== id);
-                    renderConversationList();
+                    renderConversationList(searchInput?.value || '');
                     if (conversationId === id) startNewChat();
                 }
             } catch (err) {
@@ -559,6 +725,25 @@
             });
         });
         newChatBtn.addEventListener('click', startNewChat);
+        
+        // ===== Real-time Socket.IO Updates =====
+        // Listen for chat updates from other tabs/sessions
+        window.addEventListener('chatUpdate', async (e) => {
+            const data = e.detail;
+            if (data.type === 'new-conversation') {
+                // Refresh conversation list when a new conversation is created elsewhere
+                await fetchConversations();
+            } else if (data.type === 'update-conversation' && data.conversationId === conversationId) {
+                // If current conversation was updated elsewhere, reload it
+                await loadConversation(conversationId);
+            } else if (data.type === 'delete-conversation') {
+                conversations = conversations.filter(c => c._id !== data.conversationId);
+                renderConversationList();
+                if (conversationId === data.conversationId) {
+                    startNewChat();
+                }
+            }
+        });
 
         // ===== Initialization =====
         const sessionValid = await checkSession();

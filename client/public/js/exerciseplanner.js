@@ -54,7 +54,7 @@ async function generateNewPlan() {
 		}
 	} catch (error) {
 		console.error('❌ Error generating exercise plan:', error);
-		alert('Failed to generate exercise plan: ' + error.message);
+		CustomModal.alert('Failed to generate exercise plan: ' + error.message, { titleText: 'Error', danger: true });
 		showError();
 	}
 }
@@ -130,7 +130,7 @@ function renderAIExercisePlan(plan, container, isViewingPartner = false) {
 	
 	if (!hasExercises) {
 		console.warn('⚠️ Plan has no exercises');
-		alert('No exercises found in plan. Please try regenerating.');
+		CustomModal.alert('No exercises found in plan. Please try regenerating.', { titleText: 'No Exercises' });
 		return;
 	}
 	

@@ -12,7 +12,14 @@ class ExerciseSuggestionService {
 		}
 
 		this.genAI = new GoogleGenerativeAI(this.apiKey);
-		this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+		this.model = this.genAI.getGenerativeModel({ 
+			model: 'gemini-2.0-flash',
+			generationConfig: {
+				maxOutputTokens: 8192,  // Increased to handle full 7-day plan
+				temperature: 0.7,
+				responseMimeType: 'application/json'  // Force JSON output
+			}
+		});
 		
 		// Reuse shared loader instance
 		if (!sharedExerciseLoader) {
@@ -302,6 +309,12 @@ Generate the plan now:`;
 				return prefix + fixed + '"';
 			});
 
+			// 2. Fix truncated JSON - attempt to close incomplete structures
+			if (!cleanText.endsWith('}')) {
+				console.warn('⚠️ JSON appears truncated, attempting to fix...');
+				cleanText = this.attemptFixTruncatedJson(cleanText);
+			}
+
 			const parsed = JSON.parse(cleanText);
 
 			// Validate structure
@@ -320,6 +333,59 @@ Generate the plan now:`;
 			console.error('Raw response:', text.substring(0, 1000));
 			throw new Error('Failed to parse AI exercise response');
 		}
+	}
+
+	/**
+	 * Attempt to fix truncated JSON by closing open structures
+	 */
+	attemptFixTruncatedJson(text) {
+		// Count open brackets/braces
+		let openBraces = 0;
+		let openBrackets = 0;
+		let inString = false;
+		let escape = false;
+
+		for (const char of text) {
+			if (escape) {
+				escape = false;
+				continue;
+			}
+			if (char === '\\') {
+				escape = true;
+				continue;
+			}
+			if (char === '"') {
+				inString = !inString;
+				continue;
+			}
+			if (!inString) {
+				if (char === '{') openBraces++;
+				else if (char === '}') openBraces--;
+				else if (char === '[') openBrackets++;
+				else if (char === ']') openBrackets--;
+			}
+		}
+
+		// If we're in a string, close it
+		if (inString) {
+			text += '"';
+		}
+
+		// Remove incomplete property (like "sets": nul)
+		text = text.replace(/,\s*"[^"]+"\s*:\s*[^,}\]]*$/, '');
+		text = text.replace(/,\s*$/, '');
+
+		// Close arrays and objects
+		while (openBrackets > 0) {
+			text += ']';
+			openBrackets--;
+		}
+		while (openBraces > 0) {
+			text += '}';
+			openBraces--;
+		}
+
+		return text;
 	}
 
 	/**

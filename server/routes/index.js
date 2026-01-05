@@ -155,6 +155,59 @@ router.get('/link-account', requireAuthRedirect, async (req, res) => {
   }
 });
 
+// GET /api/link-account/data - API endpoint to get link account data (for real-time updates)
+router.get('/api/link-account/data', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    
+    // Expire old pending associations
+    await user.expirePendingAssociations();
+    
+    // Populate associated users for display
+    await user.populate('associatedUsers.userId', 'firstName lastName email profileImageUrl');
+    
+    // Get invitations where this user is the receiver (others invited them)
+    const receivedInvitations = await User.findAssociationsForUser(req.session.user.id);
+    
+    res.json({
+      success: true,
+      // Associations where this user is the SENDER (others used their code)
+      linkedAccounts: (user.associatedUsers || []).map(account => ({
+        _id: account._id,
+        status: account.status,
+        relationship: account.relationship,
+        customLabel: account.customLabel,
+        userId: account.userId ? {
+          _id: account.userId._id,
+          firstName: account.userId.firstName,
+          lastName: account.userId.lastName,
+          email: account.userId.email,
+          profileImageUrl: account.userId.profileImageUrl
+        } : null
+      })),
+      // Associations where this user is the RECEIVER (they used others' code)
+      receivedInvitations: receivedInvitations.map(u => {
+        const assoc = u.associatedUsers.find(a => a.userId.toString() === req.session.user.id);
+        return {
+          ownerId: u._id,
+          ownerName: u.fullName || u.email,
+          ownerEmail: u.email,
+          ownerImage: u.profileImageUrl,
+          relationship: assoc?.relationship,
+          status: assoc?.status,
+          associationId: assoc?._id
+        };
+      })
+    });
+  } catch (err) {
+    console.error('API link account data error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // POST /link-account/refresh - force regenerate invitation code
 router.post('/link-account/refresh', requireAuth, async (req, res) => {
   try {
@@ -405,6 +458,12 @@ router.post('/link-account/cancel/:ownerId', requireAuth, async (req, res) => {
     association.deleteOne();
     await owner.save();
     
+    // Emit link-account update to the owner (the one who received the request)
+    emitLinkAccountUpdate(req, req.params.ownerId, {
+      type: 'request_cancelled',
+      by: { id: req.session.user.id }
+    });
+    
     res.json({ success: true, message: 'Request cancelled' });
   } catch (err) {
     console.error('Cancel request error:', err);
@@ -432,6 +491,16 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
     association.status = 'revoked';
     association.respondedAt = new Date();
     await owner.save();
+    
+    // Get current user's name for notification
+    const currentUser = await User.findById(req.session.user.id);
+    const userName = currentUser?.fullName || currentUser?.email || 'A user';
+    
+    // Emit link-account update to the owner
+    emitLinkAccountUpdate(req, req.params.ownerId, {
+      type: 'partner_left',
+      by: { id: req.session.user.id, name: userName }
+    });
     
     res.json({ success: true, message: 'Left association' });
   } catch (err) {
@@ -1229,6 +1298,20 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       exercisesCount: log.exercises?.length,
       mealsCount: log.foodIntake?.length
     });
+    
+    // Emit real-time update to linked partners
+    const io = req.app.get('io');
+    if (io && user?.linkedAccounts?.length > 0) {
+      user.linkedAccounts.forEach(link => {
+        if (link.status === 'accepted') {
+          io.to(`user:${link.userId}`).emit('partnerUpdate', {
+            type: 'health-log-added',
+            partnerId: req.session.user.id,
+            partnerName: user.fullName || user.firstName
+          });
+        }
+      });
+    }
     
     res.json({ success: true, log, message: isComplete ? 'Log saved and marked complete' : 'Log saved' });
   } catch (err) {

@@ -37,10 +37,10 @@ router.get('/conversations', requireAuth, async (req, res) => {
       userId, 
       deletedAt: null 
     })
-    .sort({ lastMessageAt: -1 })
+    .sort({ isPinned: -1, lastMessageAt: -1 }) // Pinned first, then by recent
     .skip(skip)
     .limit(limit)
-    .select('title topic status lastMessageAt stats createdAt')
+    .select('title topic status lastMessageAt stats createdAt isPinned isBookmarked')
     .lean(); // Use lean() for ~5x faster read-only queries
     
     res.json({ success: true, conversations, page, limit });
@@ -114,6 +114,60 @@ router.delete('/conversations/:id', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Error deleting conversation:', err);
     res.status(500).json({ success: false, errors: { general: 'Failed to delete conversation' }});
+  }
+});
+
+// PUT /chatbot/conversations/:id/rename - rename a conversation
+router.put('/conversations/:id/rename', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { title } = req.body;
+    
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return res.status(400).json({ success: false, errors: { title: 'Title is required' }});
+    }
+    
+    const trimmedTitle = title.trim().substring(0, 200); // Max 200 chars
+    
+    const conversation = await Conversation.findOneAndUpdate(
+      { _id: req.params.id, userId, deletedAt: null },
+      { title: trimmedTitle },
+      { new: true }
+    ).select('title');
+    
+    if (!conversation) {
+      return res.status(404).json({ success: false, errors: { general: 'Conversation not found' }});
+    }
+    
+    res.json({ success: true, title: conversation.title });
+  } catch (err) {
+    console.error('Error renaming conversation:', err);
+    res.status(500).json({ success: false, errors: { general: 'Failed to rename conversation' }});
+  }
+});
+
+// PUT /chatbot/conversations/:id/pin - toggle pin status
+router.put('/conversations/:id/pin', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    const conversation = await Conversation.findOne({ 
+      _id: req.params.id, 
+      userId, 
+      deletedAt: null 
+    });
+    
+    if (!conversation) {
+      return res.status(404).json({ success: false, errors: { general: 'Conversation not found' }});
+    }
+    
+    conversation.isPinned = !conversation.isPinned;
+    await conversation.save();
+    
+    res.json({ success: true, isPinned: conversation.isPinned });
+  } catch (err) {
+    console.error('Error toggling pin:', err);
+    res.status(500).json({ success: false, errors: { general: 'Failed to toggle pin' }});
   }
 });
 

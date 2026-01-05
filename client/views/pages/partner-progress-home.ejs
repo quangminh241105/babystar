@@ -135,3 +135,64 @@
     </div>
 </div>
 
+<script>
+(function() {
+    const partnerId = '<%= partnerId %>';
+    
+    // ===== Real-time Socket.IO Updates =====
+    // Listen for partner health updates
+    window.addEventListener('partnerUpdate', async (e) => {
+        const data = e.detail;
+        if (data.partnerId === partnerId) {
+            if (data.type === 'health-log-added') {
+                showToast('Your partner just logged new health data!', 'info');
+            } else if (data.type === 'profile-updated') {
+                // Refresh page data for profile changes (e.g., due date update)
+                showToast('Partner profile updated - refreshing...', 'info');
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+    });
+    
+    // Set up socket event dispatcher if socket is available  
+    if (typeof io !== 'undefined') {
+        const existingSocket = window.notificationSocket;
+        if (existingSocket) {
+            existingSocket.on('partnerUpdate', (data) => {
+                window.dispatchEvent(new CustomEvent('partnerUpdate', { detail: data }));
+            });
+        }
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Check if toast container exists, if not create one
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container';
+            toastContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.style.cssText = `
+            background: ${type === 'info' ? '#3b82f6' : type === 'success' ? '#22c55e' : '#ef4444'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        `;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+})();
+</script>

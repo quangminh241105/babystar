@@ -1650,12 +1650,12 @@
     // Clear Form button
     const clearFormBtn = document.getElementById('clearFormBtn');
     if (clearFormBtn) {
-      clearFormBtn.addEventListener('click', () => {
+      clearFormBtn.addEventListener('click', async () => {
         if (isReadOnly) {
           showMsg('Cannot clear read-only log', 'error');
           return;
         }
-        if (confirm('Are you sure you want to clear all fields? This will not delete your saved data.')) {
+        if (await CustomModal.confirm('Are you sure you want to clear all fields? This will not delete your saved data.', { titleText: 'Clear Form' })) {
           document.getElementById('healthLogForm').reset();
           symptoms = [];
           exercises = [];

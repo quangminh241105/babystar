@@ -218,8 +218,12 @@
                 if (dropdown.classList.contains('show')) {
                     loadNotificationPreview();
                 }
+                // Dispatch event for notifications page
+                window.dispatchEvent(new CustomEvent('notification', { detail: data }));
             } else if (data.type === 'count') {
                 updateBadge(data.count);
+                // Dispatch event for notifications page
+                window.dispatchEvent(new CustomEvent('notification', { detail: data }));
             }
         });
         
@@ -228,6 +232,29 @@
             // Dispatch custom event for link-account page to handle
             window.dispatchEvent(new CustomEvent('linkAccountUpdate', { detail: data }));
         });
+        
+        // Handle admin updates (for admin pages)
+        socket.on('adminUpdate', (data) => {
+            window.dispatchEvent(new CustomEvent('adminUpdate', { detail: data }));
+        });
+        
+        // Handle partner updates (for partner progress pages)
+        socket.on('partnerUpdate', (data) => {
+            window.dispatchEvent(new CustomEvent('partnerUpdate', { detail: data }));
+        });
+        
+        // Handle chat updates (for chatbot page)
+        socket.on('chatUpdate', (data) => {
+            window.dispatchEvent(new CustomEvent('chatUpdate', { detail: data }));
+        });
+        
+        // Handle report updates (for share-report page)
+        socket.on('reportUpdate', (data) => {
+            window.dispatchEvent(new CustomEvent('reportUpdate', { detail: data }));
+        });
+        
+        // Expose socket for pages that need direct access
+        window.notificationSocket = socket;
         
         socket.on('disconnect', () => {
             socketConnected = false;
