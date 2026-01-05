@@ -216,15 +216,20 @@ const weeklyReportSchema = new mongoose.Schema({
 });
 
 // ============================================================================
-// INDEXES
+// INDEXES - Optimized for common query patterns
 // ============================================================================
-weeklyReportSchema.index({ userId: 1, weekNumber: 1 }, { unique: true });
-weeklyReportSchema.index({ userId: 1, startDate: -1 });
-weeklyReportSchema.index({ userId: 1, status: 1 });
-weeklyReportSchema.index({ sharedWith: 1 });
-weeklyReportSchema.index({ 'summary.overallStatus': 1 });
-weeklyReportSchema.index({ createdAt: -1 });
-weeklyReportSchema.index({ deletedAt: 1 });
+// Primary lookup and uniqueness constraint
+weeklyReportSchema.index({ userId: 1, weekNumber: 1, deletedAt: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });
+// For fetching user's recent reports
+weeklyReportSchema.index({ userId: 1, startDate: -1, deletedAt: 1 });
+// For status-based queries (finding incomplete reports)
+weeklyReportSchema.index({ userId: 1, status: 1, deletedAt: 1 });
+// For shared reports access
+weeklyReportSchema.index({ sharedWith: 1, startDate: -1, status: 1 });
+// For finding reports with concerns
+weeklyReportSchema.index({ userId: 1, 'summary.aiFlags.severity': 1, deletedAt: 1 });
+// TTL for soft-deleted reports
+weeklyReportSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60, partialFilterExpression: { deletedAt: { $ne: null } } });
 
 // ============================================================================
 // VIRTUALS

@@ -496,5 +496,55 @@
     
     previewContent.innerHTML = html;
   }
+  
+  // ===== Real-time Socket.IO Updates =====
+  // Listen for new report generation
+  window.addEventListener('reportUpdate', async (e) => {
+    const data = e.detail;
+    if (data.type === 'new-report') {
+      showToast('New weekly report generated! Refreshing...', 'success');
+      setTimeout(() => location.reload(), 2000);
+    }
+  });
+  
+  // Set up socket event dispatcher if socket is available
+  if (typeof io !== 'undefined') {
+    const existingSocket = window.notificationSocket;
+    if (existingSocket) {
+      existingSocket.on('reportUpdate', (data) => {
+        window.dispatchEvent(new CustomEvent('reportUpdate', { detail: data }));
+      });
+    }
+  }
+  
+  // Toast notification function
+  function showToast(message, type = 'info') {
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.className = 'toast-container';
+      toastContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.style.cssText = `
+      background: ${type === 'success' ? '#22c55e' : type === 'info' ? '#3b82f6' : '#ef4444'};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease forwards';
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
 </script>
 <% } %>

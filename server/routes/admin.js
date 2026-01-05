@@ -8,6 +8,15 @@ const {
   addQuestionsToQuiz 
 } = require('../services/quizGeneratorService');
 
+// Helper function to emit admin updates via Socket.IO
+function emitAdminUpdate(req, type, data) {
+  const io = req.app.get('io');
+  if (!io) return;
+  
+  // Emit to all admin users listening for updates
+  io.emit('adminUpdate', { type, ...data });
+}
+
 // Render main admin dashboard
 router.get('/', requireAdmin, async (req, res) => {
   res.render('pages/admin-main', { title: 'Admin Dashboard' });
@@ -40,6 +49,10 @@ router.put('/users/:id/activate', requireAdmin, async (req, res) => {
       { new: true }
     ).select('fullName email role isActive');
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    
+    // Emit real-time update
+    emitAdminUpdate(req, 'user-status-change', { userId: user._id, isActive: true, user });
+    
     res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to activate user' });
@@ -55,6 +68,10 @@ router.put('/users/:id/deactivate', requireAdmin, async (req, res) => {
       { new: true }
     ).select('fullName email role isActive');
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    
+    // Emit real-time update
+    emitAdminUpdate(req, 'user-status-change', { userId: user._id, isActive: false, user });
+    
     res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to deactivate user' });
@@ -158,6 +175,19 @@ router.post('/generate-quiz', requireAdmin, async (req, res) => {
       difficulty: diff
     });
 
+    // Emit real-time update
+    emitAdminUpdate(req, 'quiz-created', { 
+      quizId: result.quiz._id, 
+      quiz: {
+        _id: result.quiz._id,
+        title: result.quiz.title,
+        category: result.quiz.category,
+        questionCount: result.quiz.questions.length,
+        isActive: result.quiz.isActive,
+        createdAt: result.quiz.createdAt
+      }
+    });
+
     res.json({
       success: true,
       message: result.isNew ? 'Quiz generated and saved!' : 'Quiz updated!',
@@ -226,6 +256,9 @@ router.delete('/quiz/:quizId', requireAdmin, async (req, res) => {
       });
     }
 
+    // Emit real-time update
+    emitAdminUpdate(req, 'quiz-deleted', { quizId: req.params.quizId });
+
     res.json({
       success: true,
       message: 'Quiz deleted successfully'
@@ -257,6 +290,9 @@ router.put('/quiz/:quizId/toggle', requireAdmin, async (req, res) => {
 
     quiz.isActive = !quiz.isActive;
     await quiz.save();
+
+    // Emit real-time update
+    emitAdminUpdate(req, 'quiz-toggled', { quizId: quiz._id, isActive: quiz.isActive });
 
     res.json({
       success: true,

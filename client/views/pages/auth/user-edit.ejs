@@ -473,7 +473,7 @@
 
     document.getElementById('exportProfile').addEventListener('click', () => { window.location.href = '/auth/user-edit/export'; });
     document.getElementById('clearPregnancy').addEventListener('click', async () => {
-      if (!confirm('Clear all pregnancy data?')) return;
+      if (!await CustomModal.confirm('Clear all pregnancy data?', { titleText: 'Clear Pregnancy Data', danger: true })) return;
       await fetch('/auth/user-edit/pregnancy', { method: 'DELETE', credentials: 'include' });
       await loadUserData();
       showMessage('Pregnancy data cleared', 'success');
@@ -576,7 +576,7 @@
     let isCalculating = false; // Prevent infinite loop
     
     // Calculate due date from LMP (LMP + 280 days)
-    lmpInput.addEventListener('change', (e) => {
+    lmpInput.addEventListener('change', async (e) => {
       if (isCalculating) return;
       
       if (e.target.value) {
@@ -585,7 +585,7 @@
         
         // Validate LMP is not in the future
         if (lmp > today) {
-          alert('Last Menstrual Period cannot be in the future');
+          await CustomModal.alert('Last Menstrual Period cannot be in the future', { titleText: 'Invalid Date' });
           e.target.value = '';
           return;
         }
@@ -593,7 +593,7 @@
         // Validate LMP is not more than 42 weeks ago
         const weeksSinceLMP = Math.floor((today - lmp) / (1000 * 60 * 60 * 24 * 7));
         if (weeksSinceLMP > 42) {
-          if (!confirm('Last Menstrual Period is over 42 weeks ago. This pregnancy may have already concluded. Continue anyway?')) {
+          if (!await CustomModal.confirm('Last Menstrual Period is over 42 weeks ago. This pregnancy may have already concluded. Continue anyway?', { titleText: 'Confirm Date' })) {
             e.target.value = '';
             return;
           }
@@ -612,7 +612,7 @@
     });
     
     // Calculate LMP from due date (Due Date - 280 days)
-    dueDateInput.addEventListener('change', (e) => {
+    dueDateInput.addEventListener('change', async (e) => {
       if (isCalculating) return;
       
       if (e.target.value) {
@@ -621,7 +621,7 @@
         
         // Validate due date is not too far in the past
         if (dueDate < today) {
-          if (!confirm('Due date has passed. If pregnancy is complete, update your pregnancy status. Continue anyway?')) {
+          if (!await CustomModal.confirm('Due date has passed. If pregnancy is complete, update your pregnancy status. Continue anyway?', { titleText: 'Confirm Date' })) {
             e.target.value = '';
             return;
           }

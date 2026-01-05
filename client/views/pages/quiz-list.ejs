@@ -427,7 +427,7 @@
 
       if (result.success) {
         showMessage(result.message, 'success');
-        loadQuizzes(); // Reload
+        // No need to call loadQuizzes() - socket update will handle it
       } else {
         showMessage(result.error || 'Failed to toggle quiz', 'error');
       }
@@ -436,5 +436,38 @@
       showMessage('Network error', 'error');
     }
   };
+  
+  // ===== Real-time Socket.IO Updates =====
+  // Listen for admin quiz updates via Socket.IO
+  window.addEventListener('adminUpdate', (e) => {
+    const data = e.detail;
+    if (data.type === 'quiz-created') {
+      showMessage('New quiz created (by another admin)', 'info');
+      loadQuizzes();
+    } else if (data.type === 'quiz-deleted') {
+      // Remove the quiz from local state
+      quizzes = quizzes.filter(q => q._id !== data.quizId);
+      applyFilters();
+      showMessage('A quiz was deleted (by another admin)', 'info');
+    } else if (data.type === 'quiz-toggled') {
+      // Update quiz status in local state
+      const quiz = quizzes.find(q => q._id === data.quizId);
+      if (quiz) {
+        quiz.isActive = data.isActive;
+        applyFilters();
+        showMessage(`Quiz ${data.isActive ? 'activated' : 'deactivated'} (by another admin)`, 'info');
+      }
+    }
+  });
+  
+  // Set up socket event dispatcher if socket is available
+  if (typeof io !== 'undefined') {
+    const existingSocket = window.notificationSocket;
+    if (existingSocket) {
+      existingSocket.on('adminUpdate', (data) => {
+        window.dispatchEvent(new CustomEvent('adminUpdate', { detail: data }));
+      });
+    }
+  }
 })();
 </script>

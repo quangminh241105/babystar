@@ -58,15 +58,17 @@ exports.generateExerciseSuggestions = async (req, res) => {
 			}
 		}
 
-		// Fetch user, health logs and weekly report in parallel
+		// Fetch user, health logs and weekly report in parallel with lean() and field selection
 		const [user, healthLogs, weeklyReport] = await Promise.all([
-			User.findById(userId),
-			HealthLog.find({ userId })
-				.sort({ date: -1 })
+			User.findById(userId).select('pregnancyProfile currentWeightKg currentPregnancyWeek currentTrimester'),
+			HealthLog.find({ userId, deletedAt: null })
+				.sort({ logDate: -1 })
 				.limit(7)
+				.select('exercises symptoms energyLevel logDate')
 				.lean(),
-			WeeklyReport.findOne({ userId })
+			WeeklyReport.findOne({ userId, deletedAt: null })
 				.sort({ startDate: -1 })
+				.select('activities summary weekNumber')
 				.lean()
 		]);
 

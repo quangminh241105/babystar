@@ -265,7 +265,8 @@
                     connectMessage.className = 'message success';
                     connectMessage.textContent = 'Link request sent successfully!';
                     connectForm.reset();
-                    setTimeout(() => location.reload(), 1500);
+                    // Refresh data without page reload
+                    refreshLinkAccountData();
                 } else {
                     connectMessage.className = 'message error';
                     connectMessage.textContent = data.error || 'Failed to connect';
@@ -292,7 +293,7 @@
                 remove: 'Remove this entry completely?'
             };
             
-            if (!confirm(confirmMessages[action])) return;
+            if (!await CustomModal.confirm(confirmMessages[action], { titleText: 'Confirm Action', danger: action === 'remove' || action === 'reject' || action === 'revoke' })) return;
 
             try {
                 let url, method;
@@ -309,7 +310,8 @@
 
                 if (data.success) {
                     showToast(data.message || 'Action completed', 'success');
-                    setTimeout(() => location.reload(), 1000);
+                    // Refresh data without page reload
+                    refreshLinkAccountData();
                 } else {
                     showToast(data.error || 'Action failed', 'error');
                 }
@@ -325,7 +327,7 @@
                 leave: 'Leave this connection? You will lose access.'
             };
             
-            if (!confirm(confirmMessages[action])) return;
+            if (!await CustomModal.confirm(confirmMessages[action], { titleText: 'Confirm Action', danger: action === 'leave' })) return;
 
             try {
                 const resp = await fetch(`/link-account/${action}/${ownerId}`, {
@@ -336,7 +338,8 @@
 
                 if (data.success) {
                     showToast(data.message || 'Action completed', 'success');
-                    setTimeout(() => location.reload(), 1000);
+                    // Refresh data without page reload
+                    refreshLinkAccountData();
                 } else {
                     showToast(data.error || 'Action failed', 'error');
                 }
@@ -356,6 +359,215 @@
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
+        }
+
+        // ============================================
+        // Real-time DOM Update Functions
+        // ============================================
+        
+        // Fetch latest data and update the DOM without page refresh
+        async function refreshLinkAccountData() {
+            try {
+                const resp = await fetch('/api/link-account/data', { credentials: 'include' });
+                const data = await resp.json();
+                
+                if (data.success) {
+                    renderLinkedAccounts(data.linkedAccounts);
+                    renderReceivedInvitations(data.receivedInvitations);
+                }
+            } catch (err) {
+                console.error('Failed to refresh link account data:', err);
+            }
+        }
+        
+        // Render the "People Connected to You" section
+        function renderLinkedAccounts(accounts) {
+            const container = document.getElementById('linkedAccounts');
+            if (!container) return;
+            
+            if (!accounts || accounts.length === 0) {
+                container.innerHTML = '<p class="no-links">No one has connected to you yet. Share your invitation code above!</p>';
+                return;
+            }
+            
+            container.innerHTML = accounts.map(account => {
+                const firstName = account.userId?.firstName || '';
+                const lastName = account.userId?.lastName || '';
+                const email = account.userId?.email || 'Unknown User';
+                const displayName = (firstName || lastName) ? `${firstName} ${lastName}`.trim() : email;
+                const avatarInitial = firstName?.charAt(0) || email?.charAt(0) || '?';
+                const relationship = (account.relationship || '').replace('_', ' ');
+                
+                let actionsHtml = '';
+                if (account.status === 'pending') {
+                    actionsHtml = `
+                        <button class="action-btn accept" onclick="handleAction('accept', '${account._id}')">Accept</button>
+                        <button class="action-btn reject" onclick="handleAction('reject', '${account._id}')">Reject</button>
+                    `;
+                } else if (account.status === 'accepted') {
+                    actionsHtml = `<button class="action-btn revoke" onclick="handleAction('revoke', '${account._id}')">Revoke</button>`;
+                } else {
+                    actionsHtml = `<button class="action-btn remove" onclick="handleAction('remove', '${account._id}')">Remove</button>`;
+                }
+                
+                return `
+                    <div class="linked-item" data-id="${account._id}" data-status="${account.status}">
+                        <div class="linked-main">
+                            ${account.userId?.profileImageUrl 
+                                ? `<img src="${account.userId.profileImageUrl}" alt="" class="linked-avatar">`
+                                : `<div class="linked-avatar placeholder">${avatarInitial}</div>`
+                            }
+                            <div class="linked-details">
+                                <span class="linked-name">${escapeHtml(displayName)}</span>
+                                <span class="linked-relationship">${escapeHtml(relationship)}</span>
+                                ${account.customLabel ? `<span class="linked-label">(${escapeHtml(account.customLabel)})</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="linked-status-actions">
+                            <span class="status-badge ${account.status}">${account.status}</span>
+                            <div class="linked-actions">${actionsHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Render the "Your Connections" section
+        function renderReceivedInvitations(invitations) {
+            const container = document.getElementById('receivedInvitations');
+            if (!container) return;
+            
+            if (!invitations || invitations.length === 0) {
+                container.innerHTML = '<p class="no-links">You haven\'t connected to anyone yet. Enter an invitation code above!</p>';
+                return;
+            }
+            
+            container.innerHTML = invitations.map(inv => {
+                const displayName = inv.ownerName || inv.ownerEmail || 'Unknown';
+                const avatarInitial = displayName.charAt(0) || '?';
+                const relationship = (inv.relationship || 'N/A').replace('_', ' ');
+                
+                let actionsHtml = '';
+                if (inv.status === 'pending') {
+                    actionsHtml = `<button class="action-btn cancel" onclick="handleReceiverAction('cancel', '${inv.ownerId}')">Cancel Request</button>`;
+                } else if (inv.status === 'accepted') {
+                    actionsHtml = `<button class="action-btn leave" onclick="event.preventDefault(); event.stopPropagation(); handleReceiverAction('leave', '${inv.ownerId}')">Leave</button>`;
+                }
+                
+                const itemContent = `
+                    <div class="linked-item received" data-owner="${inv.ownerId}" data-status="${inv.status}">
+                        <div class="linked-main">
+                            ${inv.ownerImage 
+                                ? `<img src="${inv.ownerImage}" alt="" class="linked-avatar">`
+                                : `<div class="linked-avatar placeholder">${avatarInitial}</div>`
+                            }
+                            <div class="linked-details">
+                                <span class="linked-name">${escapeHtml(displayName)}</span>
+                                <span class="linked-relationship">You are their: ${escapeHtml(relationship)}</span>
+                            </div>
+                        </div>
+                        <div class="linked-status-actions">
+                            <span class="status-badge ${inv.status}">${inv.status}</span>
+                            <div class="linked-actions">${actionsHtml}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Wrap accepted connections in a link
+                if (inv.status === 'accepted') {
+                    return `<a href="/partner/${inv.ownerId}" class="linked-item-link">${itemContent}</a>`;
+                }
+                return itemContent;
+            }).join('');
+        }
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // Real-time Socket.IO Updates
+        // ============================================
+        // Listen for linkAccountUpdate events dispatched from navbar.ejs
+        window.addEventListener('linkAccountUpdate', function(e) {
+            const data = e.detail;
+            console.log('Link account update received:', data);
+            
+            switch (data.type) {
+                case 'new_request':
+                    // Someone used our invitation code - show notification and refresh data
+                    showToast(`${data.from?.name || 'Someone'} wants to connect as your ${data.from?.relationship || 'partner'}!`, 'success');
+                    refreshLinkAccountData();
+                    break;
+                    
+                case 'request_accepted':
+                    // Our request to someone was accepted
+                    showToast(`${data.by?.name || 'User'} accepted your connection request! 🎉`, 'success');
+                    refreshLinkAccountData();
+                    break;
+                    
+                case 'request_rejected':
+                    // Our request was rejected
+                    showToast('Your connection request was declined.', 'error');
+                    refreshLinkAccountData();
+                    break;
+                    
+                case 'link_revoked':
+                    // Our connection was revoked by the other user
+                    showToast('A connection has been revoked.', 'error');
+                    refreshLinkAccountData();
+                    break;
+                    
+                case 'request_cancelled':
+                    // Someone cancelled their connection request to us
+                    showToast('A connection request was cancelled.', 'info');
+                    refreshLinkAccountData();
+                    break;
+                    
+                case 'partner_left':
+                    // A partner left our connection
+                    showToast(`${data.by?.name || 'A user'} has left the connection.`, 'error');
+                    refreshLinkAccountData();
+                    break;
+                    
+                case 'accepted':
+                    // We accepted a request - update the UI for this association
+                    updateAssociationStatus(data.associationId, 'accepted');
+                    break;
+                    
+                default:
+                    // Unknown update type - refresh data to be safe
+                    console.log('Unknown link account update type:', data.type);
+                    refreshLinkAccountData();
+            }
+        });
+        
+        // Update the status badge and action buttons for a specific association
+        function updateAssociationStatus(associationId, newStatus) {
+            const item = document.querySelector(`.linked-item[data-id="${associationId}"]`);
+            if (!item) return;
+            
+            item.dataset.status = newStatus;
+            
+            const statusBadge = item.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.className = `status-badge ${newStatus}`;
+                statusBadge.textContent = newStatus;
+            }
+            
+            // Update actions based on new status
+            const actionsDiv = item.querySelector('.linked-actions');
+            if (actionsDiv) {
+                if (newStatus === 'accepted') {
+                    actionsDiv.innerHTML = `<button class="action-btn revoke" onclick="handleAction('revoke', '${associationId}')">Revoke</button>`;
+                } else if (newStatus === 'rejected') {
+                    actionsDiv.innerHTML = `<button class="action-btn remove" onclick="handleAction('remove', '${associationId}')">Remove</button>`;
+                }
+            }
         }
     })();
 </script>

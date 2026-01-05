@@ -679,6 +679,7 @@ html {
 
 .toast.success { background-color: #15803d; color: var(--color-text-inverse); }
 .toast.error { background-color: #b91c1c; color: var(--color-text-inverse); }
+.toast.info { background-color: #1d4ed8; color: var(--color-text-inverse); }
 
 @media (max-width: 600px) {
     .linked-item {

@@ -97,7 +97,7 @@
       const data = await resp.json();
       if (data.success) {
         showMsg(`User ${action}d successfully`, 'success');
-        fetchUsers();
+        // No need to call fetchUsers() - socket update will handle it
       } else {
         showMsg(data.error || 'Failed to update user', 'error');
       }
@@ -105,6 +105,30 @@
       showMsg('Network error', 'error');
     }
   };
+
+  // ===== Real-time Socket.IO Updates =====
+  // Listen for admin updates via Socket.IO
+  window.addEventListener('adminUpdate', (e) => {
+    const data = e.detail;
+    if (data.type === 'user-status-change') {
+      // Refresh user list when any user status changes
+      fetchUsers();
+      if (data.user) {
+        showMsg(`User "${data.user.fullName || data.user.email}" ${data.isActive ? 'activated' : 'deactivated'} (updated by another admin)`, 'info');
+      }
+    }
+  });
+  
+  // Set up socket event dispatcher if socket is available
+  if (typeof io !== 'undefined') {
+    // Check if socket already connected via navbar
+    const existingSocket = window.notificationSocket;
+    if (existingSocket) {
+      existingSocket.on('adminUpdate', (data) => {
+        window.dispatchEvent(new CustomEvent('adminUpdate', { detail: data }));
+      });
+    }
+  }
 
   fetchUsers();
 })();

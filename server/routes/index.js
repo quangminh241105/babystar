@@ -54,12 +54,33 @@ function emitLinkAccountUpdate(req, userId, data) {
 router.get('/', async (req, res) => {
   if (req.session && req.session.user) {
       try {
-        // Fetch user data to get pregnancy information
-        const user = await User.findById(req.session.user.id);
+        // Fetch only needed fields with lean() for faster read
+        const user = await User.findById(req.session.user.id)
+          .select('pregnancyProfile')
+          .lean();
         
-        // Get pregnancy week and days until due date
-        const pregnancyWeek = user?.currentPregnancyWeek;
-        const daysUntilDueDate = user?.daysUntilDueDate;
+        // Calculate pregnancy week inline (faster than virtual)
+        let pregnancyWeek = null;
+        let daysUntilDueDate = null;
+        
+        if (user?.pregnancyProfile?.lastMenstrualPeriod) {
+          const lmp = new Date(user.pregnancyProfile.lastMenstrualPeriod);
+          const now = new Date();
+          if (lmp <= now) {
+            const diffDays = Math.floor((now - lmp) / (1000 * 60 * 60 * 24));
+            const weeks = Math.floor(diffDays / 7);
+            const days = diffDays % 7;
+            if (weeks >= 0 && weeks <= 42) {
+              pregnancyWeek = { weeks, days, totalDays: diffDays };
+            }
+          }
+        }
+        
+        if (user?.pregnancyProfile?.dueDate) {
+          const dueDate = new Date(user.pregnancyProfile.dueDate);
+          const diffTime = dueDate - new Date();
+          daysUntilDueDate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        }
         
         res.render('pages/home', { 
           title: 'Home',
@@ -132,6 +153,59 @@ router.get('/link-account', requireAuthRedirect, async (req, res) => {
   } catch (err) {
     console.error('Link account error:', err);
     res.redirect('/');
+  }
+});
+
+// GET /api/link-account/data - API endpoint to get link account data (for real-time updates)
+router.get('/api/link-account/data', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    
+    // Expire old pending associations
+    await user.expirePendingAssociations();
+    
+    // Populate associated users for display
+    await user.populate('associatedUsers.userId', 'firstName lastName email profileImageUrl');
+    
+    // Get invitations where this user is the receiver (others invited them)
+    const receivedInvitations = await User.findAssociationsForUser(req.session.user.id);
+    
+    res.json({
+      success: true,
+      // Associations where this user is the SENDER (others used their code)
+      linkedAccounts: (user.associatedUsers || []).map(account => ({
+        _id: account._id,
+        status: account.status,
+        relationship: account.relationship,
+        customLabel: account.customLabel,
+        userId: account.userId ? {
+          _id: account.userId._id,
+          firstName: account.userId.firstName,
+          lastName: account.userId.lastName,
+          email: account.userId.email,
+          profileImageUrl: account.userId.profileImageUrl
+        } : null
+      })),
+      // Associations where this user is the RECEIVER (they used others' code)
+      receivedInvitations: receivedInvitations.map(u => {
+        const assoc = u.associatedUsers.find(a => a.userId.toString() === req.session.user.id);
+        return {
+          ownerId: u._id,
+          ownerName: u.fullName || u.email,
+          ownerEmail: u.email,
+          ownerImage: u.profileImageUrl,
+          relationship: assoc?.relationship,
+          status: assoc?.status,
+          associationId: assoc?._id
+        };
+      })
+    });
+  } catch (err) {
+    console.error('API link account data error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -385,6 +459,12 @@ router.post('/link-account/cancel/:ownerId', requireAuth, async (req, res) => {
     association.deleteOne();
     await owner.save();
     
+    // Emit link-account update to the owner (the one who received the request)
+    emitLinkAccountUpdate(req, req.params.ownerId, {
+      type: 'request_cancelled',
+      by: { id: req.session.user.id }
+    });
+    
     res.json({ success: true, message: 'Request cancelled' });
   } catch (err) {
     console.error('Cancel request error:', err);
@@ -412,6 +492,16 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
     association.status = 'revoked';
     association.respondedAt = new Date();
     await owner.save();
+    
+    // Get current user's name for notification
+    const currentUser = await User.findById(req.session.user.id);
+    const userName = currentUser?.fullName || currentUser?.email || 'A user';
+    
+    // Emit link-account update to the owner
+    emitLinkAccountUpdate(req, req.params.ownerId, {
+      type: 'partner_left',
+      by: { id: req.session.user.id, name: userName }
+    });
     
     res.json({ success: true, message: 'Left association' });
   } catch (err) {
@@ -485,7 +575,7 @@ router.get('/notifications', requireAuthRedirect, async (req, res) => {
 router.get('/api/notifications', requireAuth, async (req, res) => {
   try {
     const { category, read, limit = 20 } = req.query;
-    const options = { limit: parseInt(limit) };
+    const options = { limit: Math.min(parseInt(limit), 100) }; // Cap at 100 for performance
     
     if (category && category !== 'all') {
       options.category = category;
@@ -494,7 +584,8 @@ router.get('/api/notifications', requireAuth, async (req, res) => {
       options.read = read === 'true';
     }
     
-    const notifications = await Notification.getAll(req.session.user.id, options);
+    // Use lean() for faster read-only queries
+    const notifications = await Notification.getAll(req.session.user.id, { ...options, lean: true });
     
     res.json({ success: true, notifications });
   } catch (err) {
@@ -595,13 +686,15 @@ router.get('/share-records', requireAuthRedirect, async (req, res) => {
   try {
     const userId = req.session.user.id;
     
-    // Fetch weekly reports for the user
+    // Fetch weekly reports with lean() and only needed fields
     const reports = await WeeklyReport.find({
       userId,
       deletedAt: null,
       status: 'complete'
     })
-    .sort({ weekNumber: -1 });
+    .sort({ weekNumber: -1 })
+    .select('weekNumber trimester startDate endDate summary.daysLogged summary.avgEnergyLevel vitalsSummary.avgWeightKg')
+    .lean();
 
     
     res.render('pages/share-report', { 
@@ -916,7 +1009,7 @@ router.get('/api/health-log/today', requireAuth, async (req, res) => {
       userContext: {
         pregnancyWeek,
         trimester,
-        dueDate: user?.pregnancyProfile?.dueDate
+        dueDate
       }
     });
   } catch (err) {
@@ -1382,6 +1475,20 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       mealsCount: log.foodIntake?.length
     });
     console.log('=== PREGNANCY WEEK SAVED:', log.pregnancyWeek, '===');
+    
+    // Emit real-time update to linked partners
+    const io = req.app.get('io');
+    if (io && user?.linkedAccounts?.length > 0) {
+      user.linkedAccounts.forEach(link => {
+        if (link.status === 'accepted') {
+          io.to(`user:${link.userId}`).emit('partnerUpdate', {
+            type: 'health-log-added',
+            partnerId: req.session.user.id,
+            partnerName: user.fullName || user.firstName
+          });
+        }
+      });
+    }
     
     res.json({ success: true, log, message: isComplete ? 'Log saved and marked complete' : 'Log saved' });
   } catch (err) {

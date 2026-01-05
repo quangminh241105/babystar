@@ -338,17 +338,22 @@ const healthLogSchema = new mongoose.Schema({
 });
 
 // ============================================================================
-// INDEXES
+// INDEXES - Optimized for common query patterns
 // ============================================================================
-healthLogSchema.index({ userId: 1, logDate: -1 });
-healthLogSchema.index({ userId: 1, logDate: 1 }, { unique: true }); // One log per day per user
-healthLogSchema.index({ userId: 1, pregnancyWeek: 1 });
-healthLogSchema.index({ userId: 1, 'symptoms.symptom': 1 });
-healthLogSchema.index({ logDate: -1 });
-healthLogSchema.index({ deletedAt: 1 });
-healthLogSchema.index({ sharedWith: 1 });
-// [IMPROVED] Index for finding logs with concerns
-healthLogSchema.index({ 'aiFlags.severity': 1 });
+// Primary lookup: user's logs by date (most common query)
+healthLogSchema.index({ userId: 1, logDate: -1, deletedAt: 1 });
+// Unique constraint with soft delete consideration
+healthLogSchema.index({ userId: 1, logDate: 1, deletedAt: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });
+// For weekly report generation (date range queries)
+healthLogSchema.index({ userId: 1, pregnancyWeek: 1, deletedAt: 1 });
+// Symptom search across user logs
+healthLogSchema.index({ userId: 1, 'symptoms.symptom': 1, logDate: -1 });
+// For shared logs access
+healthLogSchema.index({ sharedWith: 1, logDate: -1 });
+// For AI analysis queue
+healthLogSchema.index({ aiAnalyzed: 1, deletedAt: 1 });
+// TTL for soft-deleted logs (auto-cleanup after 90 days)
+healthLogSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60, partialFilterExpression: { deletedAt: { $ne: null } } });
 
 // ============================================================================
 // VIRTUALS

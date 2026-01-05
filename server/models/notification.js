@@ -148,6 +148,12 @@ const notificationSchema = new mongoose.Schema({
 		id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 	},
 	
+	// Custom metadata for additional context
+	metadata: {
+		type: mongoose.Schema.Types.Mixed,
+		default: {}
+	},
+	
 	// Soft delete
 	deletedAt: { type: Date, default: null }
 

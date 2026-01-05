@@ -38,8 +38,22 @@ async function generateNutritionSuggestions(req, res) {
 			}
 		}
 
-		// Get user data
-		const user = await User.findById(userId);
+		// Parallel fetch: user data and health logs together
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+		const [user, healthLogs] = await Promise.all([
+			User.findById(userId).select('pregnancyProfile name username email currentWeightKg').lean(),
+			HealthLog.find({
+				userId,
+				logDate: { $gte: sevenDaysAgo },
+				deletedAt: null
+			})
+			.sort({ logDate: -1 })
+			.select('foodIntake symptoms energyLevel hydration logDate')
+			.lean()
+		]);
+
 		if (!user) {
 			return res.status(404).json({
 				success: false,
@@ -61,16 +75,6 @@ async function generateNutritionSuggestions(req, res) {
 		const gestationalDays = 280 - Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 		const pregnancyWeek = Math.min(42, Math.max(1, Math.ceil(gestationalDays / 7)));
 		const trimester = pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3;
-
-		// Get recent health logs (last 7 days)
-		const sevenDaysAgo = new Date();
-		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-		const healthLogs = await HealthLog.find({
-			userId,
-			logDate: { $gte: sevenDaysAgo },
-			deletedAt: null
-		}).sort({ logDate: -1 });
 
 		// Generate suggestions
 		const nutritionService = new NutritionSuggestionService();
