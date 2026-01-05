@@ -423,7 +423,12 @@ function calculateContractionsSummary(healthLogs) {
  */
 async function generateWeeklyReportForUser(userId) {
 	try {
-		const user = await User.findById(userId);
+		// Parallel fetch: user and check existing report
+		const [user, existingReport] = await Promise.all([
+			User.findById(userId).select('pregnancyProfile').lean(),
+			WeeklyReport.findOne({ userId, deletedAt: null }).sort({ weekNumber: -1 }).select('weekNumber').lean()
+		]);
+		
 		if (!user) {
 			throw new Error(`User not found: ${userId}`);
 		}
@@ -439,23 +444,20 @@ async function generateWeeklyReportForUser(userId) {
 		const { startDate, endDate } = getWeekDateRange();
 
 		// Check if report already exists for this pregnancy week
-		const existingReport = await WeeklyReport.findOne({
-			userId,
-			weekNumber,
-			deletedAt: null
-		});
-
-		if (existingReport) {
+		if (existingReport && existingReport.weekNumber === weekNumber) {
 			console.log(`Report already exists for user ${userId}, week ${weekNumber}`);
-			return existingReport;
+			return await WeeklyReport.findById(existingReport._id);
 		}
 
-		// Get health logs for the calendar week
+		// Get health logs for the calendar week with lean() and field selection
 		const healthLogs = await HealthLog.find({
 			userId,
 			logDate: { $gte: startDate, $lte: endDate },
 			deletedAt: null
-		}).sort({ logDate: 1 });
+		})
+		.sort({ logDate: 1 })
+		.select('symptoms energyLevel stressLevel moodLog bloodPressure weightKg heartRateBpm bloodSugar fetalMovement exercises sleep hoursSleept hydration caffeineIntakeMg foodIntake completionPercentage aiFlags logDate')
+		.lean();
 
 		const healthLogIds = healthLogs.map(log => log._id);
 
@@ -543,13 +545,15 @@ async function generateWeeklyReportsForAllUsers() {
 	try {
 		console.log('Starting weekly report generation for all users...');
 		
-		// Find users with active pregnancy (dueDate is in pregnancyProfile)
+		// Find users with active pregnancy with lean query and only needed fields
 		const pregnantUsers = await User.find({
-			role: 'user', // Role is 'user', not 'pregnant'
+			role: 'user',
 			isActive: { $ne: false },
 			'pregnancyProfile.dueDate': { $exists: true, $ne: null },
 			'pregnancyProfile.status': 'active'
-		});
+		})
+		.select('_id pregnancyProfile.dueDate')
+		.lean();
 
 		console.log(`Found ${pregnantUsers.length} pregnant users`);
 
@@ -558,19 +562,28 @@ async function generateWeeklyReportsForAllUsers() {
 			failed: []
 		};
 
-		for (const user of pregnantUsers) {
-			try {
-				const report = await generateWeeklyReportForUser(user._id);
-				results.success.push({
-					userId: user._id,
-					weekNumber: report.weekNumber
-				});
-			} catch (error) {
-				results.failed.push({
-					userId: user._id,
-					error: error.message
-				});
-			}
+		// Process in batches of 5 for better performance without overwhelming the system
+		const batchSize = 5;
+		for (let i = 0; i < pregnantUsers.length; i += batchSize) {
+			const batch = pregnantUsers.slice(i, i + batchSize);
+			const batchResults = await Promise.allSettled(
+				batch.map(user => generateWeeklyReportForUser(user._id))
+			);
+			
+			batchResults.forEach((result, idx) => {
+				const user = batch[idx];
+				if (result.status === 'fulfilled') {
+					results.success.push({
+						userId: user._id,
+						weekNumber: result.value?.weekNumber
+					});
+				} else {
+					results.failed.push({
+						userId: user._id,
+						error: result.reason?.message || 'Unknown error'
+					});
+				}
+			});
 		}
 
 		console.log(`Weekly report generation complete. Success: ${results.success.length}, Failed: ${results.failed.length}`);

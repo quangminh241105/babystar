@@ -228,10 +228,17 @@ const conversationSchema = new mongoose.Schema({
 	minimize: false
 });
 
-// Indexes
-conversationSchema.index({ userId: 1, status: 1 });
-conversationSchema.index({ userId: 1, lastMessageAt: -1 });
-conversationSchema.index({ deletedAt: 1 });
+// ============================================================================
+// INDEXES - Optimized for common query patterns
+// ============================================================================
+// Primary query pattern: user's conversations sorted by recent activity
+conversationSchema.index({ userId: 1, deletedAt: 1, lastMessageAt: -1 });
+// For status filtering
+conversationSchema.index({ userId: 1, status: 1, deletedAt: 1 });
+// For bookmarked/pinned queries
+conversationSchema.index({ userId: 1, isBookmarked: 1, deletedAt: 1 });
+// TTL index for auto-cleanup of soft-deleted conversations after 30 days
+conversationSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60, partialFilterExpression: { deletedAt: { $ne: null } } });
 
 // ============================================================================
 // VIRTUALS

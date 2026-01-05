@@ -5,17 +5,53 @@ const csv = require('csv-parser');
 /**
  * Load and parse nutrition dataset from CSV files
  * This creates the knowledge base for RAG (Retrieval-Augmented Generation)
+ * Uses singleton pattern for caching loaded data across requests
  */
+
+// Module-level cache for singleton pattern
+let cachedInstance = null;
+let isLoading = false;
+let loadPromise = null;
+
 class NutritionDataLoader {
 	constructor() {
 		this.nutritionData = [];
 		this.datasetPath = path.join(__dirname, '../../dataset/nutrition-dataset');
+		// Precomputed indexes for faster lookups
+		this._indexByNutrient = {};
+		this._searchIndex = {};
+	}
+
+	/**
+	 * Get singleton instance with loaded data
+	 */
+	static async getInstance() {
+		if (cachedInstance && cachedInstance.nutritionData.length > 0) {
+			return cachedInstance;
+		}
+		
+		if (isLoading && loadPromise) {
+			await loadPromise;
+			return cachedInstance;
+		}
+		
+		cachedInstance = new NutritionDataLoader();
+		isLoading = true;
+		loadPromise = cachedInstance.loadNutritionData();
+		await loadPromise;
+		isLoading = false;
+		return cachedInstance;
 	}
 
 	/**
 	 * Load all nutrition CSV files
 	 */
 	async loadNutritionData() {
+		// Return cached data if already loaded
+		if (this.nutritionData.length > 0) {
+			return this.nutritionData;
+		}
+		
 		try {
 			const files = [
 				'FOOD-DATA-GROUP1.csv',
@@ -25,17 +61,44 @@ class NutritionDataLoader {
 				'FOOD-DATA-GROUP5.csv'
 			];
 
-			for (const file of files) {
+			// Load all files in parallel for faster startup
+			const loadPromises = files.map(file => {
 				const filePath = path.join(this.datasetPath, file);
-				const data = await this.parseCSV(filePath);
-				this.nutritionData.push(...data);
-			}
+				return this.parseCSV(filePath);
+			});
+			
+			const results = await Promise.all(loadPromises);
+			this.nutritionData = results.flat();
+			
+			// Build indexes for faster lookups
+			this._buildIndexes();
 
 			console.log(`✅ Loaded ${this.nutritionData.length} food items from nutrition dataset`);
 			return this.nutritionData;
 		} catch (error) {
 			console.error('❌ Error loading nutrition data:', error);
 			throw error;
+		}
+	}
+	
+	/**
+	 * Build indexes for faster nutrient lookups
+	 */
+	_buildIndexes() {
+		const nutrients = ['iron', 'calcium', 'protein', 'folicAcid', 'fiber', 'omega3'];
+		
+		for (const nutrient of nutrients) {
+			this._indexByNutrient[nutrient] = [...this.nutritionData]
+				.filter(food => food[nutrient] > 0)
+				.sort((a, b) => b[nutrient] - a[nutrient]);
+		}
+		
+		// Build search index (lowercase food names)
+		for (const food of this.nutritionData) {
+			const key = food.food.toLowerCase();
+			if (!this._searchIndex[key]) {
+				this._searchIndex[key] = food;
+			}
 		}
 	}
 
@@ -89,12 +152,17 @@ class NutritionDataLoader {
 	}
 
 	/**
-	 * Get foods rich in specific nutrient
+	 * Get foods rich in specific nutrient (uses precomputed index)
 	 * @param {string} nutrient - The nutrient to search for (e.g., 'iron', 'calcium', 'protein')
 	 * @param {number} limit - Maximum number of results
 	 * @returns {Array} Array of food objects sorted by nutrient content
 	 */
 	getFoodsRichIn(nutrient, limit = 10) {
+		// Use precomputed index if available
+		if (this._indexByNutrient[nutrient]) {
+			return this._indexByNutrient[nutrient].slice(0, limit);
+		}
+		
 		if (!this.nutritionData.length) {
 			console.warn('⚠️ Nutrition data not loaded. Call loadNutritionData() first.');
 			return [];

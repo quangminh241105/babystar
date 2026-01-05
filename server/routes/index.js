@@ -53,12 +53,33 @@ function emitLinkAccountUpdate(req, userId, data) {
 router.get('/', async (req, res) => {
   if (req.session && req.session.user) {
       try {
-        // Fetch user data to get pregnancy information
-        const user = await User.findById(req.session.user.id);
+        // Fetch only needed fields with lean() for faster read
+        const user = await User.findById(req.session.user.id)
+          .select('pregnancyProfile')
+          .lean();
         
-        // Get pregnancy week and days until due date
-        const pregnancyWeek = user?.currentPregnancyWeek;
-        const daysUntilDueDate = user?.daysUntilDueDate;
+        // Calculate pregnancy week inline (faster than virtual)
+        let pregnancyWeek = null;
+        let daysUntilDueDate = null;
+        
+        if (user?.pregnancyProfile?.lastMenstrualPeriod) {
+          const lmp = new Date(user.pregnancyProfile.lastMenstrualPeriod);
+          const now = new Date();
+          if (lmp <= now) {
+            const diffDays = Math.floor((now - lmp) / (1000 * 60 * 60 * 24));
+            const weeks = Math.floor(diffDays / 7);
+            const days = diffDays % 7;
+            if (weeks >= 0 && weeks <= 42) {
+              pregnancyWeek = { weeks, days, totalDays: diffDays };
+            }
+          }
+        }
+        
+        if (user?.pregnancyProfile?.dueDate) {
+          const dueDate = new Date(user.pregnancyProfile.dueDate);
+          const diffTime = dueDate - new Date();
+          daysUntilDueDate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        }
         
         res.render('pages/home', { 
           title: 'Home',
@@ -485,7 +506,7 @@ router.get('/notifications', requireAuthRedirect, async (req, res) => {
 router.get('/api/notifications', requireAuth, async (req, res) => {
   try {
     const { category, read, limit = 20 } = req.query;
-    const options = { limit: parseInt(limit) };
+    const options = { limit: Math.min(parseInt(limit), 100) }; // Cap at 100 for performance
     
     if (category && category !== 'all') {
       options.category = category;
@@ -494,7 +515,8 @@ router.get('/api/notifications', requireAuth, async (req, res) => {
       options.read = read === 'true';
     }
     
-    const notifications = await Notification.getAll(req.session.user.id, options);
+    // Use lean() for faster read-only queries
+    const notifications = await Notification.getAll(req.session.user.id, { ...options, lean: true });
     
     res.json({ success: true, notifications });
   } catch (err) {
@@ -595,13 +617,15 @@ router.get('/share-records', requireAuthRedirect, async (req, res) => {
   try {
     const userId = req.session.user.id;
     
-    // Fetch weekly reports for the user
+    // Fetch weekly reports with lean() and only needed fields
     const reports = await WeeklyReport.find({
       userId,
       deletedAt: null,
       status: 'complete'
     })
-    .sort({ weekNumber: -1 });
+    .sort({ weekNumber: -1 })
+    .select('weekNumber trimester startDate endDate summary.daysLogged summary.avgEnergyLevel vitalsSummary.avgWeightKg')
+    .lean();
 
     
     res.render('pages/share-report', { 
@@ -883,9 +907,28 @@ router.post('/past-health-records/:id/delete', requireAuth, async (req, res) => 
 // SPECIFIC ROUTES FIRST
 router.get('/api/health-log/today', requireAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.session.user.id);
-    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
-    const trimester = user?.currentTrimester || null;
+    // Fetch only needed user fields with lean()
+    const user = await User.findById(req.session.user.id)
+      .select('pregnancyProfile')
+      .lean();
+    
+    // Calculate pregnancy info inline for performance
+    let pregnancyWeek = null;
+    let trimester = null;
+    let dueDate = user?.pregnancyProfile?.dueDate || null;
+    
+    if (user?.pregnancyProfile?.lastMenstrualPeriod) {
+      const lmp = new Date(user.pregnancyProfile.lastMenstrualPeriod);
+      const now = new Date();
+      if (lmp <= now) {
+        const diffDays = Math.floor((now - lmp) / (1000 * 60 * 60 * 24));
+        const weeks = Math.floor(diffDays / 7);
+        if (weeks >= 0 && weeks <= 42) {
+          pregnancyWeek = weeks;
+          trimester = weeks <= 12 ? 1 : weeks <= 27 ? 2 : 3;
+        }
+      }
+    }
     
     const log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
     
@@ -895,7 +938,7 @@ router.get('/api/health-log/today', requireAuth, async (req, res) => {
       userContext: {
         pregnancyWeek,
         trimester,
-        dueDate: user?.pregnancyProfile?.dueDate
+        dueDate
       }
     });
   } catch (err) {
