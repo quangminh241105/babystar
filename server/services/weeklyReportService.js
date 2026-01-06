@@ -7,21 +7,28 @@ const { ExerciseSuggestionService } = require('../personalized_suggestion/exerci
 
 /**
  * Calculate the start and end dates for the current week (Monday to Sunday)
+ * Uses UTC to avoid timezone issues when storing/querying dates
  */
 function getWeekDateRange(date = new Date()) {
 	const current = new Date(date);
-	const dayOfWeek = current.getDay();
+	const dayOfWeek = current.getUTCDay(); // Use UTC day
 	
-	// Calculate Monday (start of week)
-	const monday = new Date(current);
+	// Calculate Monday (start of week) in UTC
+	const monday = new Date(Date.UTC(
+		current.getUTCFullYear(),
+		current.getUTCMonth(),
+		current.getUTCDate()
+	));
 	const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-	monday.setDate(current.getDate() - daysToMonday);
-	monday.setHours(0, 0, 0, 0);
+	monday.setUTCDate(monday.getUTCDate() - daysToMonday);
 	
-	// Calculate Sunday (end of week)
-	const sunday = new Date(monday);
-	sunday.setDate(monday.getDate() + 6);
-	sunday.setHours(23, 59, 59, 999);
+	// Calculate Sunday (end of week) in UTC
+	const sunday = new Date(Date.UTC(
+		monday.getUTCFullYear(),
+		monday.getUTCMonth(),
+		monday.getUTCDate() + 6,
+		23, 59, 59, 999
+	));
 	
 	return { startDate: monday, endDate: sunday };
 }

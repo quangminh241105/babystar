@@ -19,10 +19,10 @@ function initializeWeeklyReportScheduler() {
 		}
 	}, {
 		scheduled: true,
-		timezone: 'Asia/Ho_Chi_Minh'
+		timezone: 'UTC'
 	});
 
-	console.log('Weekly report scheduler initialized - runs every Sunday at 23:59');
+	console.log('Weekly report scheduler initialized - runs every Sunday at 23:59 UTC');
 }
 
 module.exports = {

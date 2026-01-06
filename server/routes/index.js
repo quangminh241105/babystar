@@ -1513,16 +1513,23 @@ router.delete('/api/health-log/:id', requireAuth, async (req, res) => {
 // Helper function to get week date range
 function getWeekDateRange(weekOffset = 0) {
   const now = new Date();
-  const currentDay = now.getDay(); // 0 = Sunday
+  const currentDay = now.getUTCDay(); // Use UTC instead of local timezone
   const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
   
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() + mondayOffset - (weekOffset * 7));
-  startOfWeek.setHours(0, 0, 0, 0);
+  // Use UTC dates to match how reports are stored in database
+  const startOfWeek = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + mondayOffset - (weekOffset * 7),
+    0, 0, 0, 0
+  ));
   
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
+  const endOfWeek = new Date(Date.UTC(
+    startOfWeek.getUTCFullYear(),
+    startOfWeek.getUTCMonth(),
+    startOfWeek.getUTCDate() + 6,
+    23, 59, 59, 999
+  ));
   
   return { startDate: startOfWeek, endDate: endOfWeek };
 }
@@ -1786,10 +1793,22 @@ router.get('/api/weekly-report/week/:offset', requireAuth, async (req, res) => {
   try {
     const offset = parseInt(req.params.offset) || 0;
     
+    // Check if partnerId is provided, otherwise use session user ID
+    const targetUserId = req.query.partnerId || req.session.user.id;
+    
     const { startDate, endDate } = getWeekDateRange(offset);
     
+    // DEBUG: Log the calculated date range
+    console.log(`[WEEKLY REPORT QUERY] Offset: ${offset}`);
+    console.log(`[WEEKLY REPORT QUERY] Target User ID: ${targetUserId}`);
+    console.log(`[WEEKLY REPORT QUERY] Looking for startDate: ${startDate.toISOString()}`);
+    console.log(`[WEEKLY REPORT QUERY] Looking for endDate: ${endDate.toISOString()}`);
+    
+    
+    console.log(`[WEEKLY REPORT QUERY] Query range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    
     const report = await WeeklyReport.findOne({
-      userId: req.session.user.id,
+      userId: targetUserId,
       startDate: { $gte: startDate, $lte: startDate },
       endDate: { $gte: endDate, $lte: endDate },
       deletedAt: null,
@@ -1797,12 +1816,19 @@ router.get('/api/weekly-report/week/:offset', requireAuth, async (req, res) => {
     });
     
     if (!report) {
+      console.log(`[WEEKLY REPORT QUERY] No report found`);
       return res.status(404).json({
         success: false,
-        message: 'No completed weekly report found for the requested week (offset: ${offset})',
-        error: 'Weekly reports are generated at the end of each week on Sunday.'
+        message: `No completed weekly report found for the requested week (offset: ${offset})`,
+        error: 'Weekly reports are generated at the end of each week on Sunday.',
+        debug: {
+          searchedStartDate: startDate.toISOString(),
+          searchedEndDate: endDate.toISOString()
+        }
       });
     }
+    
+    console.log(`[WEEKLY REPORT QUERY] Found report with startDate: ${report.startDate.toISOString()}`);
     
     res.json({
       success: true,
@@ -1861,9 +1887,12 @@ router.get('/api/weekly-report/trends', requireAuth, async (req, res) => {
   try {
     const weeksToAnalyze = parseInt(req.query.weeks) || 2;
     
+    // Check if partnerId is provided, otherwise use session user ID
+    const targetUserId = req.query.partnerId || req.session.user.id;
+
     // Fetch completed weekly reports, sorted by week number descending, limit to requested weeks
     const reports = await WeeklyReport.find({
-      userId: req.session.user.id,
+      userId: targetUserId,
       deletedAt: null,
       status: 'complete'
     })
@@ -1920,6 +1949,7 @@ router.get('/api/nearby-healthcare', async (req, res) => {
     
     if (!response.ok) {
       throw new Error(`Geoapify API error: ${response.status}`);
+   
     }
 
     const data = await response.json();
