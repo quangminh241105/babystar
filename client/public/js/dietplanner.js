@@ -2,42 +2,30 @@
   // DOM Elements
   const loadingState = document.getElementById('loadingState');
   const errorState = document.getElementById('errorState');
-  const partnerErrorState = document.getElementById('partnerErrorState');
   const mainContent = document.getElementById('mainContent');
   const errorTitle = document.getElementById('errorTitle');
   const errorMessage = document.getElementById('errorMessage');
-  let isViewingPartner = false;
-  let currentViewUserId = null;
 
   // Show loading
   function showLoading() {
     loadingState.classList.remove('hidden');
     errorState.classList.add('hidden');
-    if (partnerErrorState) partnerErrorState.classList.add('hidden');
     mainContent.classList.add('hidden');
   }
 
   // Show error
-  function showError(title, message, viewingPartner = false) {
+  function showError(title, message) {
     loadingState.classList.add('hidden');
+    errorState.classList.remove('hidden');
     mainContent.classList.add('hidden');
-    
-    if (viewingPartner && partnerErrorState) {
-      partnerErrorState.classList.remove('hidden');
-      errorState.classList.add('hidden');
-    } else {
-      errorState.classList.remove('hidden');
-      if (partnerErrorState) partnerErrorState.classList.add('hidden');
-      errorTitle.textContent = title;
-      errorMessage.textContent = message;
-    }
+    errorTitle.textContent = title;
+    errorMessage.textContent = message;
   }
 
   // Show main content
   function showMainContent() {
     loadingState.classList.add('hidden');
     errorState.classList.add('hidden');
-    if (partnerErrorState) partnerErrorState.classList.add('hidden');
     mainContent.classList.remove('hidden');
   }
 
@@ -46,46 +34,23 @@
     showLoading();
     
     try {
-      // Get partnerId from URL query params
-      const urlParams = new URLSearchParams(window.location.search);
-      const partnerId = urlParams.get('partnerId');
-      
-      let targetUserId = partnerId || null;
-      isViewingPartner = !!partnerId;
-      
-      if (partnerId) {
-        currentViewUserId = partnerId;
-        console.log(`👥 Viewing partner's nutrition plan (Partner ID: ${partnerId})`);
-      } else {
-        console.log('👤 Viewing own nutrition plan');
-      }
-      
-      // Build API URL with optional userId parameter
-      const apiUrl = targetUserId 
-        ? `/api/nutrition/current?userId=${targetUserId}` 
-        : '/api/nutrition/current';
-      
-      const response = await fetch(apiUrl);
+      const response = await fetch('/api/nutrition/current');
       const data = await response.json();
 
       if (!response.ok) {
         if (response.status === 400 && data.message?.includes('due date')) {
-          showError('Due Date Not Set', 'Please update your profile with your due date to generate a personalized nutrition plan.', isViewingPartner);
-          return;
-        }
-        if (response.status === 404 && isViewingPartner) {
-          showError('', '', true);
+          showError('Due Date Not Set', 'Please update your profile with your due date to generate a personalized nutrition plan.');
           return;
         }
         throw new Error(data.message || 'Failed to load nutrition plan');
       }
 
       if (data.success && data.data) {
-        renderNutritionPlan(data.data, isViewingPartner);
+        renderNutritionPlan(data.data);
         showMainContent();
         
-        // Show message if auto-generated (only for own plan)
-        if (!data.fromCache && !isViewingPartner) {
+        // Show message if auto-generated
+        if (!data.fromCache) {
           showSuccessMessage('New nutrition plan generated for this week!');
         }
       } else {
@@ -93,7 +58,7 @@
       }
     } catch (error) {
       console.error('Error loading nutrition plan:', error);
-      showError('Unable to Load Nutrition Plan', error.message || 'Please try again or contact support.', isViewingPartner);
+      showError('Unable to Load Nutrition Plan', error.message || 'Please try again or contact support.');
     }
   }
 
@@ -145,21 +110,17 @@
   }
 
   // Render the nutrition plan
-  function renderNutritionPlan(planData, viewingPartner = false) {
+  function renderNutritionPlan(planData) {
     // Update AI badge description
     const aiBadgeDesc = document.getElementById('aiBadgeDescription');
     if (planData.pregnancyWeek) {
-      aiBadgeDesc.textContent = viewingPartner 
-        ? `This meal plan is tailored to week ${planData.pregnancyWeek} of your partner's pregnancy.`
-        : `This meal plan is automatically tailored to week ${planData.pregnancyWeek} of your pregnancy, taking into account your logged symptoms and nutritional needs.`;
+      aiBadgeDesc.textContent = `This meal plan is automatically tailored to week ${planData.pregnancyWeek} of your pregnancy, taking into account your logged symptoms and nutritional needs.`;
     }
 
     // Update page subtitle
     const pageSubtitle = document.getElementById('pageSubtitle');
     if (planData.pregnancyWeek) {
-      pageSubtitle.textContent = viewingPartner 
-        ? `Partner's nutrition guide for week ${planData.pregnancyWeek}`
-        : `AI-customized nutrition guide for week ${planData.pregnancyWeek}`;
+      pageSubtitle.textContent = `AI-customized nutrition guide for week ${planData.pregnancyWeek}`;
     }
 
     // Render daily targets
