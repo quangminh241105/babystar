@@ -21,6 +21,23 @@ function parseDuration(value) {
 }
 
 /**
+ * Normalize intensity values to match schema enum ['low', 'moderate', 'high']
+ */
+function normalizeIntensity(value) {
+	if (!value) return 'moderate';
+	
+	const str = String(value).toLowerCase().trim();
+	
+	// Map variations to valid enum values
+	if (str.includes('light') || str === 'low') return 'low';
+	if (str.includes('moderate') || str === 'medium') return 'moderate';
+	if (str.includes('high') || str === 'intense' || str === 'vigorous') return 'high';
+	
+	// Default to moderate if unrecognized
+	return 'moderate';
+}
+
+/**
  * Generate exercise suggestions for authenticated user
  */
 exports.generateExerciseSuggestions = async (req, res) => {
@@ -116,7 +133,7 @@ exports.generateExerciseSuggestions = async (req, res) => {
 				name: ex.name || ex.exercise || 'Unnamed Exercise',
 				type: ex.type || 'general',
 				durationMinutes: parseDuration(ex.durationMinutes || ex.duration),
-				intensity: ex.intensity || 'moderate',
+				intensity: normalizeIntensity(ex.intensity),
 				targetAreas: ex.targetAreas || [],
 				instructions: ex.instructions || '',
 				modifications: ex.modifications || '',
@@ -323,7 +340,7 @@ exports.getCurrentExercisePlan = async (req, res) => {
 				name: ex.name || ex.exercise || 'Unnamed Exercise',
 				type: ex.type || 'general',
 				durationMinutes: parseDuration(ex.durationMinutes || ex.duration),
-				intensity: ex.intensity || 'moderate',
+				intensity: normalizeIntensity(ex.intensity),
 				targetAreas: ex.targetAreas || [],
 				instructions: ex.instructions || '',
 				modifications: ex.modifications || '',
