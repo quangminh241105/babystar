@@ -76,13 +76,27 @@ async function generateNutritionSuggestions(req, res) {
 		const pregnancyWeek = Math.min(42, Math.max(1, Math.ceil(gestationalDays / 7)));
 		const trimester = pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3;
 
-		// Generate suggestions
+		// Get recent health logs (last 7 days)
+		// const sevenDaysAgo = new Date();
+		// sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+		// const healthLogs = await HealthLog.find({
+		// 	userId,
+		// 	logDate: { $gte: sevenDaysAgo },
+		// 	deletedAt: null
+		// }).sort({ logDate: -1 });
+
+		// Analyze nutrition intake BEFORE AI generation
 		const nutritionService = new NutritionSuggestionService();
+		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		
+		// Generate suggestions with intake analysis context
 		const suggestions = await nutritionService.generateNutritionSuggestions({
 			userId,
 			pregnancyWeek,
 			trimester,
 			healthLogs,
+			healthSummary,
 			dueDate,
 			userProfile: {
 				name: user.name || user.username,
@@ -90,8 +104,7 @@ async function generateNutritionSuggestions(req, res) {
 			}
 		});
 
-		// Analyze nutrition intake
-		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		// Analyze intake against generated targets
 		const intakeAnalysis = nutritionService.analyzeNutritionIntake(
 			healthSummary,
 			suggestions.dailyTargets || {}
@@ -167,13 +180,15 @@ function transformWeeklyMealsForDB(dailyMealRecommendations) {
 				reason: meal.reason || '',
 				keyNutrients: meal.keyNutrients || [],
 				alternatives: meal.alternatives || [],
-				// Add detailed nutrients
-				proteinGrams: nutrients.proteinGrams || meal.proteinGrams || 0,
-				calciumMg: nutrients.calciumMg || meal.calciumMg || 0,
-				ironMg: nutrients.ironMg || meal.ironMg || 0,
-				folicAcidMcg: nutrients.folicAcidMcg || meal.folicAcidMcg || 0,
-				omega3Grams: nutrients.omega3Grams || meal.omega3Grams || 0,
-				fiberGrams: nutrients.fiberGrams || meal.fiberGrams || 0
+				// Add detailed nutrients in nutritionInfo object (matches schema)
+				nutritionInfo: {
+					proteinGrams: nutrients.proteinGrams || meal.proteinGrams || 0,
+					calciumMg: nutrients.calciumMg || meal.calciumMg || 0,
+					ironMg: nutrients.ironMg || meal.ironMg || 0,
+					folicAcidMcg: nutrients.folicAcidMcg || meal.folicAcidMcg || 0,
+					omega3Grams: nutrients.omega3Grams || meal.omega3Grams || 0,
+					fiberGrams: nutrients.fiberGrams || meal.fiberGrams || 0
+				}
 			};
 		};
 
@@ -189,26 +204,28 @@ function transformWeeklyMealsForDB(dailyMealRecommendations) {
 				reason: snack.reason || '',
 				keyNutrients: snack.keyNutrients || [],
 				alternatives: snack.alternatives || [],
-				// Add detailed nutrients
-				proteinGrams: nutrients.proteinGrams || snack.proteinGrams || 0,
-				calciumMg: nutrients.calciumMg || snack.calciumMg || 0,
-				ironMg: nutrients.ironMg || snack.ironMg || 0,
-				folicAcidMcg: nutrients.folicAcidMcg || snack.folicAcidMcg || 0,
-				omega3Grams: nutrients.omega3Grams || snack.omega3Grams || 0,
-				fiberGrams: nutrients.fiberGrams || snack.fiberGrams || 0
+				// Add detailed nutrients in nutritionInfo object (matches schema)
+				nutritionInfo: {
+					proteinGrams: nutrients.proteinGrams || snack.proteinGrams || 0,
+					calciumMg: nutrients.calciumMg || snack.calciumMg || 0,
+					ironMg: nutrients.ironMg || snack.ironMg || 0,
+					folicAcidMcg: nutrients.folicAcidMcg || snack.folicAcidMcg || 0,
+					omega3Grams: nutrients.omega3Grams || snack.omega3Grams || 0,
+					fiberGrams: nutrients.fiberGrams || snack.fiberGrams || 0
+				}
 			};
 		});
 
-		// Calculate daily totals
+		// Calculate daily totals from nutritionInfo
 		const allMeals = [...breakfast, ...lunch, ...dinner, ...snacks];
 		const dailyTotals = {
 			calories: allMeals.reduce((sum, m) => sum + (m?.calories || 0), 0),
-			proteinGrams: allMeals.reduce((sum, m) => sum + (m?.proteinGrams || 0), 0),
-			calciumMg: allMeals.reduce((sum, m) => sum + (m?.calciumMg || 0), 0),
-			ironMg: allMeals.reduce((sum, m) => sum + (m?.ironMg || 0), 0),
-			folicAcidMcg: allMeals.reduce((sum, m) => sum + (m?.folicAcidMcg || 0), 0),
-			omega3Grams: allMeals.reduce((sum, m) => sum + (m?.omega3Grams || 0), 0),
-			fiberGrams: allMeals.reduce((sum, m) => sum + (m?.fiberGrams || 0), 0)
+			proteinGrams: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.proteinGrams || 0), 0),
+			calciumMg: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.calciumMg || 0), 0),
+			ironMg: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.ironMg || 0), 0),
+			folicAcidMcg: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.folicAcidMcg || 0), 0),
+			omega3Grams: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.omega3Grams || 0), 0),
+			fiberGrams: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.fiberGrams || 0), 0)
 		};
 
 		return {
@@ -226,7 +243,14 @@ function transformWeeklyMealsForDB(dailyMealRecommendations) {
  * Transform nutrient focus for database storage
  */
 function transformNutrientFocusForDB(suggestions) {
-	const nutrientFocusArray = suggestions.nutrientFocus || [];
+	let nutrientFocusArray = suggestions.nutrientFocus || [];
+	
+	// Ensure nutrientFocus is an array
+	if (!Array.isArray(nutrientFocusArray)) {
+		console.warn('⚠️ nutrientFocus is not an array:', typeof nutrientFocusArray);
+		nutrientFocusArray = [];
+	}
+	
 	return nutrientFocusArray.map(nutrient => {
 		const recommended = (suggestions.recommendedFoods || []).find(
 			item => item.nutrient === nutrient
@@ -353,13 +377,17 @@ async function getCurrentDietPlan(req, res) {
 			deletedAt: null
 		}).sort({ logDate: -1 });
 
-		// Generate suggestions
+		// Analyze nutrition intake BEFORE AI generation
 		const nutritionService = new NutritionSuggestionService();
+		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		
+		// Generate suggestions with intake analysis context
 		const suggestions = await nutritionService.generateNutritionSuggestions({
 			userId: targetUserId,
 			pregnancyWeek,
 			trimester,
 			healthLogs,
+			healthSummary,
 			dueDate,
 			userProfile: {
 				name: user.name || user.username,
@@ -367,8 +395,7 @@ async function getCurrentDietPlan(req, res) {
 			}
 		});
 
-		// Analyze nutrition intake
-		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		// Analyze intake against generated targets
 		const intakeAnalysis = nutritionService.analyzeNutritionIntake(
 			healthSummary,
 			suggestions.dailyTargets || {}
