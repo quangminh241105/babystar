@@ -234,6 +234,10 @@
   let currentWeekOffset = initialOffset;
   let charts = {};
   
+  // Check if partnerId is in URL query parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const partnerId = urlParams.get('partnerId');
+  
   // ==================== DOM ELEMENTS ====================
   const loadingState = document.getElementById('loadingState');
   const noDataState = document.getElementById('noDataState');
@@ -313,7 +317,15 @@
   function formatDateRange(start, end) {
     const s = new Date(start);
     const e = new Date(end);
-    return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    
+    // Use UTC methods to prevent timezone conversion issues
+    const startMonth = s.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+    const startDay = s.getUTCDate();
+    const endMonth = e.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+    const endDay = e.getUTCDate();
+    const endYear = e.getUTCFullYear();
+    
+    return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${endYear}`;
   }
 
   function getTrimesterLabel(t) {
@@ -595,7 +607,12 @@
 
   async function renderTrends() {
     try {
-      const resp = await fetch('/api/weekly-report/trends?weeks=2', { credentials: 'include' });
+      let apiUrl = '/api/weekly-report/trends?weeks=2';
+      if (partnerId) {
+        apiUrl += `&partnerId=${partnerId}`;
+      }
+      
+      const resp = await fetch(apiUrl, { credentials: 'include' });
       const result = await resp.json();
       if (result.success && result.trends && result.trends.length > 0) {
         const labels = result.trends.map(t => `Week ${t.weekNumber}`);
@@ -740,7 +757,12 @@
     reportContent.style.display = 'none';
 
     try {
-      const resp = await fetch(`/api/weekly-report/week/${weekOffset}`, { credentials: 'include' });
+      let apiUrl = `/api/weekly-report/week/${weekOffset}`;
+      if (partnerId) {
+        apiUrl += `?partnerId=${partnerId}`;
+      }
+      
+      const resp = await fetch(apiUrl, { credentials: 'include' });
       const result = await resp.json();
 
       loadingState.style.display = 'none';

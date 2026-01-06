@@ -8,6 +8,16 @@
 </head>
 <body>
   <%
+    // Helper function for UTC date formatting in EJS (server-side)
+    function formatDateUTC(dateStr) {
+      if (!dateStr) return 'N/A';
+      const date = new Date(dateStr);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
     // Helper function to format sleep quality
     const formatSleepQuality = (quality) => {
       if (!quality) return 'N/A';
@@ -114,7 +124,7 @@
               </svg>
               <span>Start Date</span>
             </div>
-            <div class="pdf-info-value"><%= report.startDate ? new Date(report.startDate).toISOString().split('T')[0] : 'N/A' %></div>
+            <div class="pdf-info-value"><%= formatDateUTC(report.startDate) %></div>
           </div>
           <div class="pdf-info-item">
             <div class="pdf-info-label">
@@ -126,7 +136,7 @@
               </svg>
               <span>End Date</span>
             </div>
-            <div class="pdf-info-value"><%= report.endDate ? new Date(report.endDate).toISOString().split('T')[0] : 'N/A' %></div>
+            <div class="pdf-info-value"><%= formatDateUTC(report.endDate) %></div>
           </div>
         </div>
       </section>

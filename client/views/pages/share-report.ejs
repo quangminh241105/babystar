@@ -1,3 +1,15 @@
+<% 
+  // Helper function for UTC date formatting in EJS (server-side)
+  function formatDateUTC(dateStr) {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+%>
+
 <link rel="stylesheet" href="/css/share-report.css">
 
 <div class="page-container">
@@ -31,7 +43,7 @@
                         <dl class="report-meta">
                           <div>
                             <dt>Date</dt>
-                            <dd><%= new Date(report.startDate).toISOString().split('T')[0] %> - <%= new Date(report.endDate).toISOString().split('T')[0] %></dd>
+                            <dd><%= formatDateUTC(report.startDate) %> - <%= formatDateUTC(report.endDate) %></dd>
                           </div>
                           <div>
                             <dt>Report ID</dt>
@@ -191,9 +203,13 @@
     
     if (!report || !previewContent) return;
     
-    // Helper function to format date
+    // Helper function to format date - USE UTC to match database storage
     const formatDate = (dateStr) => {
-      return new Date(dateStr).toISOString().split('T')[0];
+      const date = new Date(dateStr);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     };
     
     // Helper function to format mood from dominantMoods array

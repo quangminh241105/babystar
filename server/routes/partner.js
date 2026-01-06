@@ -13,9 +13,12 @@ router.get('/weekly-report', async (req, res) => {
   
   try {
     const partner = await User.findById(partnerId);
+    if (!partner) {
+        return res.redirect('/link-account');
+      }
     
-    res.render('pages/partner-weekly-report', {
-      title: 'Weekly Report',
+    res.render('pages/weekly-report', {
+      title: 'Partner Weekly Report',
       partnerId: partnerId,
       partner: partner
     });

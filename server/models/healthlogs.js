@@ -441,9 +441,15 @@ healthLogSchema.statics.getByDate = function(userId, date) {
 
 // [IMPROVED] Get or create log for today
 healthLogSchema.statics.getOrCreateToday = async function(userId, pregnancyWeek = null, trimester = null) {
-	const today = new Date();
-	// Use UTC to avoid timezone issues
-	today.setUTCHours(0, 0, 0, 0);
+	// Get today's date based on USER'S LOCAL DATE (not UTC date)
+	// This ensures if user logs at Monday 00:01 local time, it's stored as Monday UTC
+	const now = new Date();
+	const today = new Date(Date.UTC(
+		now.getFullYear(),      // Local year
+		now.getMonth(),         // Local month
+		now.getDate(),          // Local day
+		0, 0, 0, 0
+	));
 	
 	let log = await this.findOne({
 		userId,
