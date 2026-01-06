@@ -16,20 +16,19 @@
     </div>
   </header>
 
-  <!-- LMP Required Alert -->
-  <div id="lmpRequiredAlert" class="alert-banner" style="display: none; background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 20px; border-radius: 8px;">
-    <div style="display: flex; align-items: start; gap: 12px;">
-      <svg style="flex-shrink: 0; width: 24px; height: 24px; color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-      </svg>
-      <div>
-        <strong style="color: #92400e; display: block; margin-bottom: 4px;">Last Menstrual Period Required</strong>
-        <p style="color: #78350f; margin: 0; font-size: 14px;">Please set your Last Menstrual Period (LMP) below to enable health log features and track your pregnancy week accurately.</p>
+  <form id="profileForm" novalidate autocomplete="off">
+    <!-- LMP Required Alert -->
+    <div id="lmpRequiredAlert" style="display: none; background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 20px; border-radius: 8px;">
+      <div style="display: flex; align-items: start; gap: 12px;">
+        <svg style="flex-shrink: 0; width: 24px; height: 24px; color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div style="flex: 1;">
+          <strong id="alertTitle" style="color: #92400e; display: block; margin-bottom: 4px;">Pregnancy Profile Required</strong>
+          <p id="alertMessage" style="color: #78350f; margin: 0; font-size: 14px;">Please complete your pregnancy profile below to access health tracking features.</p>
+        </div>
       </div>
     </div>
-  </div>
-
-  <form id="profileForm" novalidate autocomplete="off">
     <!-- Hidden fields to trick browser autofill -->
     <input type="text" name="fakeusernameremembered" style="display:none;" />
     <input type="password" name="fakepasswordremembered" style="display:none;" />
@@ -115,13 +114,15 @@
 
       <div class="row two">
         <div class="field">
-          <label for="pp_heightCm">Height (cm)</label>
+          <label for="pp_heightCm">Height (cm) <span style="color: #dc2626;">*</span></label>
           <input id="pp_heightCm" name="pregnancyProfile.heightCm" type="number" step="0.1" min="50" max="300" autocomplete="nope" data-lpignore="true" />
+          <div class="helper" id="heightHelper"></div>
         </div>
         <div class="field">
-          <label for="pp_prePregnancyWeightKg">Pre-Pregnancy Weight (kg)</label>
+          <label for="pp_prePregnancyWeightKg">Pre-Pregnancy Weight (kg) <span style="color: #dc2626;">*</span></label>
           <input id="pp_prePregnancyWeightKg" name="pregnancyProfile.prePregnancyWeightKg" type="number" step="0.1"
             min="20" max="500" autocomplete="nope" data-lpignore="true" />
+          <div class="helper" id="weightHelper"></div>
         </div>
       </div>
 
@@ -285,25 +286,55 @@
   (function () {
     // Clear all form fields on page load to prevent autofill
     window.addEventListener('load', function() {
-      // Check if redirected from health log due to missing LMP
+      // Check if redirected from health log due to missing pregnancy profile
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('error') === 'lmp_required') {
+      const errorType = urlParams.get('error');
+      const missingFields = urlParams.get('missing');
+      
+      if (errorType === 'lmp_required' || errorType === 'profile_incomplete') {
         const alertBanner = document.getElementById('lmpRequiredAlert');
-        if (alertBanner) {
+        const alertTitle = document.getElementById('alertTitle');
+        const alertMessage = document.getElementById('alertMessage');
+        
+        if (alertBanner && alertTitle && alertMessage) {
           alertBanner.style.display = 'block';
-          // Scroll to pregnancy section and highlight LMP field
+          
+          // Customize message based on missing fields
+          if (missingFields) {
+            const fields = decodeURIComponent(missingFields);
+            alertTitle.textContent = 'Pregnancy Profile Incomplete';
+            alertMessage.textContent = `Please complete the following required fields: ${fields}. These are needed to access personalized health tracking features.`;
+          } else {
+            alertTitle.textContent = 'Last Menstrual Period Required';
+            alertMessage.textContent = 'Please set your Last Menstrual Period (LMP) below to enable health log features and track your pregnancy week accurately.';
+          }
+          
+          // Scroll to pregnancy section and highlight appropriate field
           setTimeout(() => {
-            const lmpField = document.getElementById('lmpField');
-            const lmpInput = document.getElementById('pp_lastMenstrualPeriod');
-            if (lmpField && lmpInput) {
-              lmpField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            let targetField = null;
+            let targetInput = null;
+            
+            // Prioritize highlighting: LMP -> Height -> Weight
+            if (!missingFields || missingFields.includes('Last Menstrual Period') || missingFields.includes('Due Date')) {
+              targetField = document.getElementById('lmpField');
+              targetInput = document.getElementById('pp_lastMenstrualPeriod');
+            } else if (missingFields.includes('Height')) {
+              targetInput = document.getElementById('pp_heightCm');
+              targetField = targetInput.closest('.field');
+            } else if (missingFields.includes('Weight')) {
+              targetInput = document.getElementById('pp_prePregnancyWeightKg');
+              targetField = targetInput.closest('.field');
+            }
+            
+            if (targetField && targetInput) {
+              targetField.scrollIntoView({ behavior: 'smooth', block: 'center' });
               // Add highlight animation
-              lmpField.style.animation = 'highlightField 2s ease-in-out';
-              lmpInput.focus();
+              targetField.style.animation = 'highlightField 2s ease-in-out';
+              targetInput.focus();
               
               // Remove animation after it completes
               setTimeout(() => {
-                lmpField.style.animation = '';
+                targetField.style.animation = '';
               }, 2000);
             }
           }, 500);
@@ -385,6 +416,24 @@
       document.getElementById('notif_weeklyReportReady').checked = notif.weeklyReportReady !== false;
       document.getElementById('notif_appointmentReminders').checked = notif.appointmentReminders !== false;
       document.getElementById('notif_healthAlerts').checked = notif.healthAlerts !== false;
+      
+      // Apply height/weight lock if necessary
+      applyHeightWeightLock(pp);
+      
+      // Hide alert if required fields are filled
+      checkAndHideAlert(pp);
+    }
+    
+    function checkAndHideAlert(pregnancyProfile) {
+      const hasLMP = pregnancyProfile.lastMenstrualPeriod;
+      const hasDueDate = pregnancyProfile.dueDate;
+      const hasHeight = pregnancyProfile.heightCm && pregnancyProfile.heightCm > 0;
+      const hasWeight = pregnancyProfile.prePregnancyWeightKg && pregnancyProfile.prePregnancyWeightKg > 0;
+      
+      // Hide alert if all required fields are filled
+      if ((hasLMP || hasDueDate) && hasHeight && hasWeight) {
+        document.getElementById('lmpRequiredAlert').style.display = 'none';
+      }
     }
 
     function updateStatus(data) {
@@ -405,6 +454,79 @@
       }
     }
 
+    function applyHeightWeightLock(pregnancyProfile) {
+      const heightInput = document.getElementById('pp_heightCm');
+      const weightInput = document.getElementById('pp_prePregnancyWeightKg');
+      const heightHelper = document.getElementById('heightHelper');
+      const weightHelper = document.getElementById('weightHelper');
+      
+      const hasHeight = pregnancyProfile.heightCm && pregnancyProfile.heightCm > 0;
+      const hasWeight = pregnancyProfile.prePregnancyWeightKg && pregnancyProfile.prePregnancyWeightKg > 0;
+      const dueDate = pregnancyProfile.dueDate;
+      
+      // If no due date set, show warning
+      if (!dueDate) {
+        if (!hasHeight) {
+          heightHelper.textContent = 'Required for personalized plans';
+          heightHelper.className = 'helper required';
+        }
+        if (!hasWeight) {
+          weightHelper.textContent = 'Required for personalized plans';
+          weightHelper.className = 'helper required';
+        }
+        return;
+      }
+      
+      // Calculate unlock date (due date + 1 week = 8 days)
+      const dueDateObj = new Date(dueDate);
+      const unlockDate = new Date(dueDateObj.getTime() + (8 * 24 * 60 * 60 * 1000));
+      const now = new Date();
+      const isLocked = now < unlockDate;
+      
+      // Format unlock date for display
+      const unlockDateStr = unlockDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      
+      // Lock height field if it has a value and lock period hasn't expired
+      if (hasHeight && isLocked) {
+        heightInput.readOnly = true;
+        heightInput.style.backgroundColor = '#f3f4f6';
+        heightInput.style.cursor = 'not-allowed';
+        heightHelper.innerHTML = `🔒 Locked until ${unlockDateStr} (1 week after due date)`;
+        heightHelper.className = 'helper locked';
+      } else if (hasHeight && !isLocked) {
+        heightInput.readOnly = false;
+        heightInput.style.backgroundColor = '';
+        heightInput.style.cursor = '';
+        heightHelper.innerHTML = `✅ Now editable (lock period expired)`;
+        heightHelper.className = 'helper unlocked';
+      } else {
+        heightHelper.textContent = 'Required • Cannot be changed after first save until 1 week after due date';
+        heightHelper.className = 'helper required';
+      }
+      
+      // Lock weight field if it has a value and lock period hasn't expired
+      if (hasWeight && isLocked) {
+        weightInput.readOnly = true;
+        weightInput.style.backgroundColor = '#f3f4f6';
+        weightInput.style.cursor = 'not-allowed';
+        weightHelper.innerHTML = `🔒 Locked until ${unlockDateStr} (1 week after due date)`;
+        weightHelper.className = 'helper locked';
+      } else if (hasWeight && !isLocked) {
+        weightInput.readOnly = false;
+        weightInput.style.backgroundColor = '';
+        weightInput.style.cursor = '';
+        weightHelper.innerHTML = `✅ Now editable (lock period expired)`;
+        weightHelper.className = 'helper unlocked';
+      } else {
+        weightHelper.textContent = 'Required • Cannot be changed after first save until 1 week after due date';
+        weightHelper.className = 'helper required';
+      }
+    }
+
     function showMessage(text, type = 'success') {
       messageEl.textContent = text;
       messageEl.className = `msg ${type}`;
@@ -414,6 +536,35 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // Check if height/weight fields are locked and prevent submission if they're read-only
+      const heightInput = document.getElementById('pp_heightCm');
+      const weightInput = document.getElementById('pp_prePregnancyWeightKg');
+      
+      if (heightInput.readOnly || weightInput.readOnly) {
+        // Verify they haven't been tampered with
+        const originalHeight = originalData?.pregnancyProfile?.heightCm;
+        const originalWeight = originalData?.pregnancyProfile?.prePregnancyWeightKg;
+        const currentHeight = parseFloat(heightInput.value) || null;
+        const currentWeight = parseFloat(weightInput.value) || null;
+        
+        if (heightInput.readOnly && currentHeight !== originalHeight && originalHeight) {
+          await CustomModal.alert('Height cannot be changed until 1 week after your due date.', { 
+            titleText: 'Field Locked' 
+          });
+          heightInput.value = originalHeight;
+          return;
+        }
+        
+        if (weightInput.readOnly && currentWeight !== originalWeight && originalWeight) {
+          await CustomModal.alert('Pre-pregnancy weight cannot be changed until 1 week after your due date.', { 
+            titleText: 'Field Locked' 
+          });
+          weightInput.value = originalWeight;
+          return;
+        }
+      }
+      
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
 

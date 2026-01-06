@@ -64,11 +64,53 @@ function checkAuth(req, res, next) {
   next();
 }
 
+// Require pregnancy profile completion - redirects to profile if incomplete
+async function requirePregnancyProfile(req, res, next) {
+  if (!req.session || !req.session.user) {
+    return res.redirect('/auth/login?redirect=' + encodeURIComponent(req.originalUrl));
+  }
+  
+  try {
+    const User = require('../models/user');
+    const user = await User.findById(req.session.user.id).select('pregnancyProfile').lean();
+    
+    // Check if user has required pregnancy information
+    const hasLMP = user?.pregnancyProfile?.lastMenstrualPeriod;
+    const hasDueDate = user?.pregnancyProfile?.dueDate;
+    const hasHeight = user?.pregnancyProfile?.heightCm;
+    const hasWeight = user?.pregnancyProfile?.prePregnancyWeightKg;
+    
+    // User must have LMP/due date AND height AND weight to proceed
+    const missingFields = [];
+    if (!hasLMP && !hasDueDate) missingFields.push('Last Menstrual Period or Due Date');
+    if (!hasHeight) missingFields.push('Height');
+    if (!hasWeight) missingFields.push('Pre-pregnancy Weight');
+    
+    if (missingFields.length > 0) {
+      // Store the intended destination for redirect after profile completion
+      req.session.returnTo = req.originalUrl;
+      const missingFieldsStr = encodeURIComponent(missingFields.join(', '));
+      return res.redirect(`/auth/user-edit?error=profile_incomplete&missing=${missingFieldsStr}`);
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error checking pregnancy profile:', error);
+    return res.status(500).render('pages/error', {
+      title: 'Error',
+      statusCode: 500,
+      errorTitle: 'Server Error',
+      errorMessage: 'An error occurred while verifying your profile. Please try again.'
+    });
+  }
+}
+
 module.exports = {
   requireAuth,
   requireAuthRedirect,
   redirectIfLoggedIn,
   requireRole,
   requireAdmin,
-  checkAuth
+  checkAuth,
+  requirePregnancyProfile
 };

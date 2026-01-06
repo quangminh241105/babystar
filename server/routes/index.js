@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const router = express.Router();
-const { requireAuth, requireAuthRedirect } = require('../middleware');
+const { requireAuth, requireAuthRedirect, requirePregnancyProfile } = require('../middleware');
 const User = require('../models/user');
 const HealthLog = require('../models/healthlogs');
 const WeeklyReport = require('../models/weeklyreports');
@@ -103,7 +103,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/weekly-report', requireAuthRedirect, (req, res) => {
+router.get('/weekly-report', requireAuthRedirect, requirePregnancyProfile, (req, res) => {
   res.render('pages/weekly-report', { title: 'Weekly Report' });
 });
 
@@ -511,7 +511,7 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
 });
 
 // AI-Powered Diet Planner
-router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
+router.get('/diet-plan', requireAuthRedirect, requirePregnancyProfile, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
     const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
@@ -678,7 +678,7 @@ router.post('/api/notifications/:id/click', requireAuth, async (req, res) => {
 
 // ==================== END NOTIFICATION ROUTES ====================
 
-router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
+router.get('/exercise-plan', requireAuthRedirect, requirePregnancyProfile, (req, res) => {
   res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
 });
 
@@ -856,15 +856,9 @@ router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
   res.render('pages/nearbyhealthcare', { title: 'Nearby Healthcare' });
 });
 
-router.get('/log-health', requireAuthRedirect, async (req, res) => {
+router.get('/log-health', requireAuthRedirect, requirePregnancyProfile, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
-    
-    // Check if user has set their Last Menstrual Period (LMP)
-    if (!user.pregnancyProfile?.lastMenstrualPeriod) {
-      // Redirect to profile page with message to set LMP
-      return res.redirect('/auth/profile?error=lmp_required&message=Please+set+your+Last+Menstrual+Period+to+use+health+log+features');
-    }
     
     const currentWeek = user?.currentPregnancyWeek?.weeks || null;
     const trimester = user?.currentTrimester || null;
@@ -884,7 +878,7 @@ router.get('/log-health', requireAuthRedirect, async (req, res) => {
   }
 });
 
-router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
+router.get('/past-health-records', requireAuthRedirect, requirePregnancyProfile, async (req, res) => {
   try {
     const { startDate, endDate, range } = req.query;
     const userId = req.session.user.id;
@@ -1009,7 +1003,7 @@ router.get('/api/health-log/today', requireAuth, async (req, res) => {
       userContext: {
         pregnancyWeek,
         trimester,
-        dueDate
+        dueDate: user.pregnancyProfile.dueDate || null
       }
     });
   } catch (err) {
@@ -1271,6 +1265,35 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       });
     }
     
+    // SERVER-SIDE VALIDATION: Ensure the log has at least some data
+    // Don't allow saving completely empty health logs
+    const hasAnyData = (
+      req.body.weightKg ||
+      req.body.heartRateBpm ||
+      (req.body.bloodPressure?.systolic || req.body.bloodPressure?.diastolic) ||
+      req.body.bloodSugar?.value ||
+      req.body.energyLevel ||
+      req.body.stressLevel ||
+      (req.body.moodLog && req.body.moodLog.length > 0) ||
+      (req.body.sleep?.totalHours || req.body.sleep?.quality) ||
+      (req.body.symptoms && req.body.symptoms.length > 0) ||
+      (req.body.exercises && req.body.exercises.length > 0) ||
+      (req.body.hydration?.waterLiters > 0 || req.body.hydration?.otherFluidsLiters > 0) ||
+      req.body.caffeineIntakeMg > 0 ||
+      (req.body.foodIntake && req.body.foodIntake.length > 0) ||
+      req.body.fetalMovement?.count > 0 ||
+      req.body.doctorVisit?.visited ||
+      (req.body.notes && req.body.notes.trim())
+    );
+    
+    if (!hasAnyData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot save an empty health log. Please fill in at least one field.',
+        isEmpty: true
+      });
+    }
+
     const {
       // Vitals
       weightKg,

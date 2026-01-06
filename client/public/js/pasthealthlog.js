@@ -165,7 +165,7 @@
       
       <div class="detail-actions">
         ${isToday ? `
-          <a href="/health-log" class="action-button edit-btn">
+          <a href="/log-health" class="action-button edit-btn">
             Edit Today's Log
           </a>
         ` : ''}

@@ -32,35 +32,54 @@
           <div class="section-block">
             <div class="section-title">
               <span class="section-icon">🩺</span> Vitals
+              <span class="section-status incomplete" id="vitalsStatus">Not started</span>
             </div>
             <div class="vitals-form">
               <div class="row two">
                 <div class="field">
-                  <label for="weightKg">💪 Weight <span class="required-badge">Required</span></label>
+                  <label for="weightKg">
+                    💪 Weight <span class="required-badge">Required</span>
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Track your weight regularly. Normal weight gain during pregnancy varies by trimester.</span>
+                    </span>
+                  </label>
                   <div class="input-with-unit">
                     <input id="weightKg" type="number" step="0.1" min="20" max="300" placeholder="e.g., 65.5" class="input-primary" required>
                     <span class="input-unit">kg</span>
                   </div>
+                  <span class="field-hint">Valid range: 20-300 kg</span>
+                  <div class="validation-message" id="weightValidation"></div>
                 </div>
                 <div class="field">
-                  <label for="heartRateBpm">❤️ Heart Rate <span class="required-badge">Required</span></label>
+                  <label for="heartRateBpm">
+                    ❤️ Heart Rate <span class="required-badge">Required</span>
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Resting heart rate typically increases 10-20 bpm during pregnancy. Normal range: 60-100 bpm.</span>
+                    </span>
+                  </label>
                   <div class="heart-rate-display">
                     <span class="heart-value" id="heartRateDisplay">—</span>
                     <span class="heart-label">bpm</span>
                   </div>
                   <input id="heartRateBpm" type="range" min="50" max="160" step="1" class="custom-range" required>
                   <div class="range-labels">
-                    <span>50</span>
-                    <span>105</span>
-                    <span>160</span>
+                    <span>50 (Low)</span>
+                    <span>105 (Normal)</span>
+                    <span>160 (High)</span>
                   </div>
+                  <div class="validation-message" id="heartRateValidation"></div>
                 </div>
               </div>
 
               <div class="vitals-optional-section">
                 <div class="row two">
                   <div class="field">
-                    <label>🩸 Blood Sugar <span class="optional-badge">Optional</span></label>
+                    <label>
+                      🩸 Blood Sugar <span class="optional-badge">Optional</span>
+                      <span class="info-tooltip">
+                        <span class="tooltip-content">Monitor blood sugar if recommended by your healthcare provider. Gestational diabetes affects 2-10% of pregnancies.</span>
+                      </span>
+                    </label>
                     <div class="blood-sugar-inputs">
                       <input id="bloodSugarValue" type="number" step="0.1" min="0" max="500" placeholder="Value" class="input-primary sugar-value-input">
                       <select id="bloodSugarUnit" class="input-primary sugar-unit-select">
@@ -72,19 +91,27 @@
                       <option value="">When was it measured?</option>
                       <option value="fasting">🌅 Fasting (morning)</option>
                       <option value="before_meal">🍽️ Before Meal</option>
-                      <option value="after_meal">✅ After Meal</option>
+                      <option value="after_meal">✅ After Meal (2hr)</option>
                       <option value="bedtime">🌙 Bedtime</option>
                     </select>
+                    <span class="field-hint">Fasting: 70-95 mg/dL | After meal: &lt;140 mg/dL</span>
+                    <div class="validation-message" id="bloodSugarValidation"></div>
                   </div>
                   <div class="field">
-                    <label>💉 Blood Pressure <span class="required-badge">Required</span></label>
+                    <label>
+                      💉 Blood Pressure <span class="required-badge">Required</span>
+                      <span class="info-tooltip">
+                        <span class="tooltip-content">Blood pressure above 140/90 mmHg may indicate hypertension. Contact your healthcare provider if readings are consistently high.</span>
+                      </span>
+                    </label>
                     <div class="blood-pressure-inputs">
-                      <input id="systolicBP" type="number" min="70" max="200" placeholder="120" class="input-primary bp-input" required>
+                      <input id="systolicBP" type="number" min="70" max="200" placeholder="120" class="input-primary bp-input" required aria-label="Systolic blood pressure">
                       <span class="bp-separator">/</span>
-                      <input id="diastolicBP" type="number" min="40" max="130" placeholder="80" class="input-primary bp-input" required>
+                      <input id="diastolicBP" type="number" min="40" max="130" placeholder="80" class="input-primary bp-input" required aria-label="Diastolic blood pressure">
                       <span class="bp-unit">mmHg</span>
                     </div>
-                    <div class="bp-hint">Normal: 90-120 / 60-80</div>
+                    <span class="field-hint info">🎯 Target: 90-120 / 60-80 mmHg</span>
+                    <div class="validation-message" id="bpValidation"></div>
                   </div>
                 </div>
               </div>
@@ -95,21 +122,32 @@
           <div class="section-block">
             <div class="section-title">
               <span class="section-icon">🙂</span> Mood & Energy
+              <span class="section-status incomplete" id="moodStatus">Not started</span>
             </div>
             <div class="mood-energy-form">
               <div class="row two">
                 <div class="field">
-                  <label>⚡ Energy Level</label>
+                  <label>
+                    ⚡ Energy Level
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Rate your overall energy. Fatigue is common in 1st and 3rd trimesters.</span>
+                    </span>
+                  </label>
                   <div class="energy-rating-container">
-                    <div class="rating energy-rating" id="energyRating" aria-label="Energy"></div>
+                    <div class="rating energy-rating" id="energyRating" aria-label="Energy level from 1 to 5"></div>
                     <span class="rating-label" id="energyLabel">Not rated</span>
                   </div>
                   <input type="hidden" id="energyLevel">
                 </div>
                 <div class="field">
-                  <label>😰 Stress Level</label>
+                  <label>
+                    😰 Stress Level
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Managing stress is important for you and baby. Consider relaxation techniques if stress is high.</span>
+                    </span>
+                  </label>
                   <div class="stress-rating-container">
-                    <div class="rating stress-rating" id="stressRating" aria-label="Stress"></div>
+                    <div class="rating stress-rating" id="stressRating" aria-label="Stress level from 1 to 5"></div>
                     <span class="rating-label" id="stressLabel">Not rated</span>
                   </div>
                   <input type="hidden" id="stressLevel">
@@ -117,9 +155,14 @@
               </div>
 
               <div class="mood-log-section">
-                <label class="section-sublabel">💭 Track Your Mood Throughout the Day <span class="optional-badge">Optional</span></label>
+                <label class="section-sublabel">
+                  💭 Track Your Mood Throughout the Day <span class="optional-badge">Optional</span>
+                  <span class="info-tooltip">
+                    <span class="tooltip-content">Log mood changes to identify patterns. Hormonal changes can affect emotions - this is normal!</span>
+                  </span>
+                </label>
                 <div class="mood-log-inputs">
-                  <select id="moodLogMood" class="input-primary mood-select">
+                  <select id="moodLogMood" class="input-primary mood-select" aria-label="Select your current mood">
                     <option value="">How are you feeling?</option>
                     <option value="very_happy">😁 Very Happy</option>
                     <option value="happy">🙂 Happy</option>
@@ -131,11 +174,12 @@
                     <option value="emotional">😭 Emotional</option>
                     <option value="overwhelmed">😩 Overwhelmed</option>
                   </select>
-                  <input id="moodLogTrigger" class="input-primary mood-trigger-input" type="text" placeholder="What triggered this feeling? (optional)">
+                  <input id="moodLogTrigger" class="input-primary mood-trigger-input" type="text" placeholder="What triggered this feeling? (optional)" maxlength="100" aria-label="Mood trigger">
                   <button type="button" class="btn-add-mood" id="addMoodLogBtn">
                     <span>+ Add</span>
                   </button>
                 </div>
+                <span class="field-hint">Add multiple entries to track mood changes throughout the day</span>
                 <div id="moodLogList" class="mood-log-list"></div>
               </div>
             </div>
@@ -145,26 +189,38 @@
           <div class="section-block">
             <div class="section-title">
               <span class="section-icon">😴</span> Sleep
+              <span class="section-status incomplete" id="sleepStatus">Not started</span>
             </div>
             <div class="sleep-form">
               <div class="row two">
                 <div class="field">
-                  <label for="sleepHours">Total Sleep Hours</label>
+                  <label for="sleepHours">
+                    Total Sleep Hours
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Aim for 7-9 hours of sleep. Quality matters as much as quantity during pregnancy.</span>
+                    </span>
+                  </label>
                   <div class="sleep-hours-display">
                     <span class="hours-value" id="sleepHoursDisplay">0</span>
                     <span class="hours-label">hours</span>
                   </div>
-                  <input id="sleepHours" type="range" min="0" max="12" step="0.5" class="custom-range">
+                  <input id="sleepHours" type="range" min="0" max="12" step="0.5" class="custom-range" aria-label="Total sleep hours">
                   <div class="range-labels">
-                    <span>0h</span>
-                    <span>6h</span>
-                    <span>12h</span>
+                    <span>0h (None)</span>
+                    <span>6h (Fair)</span>
+                    <span>12h (Max)</span>
                   </div>
+                  <span class="field-hint" id="sleepHint">Recommended: 7-9 hours per night</span>
                 </div>
                 <div class="field">
-                  <label>Sleep Quality</label>
+                  <label>
+                    Sleep Quality
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Poor sleep quality may be due to discomfort, frequent urination, or anxiety. Try relaxation techniques before bed.</span>
+                    </span>
+                  </label>
                   <div class="quality-stars-container">
-                    <div class="rating quality-rating" id="sleepQualityRating"></div>
+                    <div class="rating quality-rating" id="sleepQualityRating" aria-label="Sleep quality from 1 to 5 stars"></div>
                     <span class="quality-label" id="qualityLabel">Not rated</span>
                   </div>
                   <input type="hidden" id="sleepQuality">
@@ -175,34 +231,39 @@
                 <div class="row three">
                   <div class="field">
                     <label for="bedTime">🌙 Bed Time</label>
-                    <input id="bedTime" type="time" class="input-primary">
+                    <input id="bedTime" type="time" class="input-primary" aria-label="Bed time">
                   </div>
                   <div class="field">
                     <label for="wakeTime">☀️ Wake Time</label>
-                    <input id="wakeTime" type="time" class="input-primary">
+                    <input id="wakeTime" type="time" class="input-primary" aria-label="Wake time">
                   </div>
                   <div class="field">
-                    <label for="primaryPosition">🛏️ Sleep Position</label>
-                    <select id="primaryPosition" class="input-primary">
+                    <label for="primaryPosition">
+                      🛏️ Sleep Position
+                      <span class="info-tooltip">
+                        <span class="tooltip-content">Left side sleeping is recommended after 20 weeks as it improves blood flow to baby.</span>
+                      </span>
+                    </label>
+                    <select id="primaryPosition" class="input-primary" aria-label="Primary sleep position">
                       <option value="">Choose position...</option>
-                      <option value="left_side">Left Side (Recommended)</option>
+                      <option value="left_side">✅ Left Side (Recommended)</option>
                       <option value="right_side">Right Side</option>
-                      <option value="back">Back</option>
+                      <option value="back">⚠️ Back (Not recommended after 20 weeks)</option>
                       <option value="varied">Varied</option>
                     </select>
                   </div>
                 </div>
 
                 <div class="field">
-                  <label class="section-sublabel">What woke you up during the night?</label>
+                  <label class="section-sublabel">What woke you up during the night? <span class="optional-badge">Select all that apply</span></label>
                   <div class="awakening-chips" id="awakeningChips">
-                    <button type="button" class="awakening-chip" data-reason="bathroom">🚽 Bathroom</button>
-                    <button type="button" class="awakening-chip" data-reason="discomfort">😣 Discomfort</button>
-                    <button type="button" class="awakening-chip" data-reason="baby_movement">👶 Baby Movement</button>
-                    <button type="button" class="awakening-chip" data-reason="noise">🔊 Noise</button>
-                    <button type="button" class="awakening-chip" data-reason="pain">😖 Pain</button>
-                    <button type="button" class="awakening-chip" data-reason="nightmare">😰 Nightmare</button>
-                    <button type="button" class="awakening-chip" data-reason="other">Other</button>
+                    <button type="button" class="awakening-chip" data-reason="bathroom" aria-pressed="false">🚽 Bathroom</button>
+                    <button type="button" class="awakening-chip" data-reason="discomfort" aria-pressed="false">😣 Discomfort</button>
+                    <button type="button" class="awakening-chip" data-reason="baby_movement" aria-pressed="false">👶 Baby Movement</button>
+                    <button type="button" class="awakening-chip" data-reason="noise" aria-pressed="false">🔊 Noise</button>
+                    <button type="button" class="awakening-chip" data-reason="pain" aria-pressed="false">😖 Pain</button>
+                    <button type="button" class="awakening-chip" data-reason="nightmare" aria-pressed="false">😰 Nightmare</button>
+                    <button type="button" class="awakening-chip" data-reason="other" aria-pressed="false">Other</button>
                   </div>
                 </div>
               </div>
@@ -213,40 +274,54 @@
           <div class="section-block">
             <div class="section-title">
               <span class="section-icon">🤒</span> Symptoms
+              <span class="section-status incomplete" id="symptomsStatus">Not started</span>
             </div>
             <div class="symptoms-form">
-              <label class="section-sublabel">Select symptoms you're experiencing</label>
+              <label class="section-sublabel">
+                Select symptoms you're experiencing <span class="optional-badge">Optional</span>
+                <span class="info-tooltip">
+                  <span class="tooltip-content">Tracking symptoms helps identify patterns. Contact your healthcare provider for severe or persistent symptoms.</span>
+                </span>
+              </label>
               <div class="symptom-chips" id="symptomChips">
-                <button type="button" class="symptom-chip" data-symptom="nausea">🤢 Nausea</button>
-                <button type="button" class="symptom-chip" data-symptom="fatigue">😴 Fatigue</button>
-                <button type="button" class="symptom-chip" data-symptom="headache">🤕 Headache</button>
-                <button type="button" class="symptom-chip" data-symptom="back_pain">🔙 Back Pain</button>
-                <button type="button" class="symptom-chip" data-symptom="spotting">🩸 Spotting</button>
-                <button type="button" class="symptom-chip" data-symptom="leg_cramps">🦵 Leg Cramps</button>
-                <button type="button" class="symptom-chip" data-symptom="heartburn">🔥 Heartburn</button>
-                <button type="button" class="symptom-chip" data-symptom="swelling_feet">🦶 Swelling</button>
+                <button type="button" class="symptom-chip" data-symptom="nausea" aria-pressed="false">🤢 Nausea</button>
+                <button type="button" class="symptom-chip" data-symptom="fatigue" aria-pressed="false">😴 Fatigue</button>
+                <button type="button" class="symptom-chip" data-symptom="headache" aria-pressed="false">🤕 Headache</button>
+                <button type="button" class="symptom-chip" data-symptom="back_pain" aria-pressed="false">🔙 Back Pain</button>
+                <button type="button" class="symptom-chip" data-symptom="spotting" aria-pressed="false">🩸 Spotting</button>
+                <button type="button" class="symptom-chip" data-symptom="leg_cramps" aria-pressed="false">🦵 Leg Cramps</button>
+                <button type="button" class="symptom-chip" data-symptom="heartburn" aria-pressed="false">🔥 Heartburn</button>
+                <button type="button" class="symptom-chip" data-symptom="swelling_feet" aria-pressed="false">🦶 Swelling</button>
               </div>
 
               <div class="symptom-details-panel" id="symptomDetailsPanel" style="display:none;">
                 <div class="row two">
                   <div class="field">
-                    <label for="symptomSeverity">How severe? (1-10)</label>
+                    <label for="symptomSeverity">
+                      How severe? (1-10)
+                      <span class="info-tooltip">
+                        <span class="tooltip-content">1-3: Mild | 4-6: Moderate | 7-10: Severe. Contact your doctor for severity 8+.</span>
+                      </span>
+                    </label>
                     <div class="severity-display">
                       <div class="severity-bar-container">
                         <div class="severity-bar" id="severityBar"></div>
                       </div>
                       <span class="severity-value" id="severityValue">5</span>
                     </div>
-                    <input id="symptomSeverity" type="range" min="1" max="10" step="1" value="5" class="custom-range">
+                    <input id="symptomSeverity" type="range" min="1" max="10" step="1" value="5" class="custom-range" aria-label="Symptom severity">
                     <div class="range-labels">
-                      <span>Mild</span>
-                      <span>Moderate</span>
-                      <span>Severe</span>
+                      <span>Mild (1-3)</span>
+                      <span>Moderate (4-6)</span>
+                      <span>Severe (7-10)</span>
+                    </div>
+                    <div class="validation-message warning" id="severityWarning" style="display:none;">
+                      ⚠️ Consider contacting your healthcare provider for severe symptoms
                     </div>
                   </div>
                   <div class="field">
                     <label for="occurredAt">Time it started (optional)</label>
-                    <input id="occurredAt" type="time" class="input-primary">
+                    <input id="occurredAt" type="time" class="input-primary" aria-label="Time symptom occurred">
                   </div>
                 </div>
                 <button type="button" class="btn-add-item" id="addSymptomBtn">
@@ -256,6 +331,17 @@
             </div>
             
             <div id="symptomList" class="item-list"></div>
+          </div>
+
+          <!-- Tab Navigation -->
+          <div class="tab-navigation">
+            <button type="button" class="tab-nav-btn tab-nav-prev" id="prevBtnBasics" style="visibility: hidden;">
+              <span class="nav-arrow">←</span> Previous
+            </button>
+            <span class="tab-nav-indicator">1 of 3</span>
+            <button type="button" class="tab-nav-btn tab-nav-next" id="nextBtnBasics">
+              Next <span class="nav-arrow">→</span>
+            </button>
           </div>
         </section>
 
@@ -267,23 +353,30 @@
           <div class="section-block">
             <div class="section-title">
               <span class="section-icon">🥤</span> Hydration & Drinks
+              <span class="section-status incomplete" id="hydrationStatus">Not started</span>
             </div>
             <div class="drinks-form">
               <div class="hydration-trackers">
                 <div class="tracker-card">
                   <div class="tracker-icon">💧</div>
                   <div class="tracker-content">
-                    <label for="waterLiters">Water</label>
+                    <label for="waterLiters">
+                      Water
+                      <span class="info-tooltip">
+                        <span class="tooltip-content">Aim for 2-3 liters daily. Proper hydration helps prevent constipation and UTIs.</span>
+                      </span>
+                    </label>
                     <div class="tracker-value-display">
                       <span class="tracker-value" id="waterDisplay">0</span>
                       <span class="tracker-unit">liters</span>
                     </div>
-                    <input id="waterLiters" type="range" min="0" max="5" step="0.1" class="custom-range">
+                    <input id="waterLiters" type="range" min="0" max="5" step="0.1" class="custom-range" aria-label="Water intake in liters">
                     <div class="range-labels">
                       <span>0L</span>
-                      <span>2.5L</span>
+                      <span>2.5L ✓</span>
                       <span>5L</span>
                     </div>
+                    <span class="field-hint" id="waterHint">Goal: 2-3 liters per day</span>
                   </div>
                 </div>
 
@@ -295,32 +388,39 @@
                       <span class="tracker-value" id="fluidsDisplay">0</span>
                       <span class="tracker-unit">liters</span>
                     </div>
-                    <input id="otherFluidsLiters" type="range" min="0" max="3" step="0.1" class="custom-range">
+                    <input id="otherFluidsLiters" type="range" min="0" max="3" step="0.1" class="custom-range" aria-label="Other fluids in liters">
                     <div class="range-labels">
                       <span>0L</span>
                       <span>1.5L</span>
                       <span>3L</span>
                     </div>
+                    <span class="field-hint">Juice, milk, smoothies, etc.</span>
                   </div>
                 </div>
 
                 <div class="tracker-card caffeine-tracker">
                   <div class="tracker-icon">☕</div>
                   <div class="tracker-content">
-                    <label for="caffeineIntakeMg">Caffeine</label>
+                    <label for="caffeineIntakeMg">
+                      Caffeine
+                      <span class="info-tooltip">
+                        <span class="tooltip-content">Limit caffeine to 200mg/day during pregnancy. 1 cup of coffee ≈ 95mg.</span>
+                      </span>
+                    </label>
                     <div class="tracker-value-display">
                       <span class="tracker-value" id="caffeineDisplay">0</span>
                       <span class="tracker-unit">mg</span>
                     </div>
-                    <input id="caffeineIntakeMg" type="range" min="0" max="500" step="10" class="custom-range">
+                    <input id="caffeineIntakeMg" type="range" min="0" max="500" step="10" class="custom-range" aria-label="Caffeine intake in mg">
                     <div class="range-labels">
                       <span>0mg</span>
-                      <span>250mg</span>
+                      <span>200mg ⚠️</span>
                       <span>500mg</span>
                     </div>
                     <div class="caffeine-warning" id="caffeineWarning" style="display:none;">
                       ⚠️ Limit to 200mg/day during pregnancy
                     </div>
+                    <span class="field-hint">☕ Coffee: ~95mg | 🍵 Tea: ~45mg | 🥤 Cola: ~35mg</span>
                   </div>
                 </div>
               </div>
@@ -328,17 +428,18 @@
               <div class="drink-log-section">
                 <label class="section-sublabel">📝 Log Individual Drinks <span class="optional-badge">Optional</span></label>
                 <div class="drink-input-row">
-                  <select id="drinkType" class="input-primary drink-type-select">
+                  <select id="drinkType" class="input-primary drink-type-select" aria-label="Drink type">
                     <option value="">Choose drink type...</option>
                     <option value="water">💧 Water</option>
                     <option value="juice">🧃 Juice</option>
                     <option value="milk">🥛 Milk</option>
                     <option value="tea">🍵 Tea</option>
                     <option value="coffee">☕ Coffee</option>
+                    <option value="smoothie">🥤 Smoothie</option>
                     <option value="other">🥤 Other</option>
                   </select>
                   <div class="input-with-unit">
-                    <input id="drinkAmount" type="number" min="0" max="2000" placeholder="Amount" class="input-primary drink-amount-input">
+                    <input id="drinkAmount" type="number" min="0" max="2000" placeholder="Amount" class="input-primary drink-amount-input" aria-label="Drink amount in ml">
                     <span class="input-unit">ml</span>
                   </div>
                   <button type="button" class="btn-add-drink-item" id="addDrinkBtn">
@@ -354,12 +455,18 @@
           <div class="section-block">
             <div class="section-title">
               <span class="section-icon">🏃‍♀️</span> Exercise
+              <span class="section-status incomplete" id="exerciseStatus">Not started</span>
             </div>
             <div class="exercise-form">
               <div class="row two">
                 <div class="field">
-                  <label for="exerciseType">Exercise Type</label>
-                  <select id="exerciseType" class="input-primary">
+                  <label for="exerciseType">
+                    Exercise Type
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Safe exercises during pregnancy include walking, swimming, prenatal yoga, and low-impact aerobics.</span>
+                    </span>
+                  </label>
+                  <select id="exerciseType" class="input-primary" aria-label="Select exercise type">
                     <option value="">Choose exercise...</option>
                     <option value="walking">🚶‍♀️ Walking</option>
                     <option value="prenatal_yoga">🧘‍♀️ Prenatal Yoga</option>
@@ -368,28 +475,42 @@
                     <option value="stretching">🤸‍♀️ Stretching</option>
                     <option value="pilates">Pilates</option>
                     <option value="stationary_cycling">🚴‍♀️ Stationary Cycling</option>
+                    <option value="prenatal_aerobics">💃 Prenatal Aerobics</option>
+                    <option value="kegel_exercises">Kegel Exercises</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
                 <div class="field">
-                  <label for="exerciseMinutes">Duration (minutes)</label>
-                  <input id="exerciseMinutes" type="number" min="0" max="300" placeholder="e.g., 30" class="input-primary">
+                  <label for="exerciseMinutes">
+                    Duration (minutes)
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">Aim for 150 minutes of moderate exercise per week (about 30 min/day, 5 days/week).</span>
+                    </span>
+                  </label>
+                  <input id="exerciseMinutes" type="number" min="0" max="300" placeholder="e.g., 30" class="input-primary" aria-label="Exercise duration in minutes">
+                  <span class="field-hint">Valid range: 0-300 minutes</span>
+                  <div class="validation-message" id="exerciseMinutesValidation"></div>
                 </div>
               </div>
               
               <div class="row two">
                 <div class="field">
-                  <label>Intensity Level</label>
+                  <label>
+                    Intensity Level
+                    <span class="info-tooltip">
+                      <span class="tooltip-content">During pregnancy, moderate intensity is best. You should be able to talk but not sing during exercise.</span>
+                    </span>
+                  </label>
                   <div class="intensity-buttons">
-                    <button type="button" class="intensity-btn" data-val="light">
+                    <button type="button" class="intensity-btn" data-val="light" aria-pressed="false">
                       <span class="intensity-icon">🟢</span>
                       <span>Light</span>
                     </button>
-                    <button type="button" class="intensity-btn" data-val="moderate">
+                    <button type="button" class="intensity-btn" data-val="moderate" aria-pressed="false">
                       <span class="intensity-icon">🟡</span>
                       <span>Moderate</span>
                     </button>
-                    <button type="button" class="intensity-btn" data-val="vigorous">
+                    <button type="button" class="intensity-btn" data-val="vigorous" aria-pressed="false">
                       <span class="intensity-icon">🔴</span>
                       <span>Vigorous</span>
                     </button>
@@ -429,13 +550,19 @@
           <div class="section-block">
             <div class="section-title">
               <span class="section-icon">🥗</span> Nutrition
+              <span class="section-status incomplete" id="nutritionStatus">Not started</span>
             </div>
             <div class="nutrition-form">
               <div class="meal-header">
                 <div class="row one">
                   <div class="field">
-                    <label for="mealType">Meal Type</label>
-                    <select id="mealType" class="input-primary">
+                    <label for="mealType">
+                      Meal Type
+                      <span class="info-tooltip">
+                        <span class="tooltip-content">Eat smaller, frequent meals to manage nausea and heartburn. Include protein with every meal.</span>
+                      </span>
+                    </label>
+                    <select id="mealType" class="input-primary" aria-label="Select meal type">
                       <option value="">Choose meal...</option>
                       <option value="breakfast">🍳 Breakfast</option>
                       <option value="lunch">🥙 Lunch</option>
@@ -450,14 +577,16 @@
               <div class="food-entry-section">
                 <label class="section-sublabel">Add Foods to This Meal</label>
                 <div class="food-input-row">
-                  <input id="foodName" type="text" placeholder="Food name (e.g., Grilled Chicken)" class="input-primary food-name-input">
-                  <input id="foodAmount" type="number" min="0" placeholder="Amount" class="input-primary food-amount-input">
-                  <select id="foodUnit" class="input-primary food-unit-select">
+                  <input id="foodName" type="text" placeholder="Food name (e.g., Grilled Chicken)" class="input-primary food-name-input" maxlength="100" aria-label="Food name">
+                  <input id="foodAmount" type="number" min="0" max="5000" placeholder="Amount" class="input-primary food-amount-input" aria-label="Food amount">
+                  <select id="foodUnit" class="input-primary food-unit-select" aria-label="Food unit">
                     <option value="g">grams</option>
                     <option value="ml">ml</option>
                     <option value="serving">serving</option>
                     <option value="piece">piece</option>
                     <option value="cup">cup</option>
+                    <option value="tbsp">tbsp</option>
+                    <option value="tsp">tsp</option>
                   </select>
                   <button type="button" class="btn-add-food" id="addFoodBtn">
                     <span>+ Add</span>
@@ -469,7 +598,8 @@
               <div class="meal-footer">
                 <div class="field">
                   <label for="mealNotes">Meal Notes (optional)</label>
-                  <input id="mealNotes" type="text" placeholder="Any additional details about this meal..." class="input-primary">
+                  <input id="mealNotes" type="text" placeholder="Any additional details about this meal..." class="input-primary" maxlength="200" aria-label="Meal notes">
+                  <span class="field-hint">E.g., "Felt nauseous after eating" or "Craving satisfied"</span>
                 </div>
 
                 <button type="button" class="btn-add-item" id="addMealBtn">
@@ -485,23 +615,42 @@
           <div class="section-block" id="fetalMovementSection" style="display:none;">
             <div class="section-title">
               <span class="section-icon">🤰</span> Fetal Movement
+              <span class="info-tooltip">
+                <span class="tooltip-content">Most women start feeling movement between 16-25 weeks. Track kicks to ensure baby is active.</span>
+              </span>
             </div>
             <div class="row three">
               <div class="field">
                 <label for="fmStartTime">Start Time</label>
-                <input id="fmStartTime" type="time">
+                <input id="fmStartTime" type="time" class="input-primary" aria-label="Kick count start time">
               </div>
               <div class="field">
                 <label for="fmEndTime">End Time</label>
-                <input id="fmEndTime" type="time">
+                <input id="fmEndTime" type="time" class="input-primary" aria-label="Kick count end time">
               </div>
-            </div>
-            <div class="row two">
               <div class="field">
-                <label for="fmNotes">Notes</label>
-                <input id="fmNotes" type="text" placeholder="Notes">
+                <label for="fmKickCount">Kick Count</label>
+                <input id="fmKickCount" type="number" min="0" max="200" placeholder="Number of kicks" class="input-primary" aria-label="Number of kicks">
+                <span class="field-hint info">💡 10+ kicks in 2 hours is normal</span>
               </div>
             </div>
+            <div class="row one">
+              <div class="field">
+                <label for="fmNotes">Movement Notes</label>
+                <input id="fmNotes" type="text" placeholder="Describe baby's movement patterns" class="input-primary" maxlength="200" aria-label="Fetal movement notes">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Navigation -->
+          <div class="tab-navigation">
+            <button type="button" class="tab-nav-btn tab-nav-prev" id="prevBtnHealth">
+              <span class="nav-arrow">←</span> Previous
+            </button>
+            <span class="tab-nav-indicator">2 of 3</span>
+            <button type="button" class="tab-nav-btn tab-nav-next" id="nextBtnHealth">
+              Next <span class="nav-arrow">→</span>
+            </button>
           </div>
         </section>
 
@@ -510,43 +659,97 @@
           <h2 class="card-title">Details & Notes</h2>
 
           <!-- Doctor Visit -->
-          <div class="row two">
-            <div class="field checkbox-field">
-              <label class="checkbox-label">
-                <input type="checkbox" id="visitedDoctor" />
-                <span>Visited Doctor Today</span>
-              </label>
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">👨‍⚕️</span> Doctor Visit
+              <span class="section-status incomplete" id="doctorStatus">Not started</span>
+            </div>
+            <div class="row two">
+              <div class="field checkbox-field">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="visitedDoctor" class="checkbox-input" aria-label="Visited doctor today" />
+                  <span class="checkbox-text">Visited Doctor Today</span>
+                </label>
+              </div>
+              <div class="field">
+                <label for="visitType">Visit Type</label>
+                <select id="visitType" class="input-primary" disabled aria-label="Type of doctor visit">
+                  <option value="">Select...</option>
+                  <option value="routine">📋 Routine Checkup</option>
+                  <option value="ultrasound">📺 Ultrasound</option>
+                  <option value="lab_work">🔬 Lab Work / Blood Tests</option>
+                  <option value="specialist">👩‍⚕️ Specialist Visit</option>
+                  <option value="emergency">🚨 Emergency</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
             <div class="field">
-              <label for="visitType">Visit Type</label>
-              <select id="visitType" disabled>
-                <option value="">Select...</option>
-                <option value="routine">Routine</option>
-                <option value="ultrasound">Ultrasound</option>
-                <option value="lab_work">Lab Work</option>
-                <option value="specialist">Specialist</option>
-                <option value="emergency">Emergency</option>
-              </select>
+              <label for="doctorVisitNotes">
+                Doctor Visit Notes
+                <span class="info-tooltip">
+                  <span class="tooltip-content">Record important findings, advice, or instructions from your doctor.</span>
+                </span>
+              </label>
+              <textarea id="doctorVisitNotes" rows="3" placeholder="Record important findings, advice, or instructions..." class="input-primary" disabled maxlength="500" aria-label="Doctor visit notes"></textarea>
+              <div class="char-counter" id="doctorNotesCounter">0/500</div>
+            </div>
+            <div class="field">
+              <label for="nextAppointment">Next Appointment</label>
+              <input id="nextAppointment" type="date" class="input-primary" disabled aria-label="Next appointment date">
+              <span class="field-hint">Set a reminder for your next visit</span>
             </div>
           </div>
-          <div class="field">
-            <label for="doctorVisitNotes">Doctor Visit Notes</label>
-            <input id="doctorVisitNotes" type="text" placeholder="Notes" disabled>
+
+          <!-- General Notes -->
+          <div class="section-block">
+            <div class="section-title">
+              <span class="section-icon">📝</span> Daily Notes
+            </div>
+            <div class="field">
+              <label for="notes">
+                Notes (optional)
+                <span class="info-tooltip">
+                  <span class="tooltip-content">Record anything notable about today - thoughts, feelings, milestones, or questions for your next doctor visit.</span>
+                </span>
+              </label>
+              <textarea id="notes" rows="5" placeholder="Anything notable about today... thoughts, feelings, questions for your doctor, milestones..." class="input-primary" maxlength="2000" aria-label="Daily notes"></textarea>
+              <div class="char-counter" id="notesCounter">0/2000</div>
+              <span class="field-hint">💡 Use this space to journal your pregnancy journey</span>
+            </div>
           </div>
-          <div class="field">
-            <label for="nextAppointment">Next Appointment</label>
-            <input id="nextAppointment" type="date" disabled>
-          </div>
-          <!-- Notes -->
-          <div class="field">
-            <label for="notes">Notes (optional)</label>
-            <textarea id="notes" rows="4" placeholder="Anything notable about today..."></textarea>
+
+          <!-- Tab Navigation -->
+          <div class="tab-navigation">
+            <button type="button" class="tab-nav-btn tab-nav-prev" id="prevBtnNotes">
+              <span class="nav-arrow">←</span> Previous
+            </button>
+            <span class="tab-nav-indicator">3 of 3</span>
+            <button type="button" class="tab-nav-btn tab-nav-next tab-nav-save" id="saveBtnNotes">
+              <span class="save-icon">💾</span> Save
+            </button>
           </div>
         </section>
       </form>
 
       <!-- Sidebar -->
       <aside class="status-sidebar healthlog-sidebar">
+        <!-- Streak Card -->
+        <div class="card streak-card">
+          <div class="streak-header">
+            <span class="streak-fire">🔥</span>
+            <div class="streak-info">
+              <div class="streak-count" id="streakCount">0</div>
+              <div class="streak-label">Day Streak</div>
+            </div>
+          </div>
+          <div class="streak-message" id="streakMessage">Keep logging daily to build your streak!</div>
+          <div class="streak-progress">
+            <div class="streak-progress-bar" id="streakProgress" style="width: 0%"></div>
+          </div>
+          <div class="streak-hint" id="streakHint">Log today to continue your streak</div>
+        </div>
+
         <div class="card status-card">
           <div class="section-head">
             <strong>Log Status</strong>
@@ -556,7 +759,21 @@
           <div class="progress-bar-container">
             <div class="progress-bar" id="logProgress"></div>
           </div>
-          <div class="small" id="logDetail">Complete more sections to improve insights.</div>
+          <div class="progress-percentage" id="progressPercentage">0% Complete</div>
+          <div class="completion-details" id="completionDetails">
+            <div class="completion-item">
+              <span class="completion-icon" id="vitalsIcon">⭕</span>
+              <span class="completion-text">Vitals & Mood</span>
+            </div>
+            <div class="completion-item">
+              <span class="completion-icon" id="hydrationIcon">⭕</span>
+              <span class="completion-text">Hydration & Activity</span>
+            </div>
+            <div class="completion-item">
+              <span class="completion-icon" id="notesIcon">⭕</span>
+              <span class="completion-text">Notes & Visits</span>
+            </div>
+          </div>
           <div class="stats-grid">
             <div class="stat-item">
               <div class="stat-value" id="statSections">0/3</div>
@@ -584,7 +801,7 @@
             </div>
           </div>
         </div>
-        <div class="card quick-actions-card">
+        <div class="card quick-actions-card" style="display: none;">
           <div class="quick-actions-header">
             <strong>⚡ Quick Actions</strong>
             <p class="quick-actions-subtitle">Manage your daily log</p>
@@ -628,6 +845,19 @@
       pregnancyWeek: <%= typeof currentPregnancyWeek !== 'undefined' && currentPregnancyWeek ? JSON.stringify(currentPregnancyWeek) : 'null' %>,
       trimester: <%= typeof currentTrimester !== 'undefined' && currentTrimester ? JSON.stringify(currentTrimester) : 'null' %>
     };
+    
+    // Track which fields have been touched by the user (not just default values)
+    const touchedFields = new Set();
+    
+    // Helper to mark a field as touched
+    function markAsTouched(fieldId) {
+      touchedFields.add(fieldId);
+    }
+    
+    // Helper to check if a field has been touched
+    function isTouched(fieldId) {
+      return touchedFields.has(fieldId);
+    }
 
     // ==================== DOM ELEMENTS ====================
     const messageEl = document.getElementById('message');
@@ -638,19 +868,25 @@
     // ==================== BLOOD PRESSURE VALIDATION ====================
     const systolicBP = document.getElementById('systolicBP');
     const diastolicBP = document.getElementById('diastolicBP');
+    const bpValidation = document.getElementById('bpValidation');
 
     function validateBloodPressure(input, min, max, name) {
       input.addEventListener('input', function() {
+        markAsTouched(input.id);
         const value = parseInt(this.value);
         if (this.value && (value < min || value > max)) {
-          this.style.borderColor = '#d91e8f';
-          this.style.background = '#ffe3f0';
+          this.classList.remove('valid');
+          this.classList.add('invalid');
           this.setCustomValidity(`${name} must be between ${min} and ${max}`);
+        } else if (this.value) {
+          this.classList.remove('invalid');
+          this.classList.add('valid');
+          this.setCustomValidity('');
         } else {
-          this.style.borderColor = '';
-          this.style.background = '';
+          this.classList.remove('valid', 'invalid');
           this.setCustomValidity('');
         }
+        updateBPValidation();
       });
 
       input.addEventListener('blur', function() {
@@ -662,13 +898,291 @@
           this.value = max;
           showMsg(`${name} adjusted to maximum (${max})`, 'info');
         }
-        this.style.borderColor = '';
-        this.style.background = '';
+        this.classList.remove('invalid');
+        if (this.value) this.classList.add('valid');
+        updateBPValidation();
       });
+    }
+
+    function updateBPValidation() {
+      const systolic = parseInt(systolicBP?.value) || 0;
+      const diastolic = parseInt(diastolicBP?.value) || 0;
+      
+      if (bpValidation && systolic && diastolic) {
+        if (systolic >= 140 || diastolic >= 90) {
+          bpValidation.innerHTML = '⚠️ Blood pressure is elevated. Consider monitoring and consult your healthcare provider.';
+          bpValidation.className = 'validation-message warning show';
+        } else if (systolic < 90 || diastolic < 60) {
+          bpValidation.innerHTML = '💡 Blood pressure is low. Stay hydrated and change positions slowly.';
+          bpValidation.className = 'validation-message warning show';
+        } else if (systolic >= 90 && systolic <= 120 && diastolic >= 60 && diastolic <= 80) {
+          bpValidation.innerHTML = '✓ Blood pressure is in the healthy range';
+          bpValidation.className = 'validation-message success show';
+        } else {
+          bpValidation.className = 'validation-message';
+          bpValidation.style.display = 'none';
+        }
+      }
     }
 
     if (systolicBP) validateBloodPressure(systolicBP, 70, 200, 'Systolic BP');
     if (diastolicBP) validateBloodPressure(diastolicBP, 40, 130, 'Diastolic BP');
+
+    // ==================== WEIGHT VALIDATION ====================
+    const weightInput = document.getElementById('weightKg');
+    const weightValidation = document.getElementById('weightValidation');
+    
+    if (weightInput) {
+      weightInput.addEventListener('input', function() {
+        markAsTouched('weightKg');
+        const value = parseFloat(this.value);
+        if (this.value && (value < 20 || value > 300)) {
+          this.classList.remove('valid');
+          this.classList.add('invalid');
+          if (weightValidation) {
+            weightValidation.innerHTML = '⚠️ Weight must be between 20-300 kg';
+            weightValidation.className = 'validation-message error show';
+          }
+        } else if (this.value) {
+          this.classList.remove('invalid');
+          this.classList.add('valid');
+          if (weightValidation) {
+            weightValidation.innerHTML = '✓ Weight recorded';
+            weightValidation.className = 'validation-message success show';
+          }
+        } else {
+          this.classList.remove('valid', 'invalid');
+          if (weightValidation) {
+            weightValidation.className = 'validation-message';
+          }
+        }
+        updateSectionStatuses();
+      });
+      
+      weightInput.addEventListener('blur', function() {
+        const value = parseFloat(this.value);
+        if (this.value && value < 20) {
+          this.value = 20;
+          showMsg('Weight adjusted to minimum (20 kg)', 'info');
+        } else if (this.value && value > 300) {
+          this.value = 300;
+          showMsg('Weight adjusted to maximum (300 kg)', 'info');
+        }
+        if (this.value) {
+          this.classList.remove('invalid');
+          this.classList.add('valid');
+        }
+      });
+    }
+
+    // ==================== CHARACTER COUNTERS ====================
+    function setupCharCounter(inputId, counterId, maxLength) {
+      const input = document.getElementById(inputId);
+      const counter = document.getElementById(counterId);
+      if (!input || !counter) return;
+      
+      const updateCounter = () => {
+        const len = input.value.length;
+        counter.textContent = `${len}/${maxLength}`;
+        if (len >= maxLength * 0.9) {
+          counter.classList.add('warning');
+          counter.classList.remove('error');
+        } else if (len >= maxLength) {
+          counter.classList.add('error');
+          counter.classList.remove('warning');
+        } else {
+          counter.classList.remove('warning', 'error');
+        }
+      };
+      
+      input.addEventListener('input', updateCounter);
+      updateCounter();
+    }
+    
+    setupCharCounter('notes', 'notesCounter', 2000);
+    setupCharCounter('doctorVisitNotes', 'doctorNotesCounter', 500);
+
+    // ==================== SECTION STATUS UPDATES ====================
+    function updateSectionStatuses() {
+      // Vitals status
+      const vitalsStatus = document.getElementById('vitalsStatus');
+      if (vitalsStatus) {
+        const hasWeight = document.getElementById('weightKg')?.value;
+        const hasHeartRate = parseInt(document.getElementById('heartRateBpm')?.value) > 50;
+        const hasBP = document.getElementById('systolicBP')?.value && document.getElementById('diastolicBP')?.value;
+        
+        if (hasWeight && hasHeartRate && hasBP) {
+          vitalsStatus.textContent = '✓ Complete';
+          vitalsStatus.className = 'section-status complete';
+        } else if (hasWeight || hasHeartRate || hasBP) {
+          vitalsStatus.textContent = 'Partial';
+          vitalsStatus.className = 'section-status partial';
+        } else {
+          vitalsStatus.textContent = 'Not started';
+          vitalsStatus.className = 'section-status incomplete';
+        }
+      }
+      
+      // Mood status
+      const moodStatus = document.getElementById('moodStatus');
+      if (moodStatus) {
+        const hasEnergy = document.getElementById('energyLevel')?.value;
+        const hasStress = document.getElementById('stressLevel')?.value;
+        const hasMoodLog = moodLog.length > 0;
+        
+        if (hasEnergy && hasStress) {
+          moodStatus.textContent = '✓ Complete';
+          moodStatus.className = 'section-status complete';
+        } else if (hasEnergy || hasStress || hasMoodLog) {
+          moodStatus.textContent = 'Partial';
+          moodStatus.className = 'section-status partial';
+        } else {
+          moodStatus.textContent = 'Not started';
+          moodStatus.className = 'section-status incomplete';
+        }
+      }
+      
+      // Sleep status
+      const sleepStatusEl = document.getElementById('sleepStatus');
+      if (sleepStatusEl) {
+        const hasSleepHours = parseFloat(document.getElementById('sleepHours')?.value) > 0;
+        const hasSleepQuality = document.getElementById('sleepQuality')?.value;
+        
+        if (hasSleepHours && hasSleepQuality) {
+          sleepStatusEl.textContent = '✓ Complete';
+          sleepStatusEl.className = 'section-status complete';
+        } else if (hasSleepHours || hasSleepQuality) {
+          sleepStatusEl.textContent = 'Partial';
+          sleepStatusEl.className = 'section-status partial';
+        } else {
+          sleepStatusEl.textContent = 'Not started';
+          sleepStatusEl.className = 'section-status incomplete';
+        }
+      }
+      
+      // Symptoms status
+      const symptomsStatus = document.getElementById('symptomsStatus');
+      if (symptomsStatus) {
+        if (symptoms.length > 0) {
+          symptomsStatus.textContent = `${symptoms.length} logged`;
+          symptomsStatus.className = 'section-status complete';
+        } else {
+          symptomsStatus.textContent = 'None logged';
+          symptomsStatus.className = 'section-status incomplete';
+        }
+      }
+      
+      // Hydration status
+      const hydrationStatus = document.getElementById('hydrationStatus');
+      if (hydrationStatus) {
+        const water = parseFloat(document.getElementById('waterLiters')?.value) || 0;
+        const fluids = parseFloat(document.getElementById('otherFluidsLiters')?.value) || 0;
+        
+        if (water >= 2) {
+          hydrationStatus.textContent = '✓ On track';
+          hydrationStatus.className = 'section-status complete';
+        } else if (water > 0 || fluids > 0) {
+          hydrationStatus.textContent = 'Keep drinking!';
+          hydrationStatus.className = 'section-status partial';
+        } else {
+          hydrationStatus.textContent = 'Not started';
+          hydrationStatus.className = 'section-status incomplete';
+        }
+      }
+      
+      // Exercise status
+      const exerciseStatusEl = document.getElementById('exerciseStatus');
+      if (exerciseStatusEl) {
+        if (exercises.length > 0) {
+          const totalMins = exercises.reduce((sum, ex) => sum + (ex.durationMinutes || 0), 0);
+          exerciseStatusEl.textContent = `${totalMins} min logged`;
+          exerciseStatusEl.className = 'section-status complete';
+        } else {
+          exerciseStatusEl.textContent = 'Not started';
+          exerciseStatusEl.className = 'section-status incomplete';
+        }
+      }
+      
+      // Nutrition status
+      const nutritionStatus = document.getElementById('nutritionStatus');
+      if (nutritionStatus) {
+        if (meals.length > 0) {
+          nutritionStatus.textContent = `${meals.length} meal(s) logged`;
+          nutritionStatus.className = 'section-status complete';
+        } else {
+          nutritionStatus.textContent = 'Not started';
+          nutritionStatus.className = 'section-status incomplete';
+        }
+      }
+      
+      // Doctor status
+      const doctorStatus = document.getElementById('doctorStatus');
+      if (doctorStatus) {
+        if (document.getElementById('visitedDoctor')?.checked) {
+          doctorStatus.textContent = '✓ Visited';
+          doctorStatus.className = 'section-status complete';
+        } else {
+          doctorStatus.textContent = 'No visit';
+          doctorStatus.className = 'section-status incomplete';
+        }
+      }
+    }
+
+    // ==================== SLEEP HINTS ====================
+    const sleepHoursInputEl = document.getElementById('sleepHours');
+    const sleepHintEl = document.getElementById('sleepHint');
+    if (sleepHoursInputEl && sleepHintEl) {
+      sleepHoursInputEl.addEventListener('input', function() {
+        const hours = parseFloat(this.value);
+        if (hours < 6) {
+          sleepHintEl.textContent = '😴 Try to get more rest - aim for 7-9 hours';
+          sleepHintEl.className = 'field-hint warning';
+        } else if (hours >= 7 && hours <= 9) {
+          sleepHintEl.textContent = '✓ Great! You\'re getting adequate sleep';
+          sleepHintEl.className = 'field-hint success';
+        } else if (hours > 9) {
+          sleepHintEl.textContent = '💡 If you\'re sleeping more than usual, mention it to your doctor';
+          sleepHintEl.className = 'field-hint info';
+        } else {
+          sleepHintEl.textContent = 'Recommended: 7-9 hours per night';
+          sleepHintEl.className = 'field-hint';
+        }
+        updateSectionStatuses();
+      });
+    }
+
+    // ==================== WATER INTAKE HINTS ====================
+    const waterInputEl = document.getElementById('waterLiters');
+    const waterHintEl = document.getElementById('waterHint');
+    if (waterInputEl && waterHintEl) {
+      waterInputEl.addEventListener('input', function() {
+        const liters = parseFloat(this.value);
+        if (liters < 1.5) {
+          waterHintEl.textContent = '💧 Drink more water - aim for 2-3 liters';
+          waterHintEl.className = 'field-hint warning';
+        } else if (liters >= 2 && liters <= 3) {
+          waterHintEl.textContent = '✓ Excellent hydration!';
+          waterHintEl.className = 'field-hint success';
+        } else if (liters > 3) {
+          waterHintEl.textContent = '✓ Great hydration! Be mindful not to overhydrate.';
+          waterHintEl.className = 'field-hint info';
+        } else {
+          waterHintEl.textContent = 'Goal: 2-3 liters per day';
+          waterHintEl.className = 'field-hint';
+        }
+        updateSectionStatuses();
+      });
+    }
+
+    // ==================== SEVERITY WARNING ====================
+    const severityInputEl = document.getElementById('symptomSeverity');
+    const severityWarning = document.getElementById('severityWarning');
+    if (severityInputEl && severityWarning) {
+      severityInputEl.addEventListener('input', function() {
+        const value = parseInt(this.value);
+        severityWarning.style.display = value >= 8 ? 'flex' : 'none';
+      });
+    }
 
     // ==================== DOCTOR VISIT TOGGLE ====================
     function toggleDoctorVisitFields() {
@@ -794,6 +1308,19 @@
     if (tabHealthDetailsBtn) tabHealthDetailsBtn.addEventListener('click', () => showTab('health'));
     if (tabNotesBtn) tabNotesBtn.addEventListener('click', () => showTab('notes'));
 
+    // Tab navigation buttons (Next/Previous)
+    const nextBtnBasics = document.getElementById('nextBtnBasics');
+    const nextBtnHealth = document.getElementById('nextBtnHealth');
+    const prevBtnHealth = document.getElementById('prevBtnHealth');
+    const prevBtnNotes = document.getElementById('prevBtnNotes');
+    const saveBtnNotes = document.getElementById('saveBtnNotes');
+
+    if (nextBtnBasics) nextBtnBasics.addEventListener('click', () => { showTab('health'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    if (nextBtnHealth) nextBtnHealth.addEventListener('click', () => { showTab('notes'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    if (prevBtnHealth) prevBtnHealth.addEventListener('click', () => { showTab('basics'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    if (prevBtnNotes) prevBtnNotes.addEventListener('click', () => { showTab('health'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    if (saveBtnNotes) saveBtnNotes.addEventListener('click', () => saveLog(false));
+
     // Show fetal movement only if week >= 16
     const fetalMovementSection = document.getElementById('fetalMovementSection');
     if (fetalMovementSection && userContext.pregnancyWeek && userContext.pregnancyWeek >= 16) {
@@ -812,12 +1339,13 @@
       update();
     };
     
-    // Enhanced bindings with new display elements
+    // Enhanced bindings with new display elements - TRACK TOUCHED FIELDS
     const heartRateInput = document.getElementById('heartRateBpm');
     const heartRateDisplay = document.getElementById('heartRateDisplay');
     if (heartRateInput && heartRateDisplay) {
       heartRateInput.addEventListener('input', () => {
         heartRateDisplay.textContent = heartRateInput.value;
+        markAsTouched('heartRateBpm');
       });
     }
 
@@ -826,6 +1354,7 @@
     if (waterInput && waterDisplay) {
       waterInput.addEventListener('input', () => {
         waterDisplay.textContent = waterInput.value;
+        markAsTouched('waterLiters');
       });
     }
 
@@ -834,6 +1363,7 @@
     if (fluidsInput && fluidsDisplay) {
       fluidsInput.addEventListener('input', () => {
         fluidsDisplay.textContent = fluidsInput.value;
+        markAsTouched('otherFluidsLiters');
       });
     }
 
@@ -844,6 +1374,7 @@
       caffeineInput.addEventListener('input', () => {
         const value = caffeineInput.value;
         caffeineDisplay.textContent = value;
+        markAsTouched('caffeineIntakeMg');
         if (caffeineWarning) {
           caffeineWarning.style.display = value > 200 ? 'block' : 'none';
         }
@@ -908,6 +1439,7 @@
         b.addEventListener('click', () => {
           if (isReadOnly) return;
           h.value = i;
+          markAsTouched(hiddenId); // Track that user interacted with this field
           [...c.children].forEach((ch, idx) => ch.style.color = idx < i ? '#D91E8F' : '#C88DA8');
           if (label && labelTexts[i-1]) label.textContent = labelTexts[i-1];
           updateLogStatus();
@@ -935,6 +1467,7 @@
         b.addEventListener('click', () => {
           if (isReadOnly) return;
           h.value = i;
+          markAsTouched('sleepQuality');
           [...c.children].forEach((ch, idx) => ch.style.color = idx < i ? '#D91E8F' : '#C88DA8');
           if (label) label.textContent = qualities[i-1];
           updateLogStatus();
@@ -950,6 +1483,7 @@
     if (sleepHoursInput && sleepHoursDisplay) {
       sleepHoursInput.addEventListener('input', () => {
         sleepHoursDisplay.textContent = sleepHoursInput.value;
+        markAsTouched('sleepHours');
       });
     }
 
@@ -1239,8 +1773,7 @@
         parseFloat(document.getElementById('sleepHours').value) > 0 ||
         document.getElementById('sleepQuality').value ||
         symptoms.length > 0 ||
-        moodLog.length > 0 ||
-        naps.length > 0
+        moodLog.length > 0
       );
     }
 
@@ -1267,24 +1800,93 @@
     }
 
     function updateLogStatus() {
-      let filled = 0;
-      if (isSection1Filled()) filled++;
-      if (isSection2Filled()) filled++;
-      if (isSection3Filled()) filled++;
+      // Count individual fields completed
+      let totalFields = 0;
+      let completedFields = 0;
+
+      // Section 1: Vitals & Mood (8 possible fields)
+      const vitalsFields = [
+        document.getElementById('weightKg').value,
+        parseInt(document.getElementById('heartRateBpm').value) > 50,
+        document.getElementById('systolicBP')?.value,
+        document.getElementById('diastolicBP')?.value,
+        document.getElementById('energyLevel').value,
+        document.getElementById('stressLevel').value,
+        parseFloat(document.getElementById('sleepHours').value) > 0,
+        document.getElementById('sleepQuality').value
+      ];
+      const section1Extras = (symptoms.length > 0 ? 1 : 0) + (moodLog.length > 0 ? 1 : 0);
+      totalFields += 10;
+      completedFields += vitalsFields.filter(f => f).length + section1Extras;
+
+      // Section 2: Hydration & Activity (6 possible fields)
+      const hydrationFields = [
+        parseFloat(document.getElementById('waterLiters').value) > 0,
+        parseFloat(document.getElementById('otherFluidsLiters').value) > 0,
+        parseInt(document.getElementById('caffeineIntakeMg').value) > 0,
+        drinks.length > 0,
+        exercises.length > 0,
+        meals.length > 0
+      ];
+      const fetalMovement = (document.getElementById('fmKickCount') && document.getElementById('fmKickCount').value) ? 1 : 0;
+      totalFields += 7;
+      completedFields += hydrationFields.filter(f => f).length + fetalMovement;
+
+      // Section 3: Notes & Visits (3 possible fields)
+      const notesFields = [
+        document.getElementById('visitedDoctor').checked,
+        document.getElementById('doctorVisitNotes').value,
+        document.getElementById('notes').value
+      ];
+      totalFields += 3;
+      completedFields += notesFields.filter(f => f).length;
+
+      // Calculate percentage
+      const percentage = Math.round((completedFields / totalFields) * 100);
+      
+      // Update progress bar width and color
+      const progressBar = document.getElementById('logProgress');
+      progressBar.style.width = percentage + '%';
+      
+      // Change color based on completion percentage
+      if (percentage < 30) {
+        progressBar.style.background = 'linear-gradient(90deg, #ff6b6b 0%, #ff8787 100%)';
+      } else if (percentage < 60) {
+        progressBar.style.background = 'linear-gradient(90deg, #ffa500 0%, #ffb733 100%)';
+      } else if (percentage < 90) {
+        progressBar.style.background = 'linear-gradient(90deg, #4dabf7 0%, #74c0fc 100%)';
+      } else {
+        progressBar.style.background = 'linear-gradient(90deg, #51cf66 0%, #69db7c 100%)';
+      }
+
+      // Update percentage text
+      document.getElementById('progressPercentage').textContent = `${percentage}% Complete`;
+      
+      // Update status text
+      document.getElementById('logStatusText').textContent = 
+        percentage >= 90 ? 'Complete' : 
+        percentage >= 30 ? 'In Progress' : 'Draft';
+
+      // Update completion icons
+      const section1Complete = isSection1Filled();
+      const section2Complete = isSection2Filled();
+      const section3Complete = isSection3Filled();
+      
+      document.getElementById('vitalsIcon').textContent = section1Complete ? '✅' : '⭕';
+      document.getElementById('hydrationIcon').textContent = section2Complete ? '✅' : '⭕';
+      document.getElementById('notesIcon').textContent = section3Complete ? '✅' : '⭕';
+
+      // Update stats
+      const filled = [section1Complete, section2Complete, section3Complete].filter(Boolean).length;
       document.getElementById('statSections').textContent = `${filled}/3`;
-
-      const progress = filled / 3;
-      document.getElementById('logProgress').style.width = (progress * 100) + '%';
-      document.getElementById('logStatusText').textContent = filled === 3 ? 'Complete' : (filled > 0 ? 'In Progress' : 'Draft');
-      document.getElementById('logDetail').textContent = filled === 3
-        ? 'All sections complete!'
-        : 'Complete more sections to improve insights.';
-
       document.getElementById('statWeek').textContent = userContext.pregnancyWeek || '-';
       document.getElementById('statTrimester').textContent = userContext.trimester || '-';
       document.getElementById('statEnergy').textContent = document.getElementById('energyLevel').value || '-';
       document.getElementById('statSleep').textContent = document.getElementById('sleepHours').value || '-';
       document.getElementById('statWater').textContent = document.getElementById('waterLiters').value || '-';
+      
+      // Update section statuses
+      updateSectionStatuses();
     }
 
     // Listen to inputs for status update
@@ -1297,17 +1899,75 @@
       if (el) el.addEventListener('change', updateLogStatus);
     });
 
+    // Listen for blood sugar input to mark as touched
+    const bloodSugarInput = document.getElementById('bloodSugarValue');
+    if (bloodSugarInput) {
+      bloodSugarInput.addEventListener('input', () => markAsTouched('bloodSugarValue'));
+    }
+
+    // Listen for fetal movement inputs to mark as touched
+    ['fmStartTime', 'fmEndTime', 'fmKickCount', 'fmNotes'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', () => markAsTouched(id));
+    });
+
+    // Listen for doctor visit inputs to mark as touched
+    const visitedDoctorCb = document.getElementById('visitedDoctor');
+    if (visitedDoctorCb) {
+      visitedDoctorCb.addEventListener('change', () => markAsTouched('visitedDoctor'));
+    }
+    ['visitType', 'doctorVisitNotes', 'nextAppointment'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', () => markAsTouched(id));
+    });
+
+    // Listen for notes input to mark as touched
+    const notesInput = document.getElementById('notes');
+    if (notesInput) {
+      notesInput.addEventListener('input', () => markAsTouched('notes'));
+    }
+
+    // Listen for sleep time inputs to mark as touched
+    ['bedTime', 'wakeTime'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', () => markAsTouched(id));
+    });
+    const primaryPositionSelect = document.getElementById('primaryPosition');
+    if (primaryPositionSelect) {
+      primaryPositionSelect.addEventListener('change', () => markAsTouched('primaryPosition'));
+    }
+
     // ==================== VALIDATION ====================
     function validateFormData() {
       const errors = [];
       
+      // Clear previous validation states
+      document.querySelectorAll('.invalid, .valid').forEach(el => {
+        el.classList.remove('invalid', 'valid');
+      });
+      document.querySelectorAll('.validation-message').forEach(el => {
+        el.classList.remove('show');
+      });
+      
+      // CHECK: At least one field must be filled to save
+      const hasAnyData = checkIfFormHasData();
+      if (!hasAnyData) {
+        errors.push('Please fill in at least one field before saving. Your health log cannot be empty.');
+      }
+      
       // Validate weight (20-300 kg)
-      const weight = parseFloat(document.getElementById('weightKg').value);
+      const weightEl = document.getElementById('weightKg');
+      const weight = parseFloat(weightEl.value);
       if (weight && (weight < 20 || weight > 300)) {
         errors.push('Weight must be between 20-300 kg');
-        document.getElementById('weightKg').style.borderColor = '#d91e8f';
-      } else if (document.getElementById('weightKg').value) {
-        document.getElementById('weightKg').style.borderColor = '';
+        weightEl.classList.add('invalid');
+        const weightValidation = document.getElementById('weightValidation');
+        if (weightValidation) {
+          weightValidation.innerHTML = '⚠️ Weight must be between 20-300 kg';
+          weightValidation.className = 'validation-message error show';
+        }
+      } else if (weightEl.value) {
+        weightEl.classList.add('valid');
       }
       
       // Validate heart rate (40-200 bpm)
@@ -1317,28 +1977,36 @@
       }
       
       // Validate blood pressure
-      const systolic = parseInt(document.getElementById('systolicBP')?.value);
-      const diastolic = parseInt(document.getElementById('diastolicBP')?.value);
+      const systolicEl = document.getElementById('systolicBP');
+      const diastolicEl = document.getElementById('diastolicBP');
+      const systolic = parseInt(systolicEl?.value);
+      const diastolic = parseInt(diastolicEl?.value);
+      
       if (systolic && (systolic < 70 || systolic > 200)) {
         errors.push('Systolic blood pressure must be between 70-200 mmHg');
-        document.getElementById('systolicBP').style.borderColor = '#d91e8f';
-      } else if (document.getElementById('systolicBP')?.value) {
-        document.getElementById('systolicBP').style.borderColor = '';
+        if (systolicEl) systolicEl.classList.add('invalid');
+      } else if (systolicEl?.value) {
+        systolicEl.classList.add('valid');
       }
+      
       if (diastolic && (diastolic < 40 || diastolic > 130)) {
         errors.push('Diastolic blood pressure must be between 40-130 mmHg');
-        document.getElementById('diastolicBP').style.borderColor = '#d91e8f';
-      } else if (document.getElementById('diastolicBP')?.value) {
-        document.getElementById('diastolicBP').style.borderColor = '';
+        if (diastolicEl) diastolicEl.classList.add('invalid');
+      } else if (diastolicEl?.value) {
+        diastolicEl.classList.add('valid');
       }
       
       // Validate blood sugar
-      const bloodSugar = parseFloat(document.getElementById('bloodSugarValue').value);
+      const bloodSugarEl = document.getElementById('bloodSugarValue');
+      const bloodSugar = parseFloat(bloodSugarEl.value);
       if (bloodSugar && bloodSugar < 0) {
         errors.push('Blood sugar cannot be negative');
-        document.getElementById('bloodSugarValue').style.borderColor = '#d91e8f';
-      } else if (document.getElementById('bloodSugarValue').value) {
-        document.getElementById('bloodSugarValue').style.borderColor = '';
+        bloodSugarEl.classList.add('invalid');
+      } else if (bloodSugar && bloodSugar > 500) {
+        errors.push('Blood sugar value seems too high (max 500)');
+        bloodSugarEl.classList.add('invalid');
+      } else if (bloodSugarEl.value) {
+        bloodSugarEl.classList.add('valid');
       }
       
       // Validate sleep hours (0-24)
@@ -1399,31 +2067,100 @@
       });
       
       // Validate notes length (max 2000)
-      const notes = document.getElementById('notes').value;
+      const notesEl = document.getElementById('notes');
+      const notes = notesEl.value;
       if (notes && notes.length > 2000) {
         errors.push('Notes too long (max 2000 characters)');
-        document.getElementById('notes').style.borderColor = '#d91e8f';
+        notesEl.classList.add('invalid');
       } else if (notes) {
-        document.getElementById('notes').style.borderColor = '';
+        notesEl.classList.add('valid');
       }
       
       // Validate doctor visit notes (max 500)
-      const doctorNotes = document.getElementById('doctorVisitNotes').value;
+      const doctorNotesEl = document.getElementById('doctorVisitNotes');
+      const doctorNotes = doctorNotesEl.value;
       if (doctorNotes && doctorNotes.length > 500) {
         errors.push('Doctor visit notes too long (max 500 characters)');
-        document.getElementById('doctorVisitNotes').style.borderColor = '#d91e8f';
+        doctorNotesEl.classList.add('invalid');
       } else if (doctorNotes) {
-        document.getElementById('doctorVisitNotes').style.borderColor = '';
+        doctorNotesEl.classList.add('valid');
+      }
+      
+      // Validate exercise minutes
+      const exerciseMinutesEl = document.getElementById('exerciseMinutes');
+      const exerciseMins = parseInt(exerciseMinutesEl?.value);
+      if (exerciseMins && (exerciseMins < 0 || exerciseMins > 300)) {
+        errors.push('Exercise duration must be between 0-300 minutes');
+        if (exerciseMinutesEl) exerciseMinutesEl.classList.add('invalid');
+        const exerciseValidation = document.getElementById('exerciseMinutesValidation');
+        if (exerciseValidation) {
+          exerciseValidation.innerHTML = '⚠️ Duration must be 0-300 minutes';
+          exerciseValidation.className = 'validation-message error show';
+        }
       }
       
       return errors;
     }
+    
+    // ==================== CHECK IF FORM HAS DATA ====================
+    // Only count fields that user actually touched/interacted with
+    function checkIfFormHasData() {
+      // Check text/number inputs (these don't have default values)
+      const weight = parseFloat(document.getElementById('weightKg').value);
+      const systolic = parseInt(document.getElementById('systolicBP')?.value);
+      const diastolic = parseInt(document.getElementById('diastolicBP')?.value);
+      const bloodSugar = parseFloat(document.getElementById('bloodSugarValue').value);
+      
+      if (weight || systolic || diastolic || bloodSugar) return true;
+      
+      // Check range inputs ONLY if user touched them
+      if (isTouched('heartRateBpm')) return true;
+      if (isTouched('sleepHours')) return true;
+      if (isTouched('sleepQuality')) return true;
+      if (isTouched('waterLiters')) return true;
+      if (isTouched('otherFluidsLiters')) return true;
+      if (isTouched('caffeineIntakeMg')) return true;
+      
+      // Check mood & energy (only if touched)
+      if (isTouched('energyLevel')) return true;
+      if (isTouched('stressLevel')) return true;
+      if (moodLog.length > 0) return true;
+      
+      // Check symptoms
+      if (symptoms.length > 0) return true;
+      
+      // Check exercises
+      if (exercises.length > 0) return true;
+      
+      // Check drinks array
+      if (drinks.length > 0) return true;
+      
+      // Check nutrition
+      if (meals.length > 0) return true;
+      
+      // Check fetal movement
+      const fmCount = parseInt(document.getElementById('fmKickCount')?.value);
+      if (fmCount > 0) return true;
+      
+      // Check doctor visit
+      const visitedDoctor = document.getElementById('visitedDoctor').checked;
+      if (visitedDoctor) return true;
+      
+      // Check notes
+      const notes = document.getElementById('notes').value?.trim();
+      const doctorNotes = document.getElementById('doctorVisitNotes').value?.trim();
+      if (notes || doctorNotes) return true;
+      
+      return false;
+    }
 
     // ==================== COLLECT FORM DATA ====================
+    // Only send values for fields user actually touched
     function collectFormData() {
       return {
         weightKg: parseFloat(document.getElementById('weightKg').value) || null,
-        heartRateBpm: parseInt(document.getElementById('heartRateBpm').value) || null,
+        // Only send heartRate if user touched the slider
+        heartRateBpm: isTouched('heartRateBpm') ? parseInt(document.getElementById('heartRateBpm').value) : null,
         bloodPressure: {
           systolic: parseInt(document.getElementById('systolicBP')?.value) || null,
           diastolic: parseInt(document.getElementById('diastolicBP')?.value) || null
@@ -1434,12 +2171,14 @@
           timing: document.getElementById('bloodSugarTiming').value || null,
           measuredAt: null
         },
-        energyLevel: parseInt(document.getElementById('energyLevel').value) || null,
-        stressLevel: parseInt(document.getElementById('stressLevel').value) || null,
+        // Only send energy/stress if user touched them
+        energyLevel: isTouched('energyLevel') ? parseInt(document.getElementById('energyLevel').value) : null,
+        stressLevel: isTouched('stressLevel') ? parseInt(document.getElementById('stressLevel').value) : null,
         moodLog: moodLog,
         sleep: {
-          totalHours: parseFloat(document.getElementById('sleepHours').value) || null,
-          quality: parseInt(document.getElementById('sleepQuality').value) || null,
+          // Only send sleep values if user touched them
+          totalHours: isTouched('sleepHours') ? parseFloat(document.getElementById('sleepHours').value) : null,
+          quality: isTouched('sleepQuality') ? parseInt(document.getElementById('sleepQuality').value) : null,
           bedTime: document.getElementById('bedTime').value || null,
           wakeTime: document.getElementById('wakeTime').value || null,
           primaryPosition: document.getElementById('primaryPosition').value || null,
@@ -1448,11 +2187,12 @@
         symptoms: symptoms,
         exercises: exercises,
         hydration: {
-          waterLiters: parseFloat(document.getElementById('waterLiters').value) || 0,
-          otherFluidsLiters: parseFloat(document.getElementById('otherFluidsLiters').value) || 0,
+          // Only send hydration if touched
+          waterLiters: isTouched('waterLiters') ? parseFloat(document.getElementById('waterLiters').value) : 0,
+          otherFluidsLiters: isTouched('otherFluidsLiters') ? parseFloat(document.getElementById('otherFluidsLiters').value) : 0,
           drinks: drinks
         },
-        caffeineIntakeMg: parseInt(document.getElementById('caffeineIntakeMg').value) || null,
+        caffeineIntakeMg: isTouched('caffeineIntakeMg') ? parseInt(document.getElementById('caffeineIntakeMg').value) : null,
         foodIntake: meals,
         fetalMovement: {
           startTime: document.getElementById('fmStartTime')?.value || null,
@@ -1486,7 +2226,10 @@
 
       // Vitals
       const weightInput = document.getElementById('weightKg');
-      if (log.weightKg && weightInput) weightInput.value = log.weightKg;
+      if (log.weightKg && weightInput) {
+        weightInput.value = log.weightKg;
+        markAsTouched('weightKg');
+      }
       if (log.heartRateBpm) {
         const heartRateInput = document.getElementById('heartRateBpm');
         if (heartRateInput) heartRateInput.value = log.heartRateBpm;
@@ -1494,13 +2237,16 @@
         if (hrVal) hrVal.textContent = log.heartRateBpm;
         const heartRateDisplay = document.getElementById('heartRateDisplay');
         if (heartRateDisplay) heartRateDisplay.textContent = log.heartRateBpm;
+        markAsTouched('heartRateBpm');
       }
       if (log.bloodPressure) {
         if (log.bloodPressure.systolic && document.getElementById('systolicBP')) {
           document.getElementById('systolicBP').value = log.bloodPressure.systolic;
+          markAsTouched('systolicBP');
         }
         if (log.bloodPressure.diastolic && document.getElementById('diastolicBP')) {
           document.getElementById('diastolicBP').value = log.bloodPressure.diastolic;
+          markAsTouched('diastolicBP');
         }
       }
       if (log.bloodSugar?.value) {
@@ -1510,6 +2256,7 @@
         if (bloodSugarUnitInput) bloodSugarUnitInput.value = log.bloodSugar.unit || 'mg/dL';
         const bloodSugarTimingInput = document.getElementById('bloodSugarTiming');
         if (bloodSugarTimingInput) bloodSugarTimingInput.value = log.bloodSugar.timing || '';
+        markAsTouched('bloodSugarValue');
       }
 
       // Energy & Stress
@@ -1525,6 +2272,7 @@
           const labels = ['Very Low', 'Low', 'Moderate', 'High', 'Very High'];
           energyLabel.textContent = labels[log.energyLevel - 1];
         }
+        markAsTouched('energyLevel');
       }
       if (log.stressLevel) {
         const stressLevelInput = document.getElementById('stressLevel');
@@ -1538,6 +2286,7 @@
           const labels = ['Very Low', 'Low', 'Moderate', 'High', 'Very High'];
           stressLabel.textContent = labels[log.stressLevel - 1];
         }
+        markAsTouched('stressLevel');
       }
 
       // Mood Log
@@ -1556,6 +2305,7 @@
           if (document.getElementById('sleepHoursVal')) {
             document.getElementById('sleepHoursVal').textContent = log.sleep.totalHours;
           }
+          markAsTouched('sleepHours');
         }
         if (log.sleep.quality) {
           const sleepQualityInput = document.getElementById('sleepQuality');
@@ -1567,13 +2317,23 @@
             const qualityLabel = document.getElementById('qualityLabel');
             if (qualityLabel) qualityLabel.textContent = qualities[log.sleep.quality - 1];
           }
+          markAsTouched('sleepQuality');
         }
         const bedTimeInput = document.getElementById('bedTime');
-        if (log.sleep.bedTime && bedTimeInput) bedTimeInput.value = log.sleep.bedTime;
+        if (log.sleep.bedTime && bedTimeInput) {
+          bedTimeInput.value = log.sleep.bedTime;
+          markAsTouched('bedTime');
+        }
         const wakeTimeInput = document.getElementById('wakeTime');
-        if (log.sleep.wakeTime && wakeTimeInput) wakeTimeInput.value = log.sleep.wakeTime;
+        if (log.sleep.wakeTime && wakeTimeInput) {
+          wakeTimeInput.value = log.sleep.wakeTime;
+          markAsTouched('wakeTime');
+        }
         const primaryPositionInput = document.getElementById('primaryPosition');
-        if (log.sleep.primaryPosition && primaryPositionInput) primaryPositionInput.value = log.sleep.primaryPosition;
+        if (log.sleep.primaryPosition && primaryPositionInput) {
+          primaryPositionInput.value = log.sleep.primaryPosition;
+          markAsTouched('primaryPosition');
+        }
         
         // Awakening reasons
         if (log.sleep.awakeningReasons?.length) {
@@ -1607,6 +2367,7 @@
           if (waterVal) waterVal.textContent = log.hydration.waterLiters;
           const waterDisplay = document.getElementById('waterDisplay');
           if (waterDisplay) waterDisplay.textContent = log.hydration.waterLiters;
+          markAsTouched('waterLiters');
         }
         if (log.hydration.otherFluidsLiters) {
           const otherFluidsInput = document.getElementById('otherFluidsLiters');
@@ -1615,6 +2376,7 @@
           if (fluidsVal) fluidsVal.textContent = log.hydration.otherFluidsLiters;
           const fluidsDisplay = document.getElementById('fluidsDisplay');
           if (fluidsDisplay) fluidsDisplay.textContent = log.hydration.otherFluidsLiters;
+          markAsTouched('otherFluidsLiters');
         }
         if (log.hydration.drinks?.length) {
           drinks = [...log.hydration.drinks];
@@ -1628,6 +2390,7 @@
         if (caffVal) caffVal.textContent = log.caffeineIntakeMg;
         const caffeineDisplay = document.getElementById('caffeineDisplay');
         if (caffeineDisplay) caffeineDisplay.textContent = log.caffeineIntakeMg;
+        markAsTouched('caffeineIntakeMg');
         const caffeineWarning = document.getElementById('caffeineWarning');
         if (caffeineWarning) {
           caffeineWarning.style.display = log.caffeineIntakeMg > 200 ? 'flex' : 'none';
@@ -1643,10 +2406,22 @@
       // Fetal Movement
       if (log.fetalMovement) {
         const fm = log.fetalMovement;
-        if (fm.startTime && document.getElementById('fmStartTime')) document.getElementById('fmStartTime').value = fm.startTime;
-        if (fm.endTime && document.getElementById('fmEndTime')) document.getElementById('fmEndTime').value = fm.endTime;
-        if (fm.count && document.getElementById('fmKickCount')) document.getElementById('fmKickCount').value = fm.count;
-        if (fm.notes && document.getElementById('fmNotes')) document.getElementById('fmNotes').value = fm.notes;
+        if (fm.startTime && document.getElementById('fmStartTime')) {
+          document.getElementById('fmStartTime').value = fm.startTime;
+          markAsTouched('fmStartTime');
+        }
+        if (fm.endTime && document.getElementById('fmEndTime')) {
+          document.getElementById('fmEndTime').value = fm.endTime;
+          markAsTouched('fmEndTime');
+        }
+        if (fm.count && document.getElementById('fmKickCount')) {
+          document.getElementById('fmKickCount').value = fm.count;
+          markAsTouched('fmKickCount');
+        }
+        if (fm.notes && document.getElementById('fmNotes')) {
+          document.getElementById('fmNotes').value = fm.notes;
+          markAsTouched('fmNotes');
+        }
       }
 
       // Doctor Visit
@@ -1655,16 +2430,27 @@
         // Toggle fields based on checkbox state
         toggleDoctorVisitFields();
         // Then populate the fields
-        if (log.doctorVisit.visitType) document.getElementById('visitType').value = log.doctorVisit.visitType;
-        if (log.doctorVisit.notes) document.getElementById('doctorVisitNotes').value = log.doctorVisit.notes;
+        if (log.doctorVisit.visitType) {
+          document.getElementById('visitType').value = log.doctorVisit.visitType;
+          markAsTouched('visitType');
+        }
+        if (log.doctorVisit.notes) {
+          document.getElementById('doctorVisitNotes').value = log.doctorVisit.notes;
+          markAsTouched('doctorVisitNotes');
+        }
         if (log.doctorVisit.nextAppointment) {
           const dateStr = new Date(log.doctorVisit.nextAppointment).toISOString().split('T')[0];
           document.getElementById('nextAppointment').value = dateStr;
+          markAsTouched('nextAppointment');
         }
+        markAsTouched('visitedDoctor');
       }
 
       // Notes
-      if (log.notes) document.getElementById('notes').value = log.notes;
+      if (log.notes) {
+        document.getElementById('notes').value = log.notes;
+        markAsTouched('notes');
+      }
 
       // Update status
       updateLogStatus();
@@ -1837,8 +2623,53 @@
       });
     }
 
+    // ==================== FETCH STREAK ====================
+    async function fetchStreak() {
+      try {
+        const response = await fetch('/streak/getStreak');
+        if (!response.ok) throw new Error('Failed to fetch streak');
+        
+        const data = await response.json();
+        
+        const streakCount = document.getElementById('streakCount');
+        const streakMessage = document.getElementById('streakMessage');
+        const streakProgress = document.getElementById('streakProgress');
+        const streakHint = document.getElementById('streakHint');
+        
+        if (streakCount) streakCount.textContent = data.currentStreak;
+        
+        // Update progress bar (max 7 days for visual)
+        const progressPercent = Math.min((data.currentStreak / 7) * 100, 100);
+        if (streakProgress) streakProgress.style.width = progressPercent + '%';
+        
+        // Update message and hint based on streak
+        if (data.currentStreak === 0) {
+          if (streakMessage) streakMessage.textContent = 'Start your health logging journey today!';
+          if (streakHint) streakHint.textContent = 'Log today to start your streak';
+        } else if (data.currentStreak === 1) {
+          if (streakMessage) streakMessage.textContent = 'Great start! Keep going!';
+          if (streakHint) streakHint.textContent = data.loggedToday ? '✅ Logged today' : 'Log today to continue';
+        } else if (data.currentStreak < 7) {
+          if (streakMessage) streakMessage.textContent = `${data.currentStreak} days strong! Keep it up!`;
+          if (streakHint) streakHint.textContent = data.loggedToday ? '✅ Logged today' : 'Log today to continue';
+        } else {
+          if (streakMessage) streakMessage.textContent = `Amazing! ${data.currentStreak} day streak! 🌟`;
+          if (streakHint) streakHint.textContent = data.loggedToday ? '✅ Logged today' : 'Log today to continue';
+        }
+        
+        // Add glow effect for high streaks
+        const streakCard = document.querySelector('.streak-card');
+        if (streakCard && data.currentStreak >= 7) {
+          streakCard.classList.add('streak-high');
+        }
+      } catch (error) {
+        console.error('Error fetching streak:', error);
+      }
+    }
+
     // ==================== INITIALIZE ====================
     loadTodayLog();
     updateLogStatus();
+    fetchStreak();
   })();
 </script>

@@ -139,6 +139,22 @@ header {
   font-size: 0.7rem;
   color: var(--gray-500, #6b7280);
   margin-top: 4px;
+  line-height: 1.4;
+}
+
+.helper.locked {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.helper.required {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.helper.unlocked {
+  color: #059669;
+  font-weight: 500;
 }
 
 .field-error {
@@ -311,7 +327,43 @@ button {
   height: 100%;
   background: var(--pink-500, #ec4899);
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.progress-percentage {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-700, #374151);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.completion-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #fff5f9 0%, #ffe8f2 100%);
+  border-radius: 8px;
+  border: 1px solid #f8bbd9;
+}
+
+.completion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.completion-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.completion-text {
+  color: var(--gray-700, #374151);
+  font-weight: 500;
 }
 
 .small {
