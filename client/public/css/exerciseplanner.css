@@ -116,6 +116,17 @@
     margin: 0;
 }
 
+.goal-caution {
+    font-size: 0.9rem;
+    color: #D84315;
+    background: #FFF3E0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+    border-left: 3px solid #FF9800;
+    font-weight: 500;
+}
+
 /* ===== Section Titles ===== */
 .section-title {
     font-size: 1.5rem;

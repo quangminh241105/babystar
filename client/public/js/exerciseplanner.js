@@ -35,22 +35,27 @@ function showMainContent() {
 
 // Generate new exercise plan
 async function generateNewPlan() {
+	if (!confirm('Are you sure you want to regenerate your exercise plan? This will replace your current plan.')) {
+		return;
+	}
+
 	showLoading();
 
 	try {
 		const response = await fetch('/api/exercise/generate', {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ forceRegenerate: true })
 		});
 
 		const result = await response.json();
 
 		if (response.ok && result.success && result.data) {
-			console.log('✅ Exercise plan generated successfully');
+			console.log('✅ Exercise plan regenerated successfully');
 			renderAIExercisePlan(result.data, mainContent, isViewingPartner);
 			showMainContent();
 		} else {
-			throw new Error(result.message || 'Failed to generate exercise plan');
+			throw new Error(result.message || 'Failed to regenerate exercise plan');
 		}
 	} catch (error) {
 		console.error('❌ Error generating exercise plan:', error);
@@ -307,8 +312,18 @@ function renderAIExercisePlan(plan, container, isViewingPartner = false) {
 		<!-- Weekly Goal -->
 		<section class="goal-banner">
 			<h2 class="goal-title">💪 Weekly Exercise Goal</h2>
-			<p class="goal-description">Aim for at least <strong>${plan.weeklyGoals?.totalMinutes || 150} minutes</strong> of moderate-intensity aerobic activity per week, spread throughout the week.</p>
-			<p class="goal-benefits">Regular exercise during pregnancy can help reduce back pain, prevent excess weight gain, improve sleep, and prepare your body for labor and delivery.</p>
+			<p class="goal-description">
+				${plan.weeklyGoals?.description || 'Build and maintain fitness throughout your pregnancy'}
+			</p>
+			<p class="goal-description">
+				Aim for <strong>${plan.weeklyGoals?.totalMinutes || 150} minutes</strong> 
+				of ${plan.weeklyGoals?.intensityLevel || 'moderate-intensity'} aerobic activity per week, 
+				spread over <strong>${plan.weeklyGoals?.daysPerWeek || 5} days</strong>.
+			</p>
+			<p class="goal-benefits">
+				${plan.weeklyGoals?.benefits || 'Regular exercise during pregnancy can help reduce back pain, prevent excess weight gain, improve sleep, and prepare your body for labor and delivery.'}
+			</p>
+			${plan.weeklyGoals?.cautionNote ? `<p class="goal-caution">⚠️ ${plan.weeklyGoals.cautionNote}</p>` : ''}
 		</section>
 
 		<!-- Recommended Exercises -->
