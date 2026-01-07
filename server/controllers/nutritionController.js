@@ -38,8 +38,22 @@ async function generateNutritionSuggestions(req, res) {
 			}
 		}
 
-		// Get user data
-		const user = await User.findById(userId);
+		// Parallel fetch: user data and health logs together
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+		const [user, healthLogs] = await Promise.all([
+			User.findById(userId).select('pregnancyProfile name username email currentWeightKg').lean(),
+			HealthLog.find({
+				userId,
+				logDate: { $gte: sevenDaysAgo },
+				deletedAt: null
+			})
+			.sort({ logDate: -1 })
+			.select('foodIntake symptoms energyLevel hydration logDate')
+			.lean()
+		]);
+
 		if (!user) {
 			return res.status(404).json({
 				success: false,
@@ -63,22 +77,26 @@ async function generateNutritionSuggestions(req, res) {
 		const trimester = pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3;
 
 		// Get recent health logs (last 7 days)
-		const sevenDaysAgo = new Date();
-		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+		// const sevenDaysAgo = new Date();
+		// sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-		const healthLogs = await HealthLog.find({
-			userId,
-			logDate: { $gte: sevenDaysAgo },
-			deletedAt: null
-		}).sort({ logDate: -1 });
+		// const healthLogs = await HealthLog.find({
+		// 	userId,
+		// 	logDate: { $gte: sevenDaysAgo },
+		// 	deletedAt: null
+		// }).sort({ logDate: -1 });
 
-		// Generate suggestions
+		// Analyze nutrition intake BEFORE AI generation
 		const nutritionService = new NutritionSuggestionService();
+		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		
+		// Generate suggestions with intake analysis context
 		const suggestions = await nutritionService.generateNutritionSuggestions({
 			userId,
 			pregnancyWeek,
 			trimester,
 			healthLogs,
+			healthSummary,
 			dueDate,
 			userProfile: {
 				name: user.name || user.username,
@@ -86,8 +104,7 @@ async function generateNutritionSuggestions(req, res) {
 			}
 		});
 
-		// Analyze nutrition intake
-		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		// Analyze intake against generated targets
 		const intakeAnalysis = nutritionService.analyzeNutritionIntake(
 			healthSummary,
 			suggestions.dailyTargets || {}
@@ -163,13 +180,15 @@ function transformWeeklyMealsForDB(dailyMealRecommendations) {
 				reason: meal.reason || '',
 				keyNutrients: meal.keyNutrients || [],
 				alternatives: meal.alternatives || [],
-				// Add detailed nutrients
-				proteinGrams: nutrients.proteinGrams || meal.proteinGrams || 0,
-				calciumMg: nutrients.calciumMg || meal.calciumMg || 0,
-				ironMg: nutrients.ironMg || meal.ironMg || 0,
-				folicAcidMcg: nutrients.folicAcidMcg || meal.folicAcidMcg || 0,
-				omega3Grams: nutrients.omega3Grams || meal.omega3Grams || 0,
-				fiberGrams: nutrients.fiberGrams || meal.fiberGrams || 0
+				// Add detailed nutrients in nutritionInfo object (matches schema)
+				nutritionInfo: {
+					proteinGrams: nutrients.proteinGrams || meal.proteinGrams || 0,
+					calciumMg: nutrients.calciumMg || meal.calciumMg || 0,
+					ironMg: nutrients.ironMg || meal.ironMg || 0,
+					folicAcidMcg: nutrients.folicAcidMcg || meal.folicAcidMcg || 0,
+					omega3Grams: nutrients.omega3Grams || meal.omega3Grams || 0,
+					fiberGrams: nutrients.fiberGrams || meal.fiberGrams || 0
+				}
 			};
 		};
 
@@ -185,26 +204,28 @@ function transformWeeklyMealsForDB(dailyMealRecommendations) {
 				reason: snack.reason || '',
 				keyNutrients: snack.keyNutrients || [],
 				alternatives: snack.alternatives || [],
-				// Add detailed nutrients
-				proteinGrams: nutrients.proteinGrams || snack.proteinGrams || 0,
-				calciumMg: nutrients.calciumMg || snack.calciumMg || 0,
-				ironMg: nutrients.ironMg || snack.ironMg || 0,
-				folicAcidMcg: nutrients.folicAcidMcg || snack.folicAcidMcg || 0,
-				omega3Grams: nutrients.omega3Grams || snack.omega3Grams || 0,
-				fiberGrams: nutrients.fiberGrams || snack.fiberGrams || 0
+				// Add detailed nutrients in nutritionInfo object (matches schema)
+				nutritionInfo: {
+					proteinGrams: nutrients.proteinGrams || snack.proteinGrams || 0,
+					calciumMg: nutrients.calciumMg || snack.calciumMg || 0,
+					ironMg: nutrients.ironMg || snack.ironMg || 0,
+					folicAcidMcg: nutrients.folicAcidMcg || snack.folicAcidMcg || 0,
+					omega3Grams: nutrients.omega3Grams || snack.omega3Grams || 0,
+					fiberGrams: nutrients.fiberGrams || snack.fiberGrams || 0
+				}
 			};
 		});
 
-		// Calculate daily totals
+		// Calculate daily totals from nutritionInfo
 		const allMeals = [...breakfast, ...lunch, ...dinner, ...snacks];
 		const dailyTotals = {
 			calories: allMeals.reduce((sum, m) => sum + (m?.calories || 0), 0),
-			proteinGrams: allMeals.reduce((sum, m) => sum + (m?.proteinGrams || 0), 0),
-			calciumMg: allMeals.reduce((sum, m) => sum + (m?.calciumMg || 0), 0),
-			ironMg: allMeals.reduce((sum, m) => sum + (m?.ironMg || 0), 0),
-			folicAcidMcg: allMeals.reduce((sum, m) => sum + (m?.folicAcidMcg || 0), 0),
-			omega3Grams: allMeals.reduce((sum, m) => sum + (m?.omega3Grams || 0), 0),
-			fiberGrams: allMeals.reduce((sum, m) => sum + (m?.fiberGrams || 0), 0)
+			proteinGrams: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.proteinGrams || 0), 0),
+			calciumMg: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.calciumMg || 0), 0),
+			ironMg: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.ironMg || 0), 0),
+			folicAcidMcg: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.folicAcidMcg || 0), 0),
+			omega3Grams: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.omega3Grams || 0), 0),
+			fiberGrams: allMeals.reduce((sum, m) => sum + (m?.nutritionInfo?.fiberGrams || 0), 0)
 		};
 
 		return {
@@ -222,7 +243,14 @@ function transformWeeklyMealsForDB(dailyMealRecommendations) {
  * Transform nutrient focus for database storage
  */
 function transformNutrientFocusForDB(suggestions) {
-	const nutrientFocusArray = suggestions.nutrientFocus || [];
+	let nutrientFocusArray = suggestions.nutrientFocus || [];
+	
+	// Ensure nutrientFocus is an array
+	if (!Array.isArray(nutrientFocusArray)) {
+		console.warn('⚠️ nutrientFocus is not an array:', typeof nutrientFocusArray);
+		nutrientFocusArray = [];
+	}
+	
 	return nutrientFocusArray.map(nutrient => {
 		const recommended = (suggestions.recommendedFoods || []).find(
 			item => item.nutrient === nutrient
@@ -268,22 +296,27 @@ function transformDietPlanForResponse(dietPlan) {
 
 /**
  * Get current diet plan (auto-generates if none exists)
- * GET /api/nutrition/current
+ * GET /api/nutrition/current?userId=<userId>
+ * Can fetch for current user or another user (if userId provided in query)
  */
 async function getCurrentDietPlan(req, res) {
 	try {
-		const userId = req.session?.user?.id;
+		const sessionUserId = req.session?.user?.id;
 
-		if (!userId) {
+		if (!sessionUserId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Unauthorized. Please login.'
 			});
 		}
 
+		// Allow fetching for another user via query param, default to session user
+		const targetUserId = req.query.userId || sessionUserId;
+		const isViewingOther = targetUserId !== sessionUserId;
+
 		// Check for existing active diet plan
-		console.log(`🔍 Checking for existing diet plan for user: ${userId}`);
-		const existingPlan = await DietPlan.getActivePlan(userId);
+		console.log(`🔍 Checking for existing diet plan for user: ${targetUserId}`);
+		const existingPlan = await DietPlan.getActivePlan(targetUserId);
 		
 		if (existingPlan && existingPlan.isValid()) {
 			console.log('✅ Found valid existing diet plan');
@@ -291,19 +324,31 @@ async function getCurrentDietPlan(req, res) {
 				success: true,
 				message: 'Retrieved existing nutrition plan',
 				fromCache: true,
-				data: transformDietPlanForResponse(existingPlan)
+				data: transformDietPlanForResponse(existingPlan),
+				userId: targetUserId
 			});
 		}
 
-		// No valid plan exists - auto-generate one
+		// No valid plan exists
+		// Only auto-generate for own plan, not for viewing others
+		if (isViewingOther) {
+			console.log('⚠️ No plan found for other user, cannot auto-generate');
+			return res.status(404).json({
+				success: false,
+				message: 'No nutrition plan found for this user.',
+				userId: targetUserId
+			});
+		}
+
 		console.log('📝 No valid plan found, auto-generating...');
 		
 		// Get user data
-		const user = await User.findById(userId);
+		const user = await User.findById(targetUserId);
 		if (!user) {
 			return res.status(404).json({
 				success: false,
-				message: 'User not found'
+				message: 'User not found',
+				userId: targetUserId
 			});
 		}
 
@@ -327,18 +372,22 @@ async function getCurrentDietPlan(req, res) {
 		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
 		const healthLogs = await HealthLog.find({
-			userId,
+			userId:targetUserId,
 			logDate: { $gte: sevenDaysAgo },
 			deletedAt: null
 		}).sort({ logDate: -1 });
 
-		// Generate suggestions
+		// Analyze nutrition intake BEFORE AI generation
 		const nutritionService = new NutritionSuggestionService();
+		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		
+		// Generate suggestions with intake analysis context
 		const suggestions = await nutritionService.generateNutritionSuggestions({
-			userId,
+			userId: targetUserId,
 			pregnancyWeek,
 			trimester,
 			healthLogs,
+			healthSummary,
 			dueDate,
 			userProfile: {
 				name: user.name || user.username,
@@ -346,8 +395,7 @@ async function getCurrentDietPlan(req, res) {
 			}
 		});
 
-		// Analyze nutrition intake
-		const healthSummary = nutritionService.extractHealthLogSummary(healthLogs);
+		// Analyze intake against generated targets
 		const intakeAnalysis = nutritionService.analyzeNutritionIntake(
 			healthSummary,
 			suggestions.dailyTargets || {}
@@ -355,7 +403,7 @@ async function getCurrentDietPlan(req, res) {
 
 		// Save diet plan to database
 		const dietPlan = new DietPlan({
-			userId,
+			userId: targetUserId,
 			pregnancyWeek,
 			trimester,
 			dailyTargets: suggestions.dailyTargets || {},
@@ -387,7 +435,8 @@ async function getCurrentDietPlan(req, res) {
 			success: true,
 			message: 'Nutrition plan auto-generated successfully',
 			fromCache: false,
-			data: transformDietPlanForResponse(dietPlan)
+			data: transformDietPlanForResponse(dietPlan),
+			userId: targetUserId
 		});
 
 	} catch (error) {

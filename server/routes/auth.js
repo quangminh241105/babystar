@@ -10,6 +10,87 @@ const { requireAuth, redirectIfLoggedIn } = require('../middleware');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
+// Helper to emit real-time notification via Socket.IO
+function emitNotification(req, userId, notification) {
+  const io = req.app.get('io');
+  if (io) {
+    io.to(`user:${userId}`).emit('notification', {
+      type: 'new',
+      notification: {
+        _id: notification._id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        category: notification.category,
+        priority: notification.priority,
+        actionUrl: notification.actionUrl,
+        actionLabel: notification.actionLabel,
+        createdAt: notification.createdAt,
+        read: notification.read
+      }
+    });
+
+    Notification.getUnreadCount(userId).then(count => {
+      io.to(`user:${userId}`).emit('notification', { type: 'count', count });
+    }).catch(err => console.error('Failed to emit count:', err));
+  }
+}
+
+// Helper to check if profile is incomplete
+function isProfileIncomplete(user) {
+  const profile = user.pregnancyProfile;
+  // Profile is considered incomplete if missing key pregnancy info
+  return !profile?.lastMenstrualPeriod && !profile?.dueDate;
+}
+
+// Helper to send profile completion reminder on first login after signup
+async function sendProfileCompletionReminder(req, user) {
+  try {
+    // Check if user's profile is incomplete
+    if (!isProfileIncomplete(user)) {
+      return; // Profile already complete
+    }
+
+    // Check if this is effectively first login (no lastLoginAt before this session)
+    // or if we haven't sent this type of notification in the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const recentReminder = await Notification.findOne({
+      userId: user._id,
+      type: 'system_announcement',
+      'metadata.reminderType': 'profile_completion',
+      createdAt: { $gte: sevenDaysAgo }
+    });
+
+    if (recentReminder) {
+      return; // Already sent recently
+    }
+
+    // Create profile completion notification
+    const notification = await Notification.create({
+      userId: user._id,
+      title: '📝 Complete Your Profile',
+      message: 'Set up your pregnancy details to get personalized health advice, weekly updates, and track your journey!',
+      type: 'system_announcement',
+      category: 'system',
+      priority: 'high',
+      actionUrl: '/auth/profile',
+      actionLabel: 'Complete Profile',
+      metadata: {
+        reminderType: 'profile_completion'
+      },
+      createdBy: { type: 'system' }
+    });
+
+    // Emit real-time notification
+    emitNotification(req, user._id.toString(), notification);
+
+  } catch (err) {
+    console.error('Error sending profile completion reminder:', err);
+  }
+}
+
 // GET /auth - redirect based on login status
 router.get('/', (req, res) => {
   if (req.session?.user) return res.redirect('/');
@@ -229,6 +310,9 @@ router.post('/login', async (req, res) => {
     user.lastLoginIP = req.ip;
     await user.save();
 
+    // Send profile completion reminder if needed (async, don't block login)
+    sendProfileCompletionReminder(req, user);
+
     // REGENERATE SESSION to prevent session fixation and clear old user data
     req.session.regenerate((err) => {
       if (err) {
@@ -409,6 +493,9 @@ router.post('/google', async (req, res) => {
       user.markModified('notificationPreferences');
       await user.save();
     }
+
+    // Send profile completion reminder if needed (async, don't block login)
+    sendProfileCompletionReminder(req, user);
 
     // REGENERATE SESSION for security and to clear old data
     req.session.regenerate((err) => {
@@ -870,6 +957,10 @@ router.put('/profile', requireAuth, async (req, res) => {
     const user = await User.findById(req.session.user.id);
     if (!user) return res.status(404).json({ success: false, errors: { general: 'User not found' }});
 
+    const dueDateChanged = dueDate !== undefined && 
+      ((!user.dueDate && dueDate) || 
+       (user.dueDate && dueDate && new Date(dueDate).getTime() !== new Date(user.dueDate).getTime()));
+
     // Update fields
     if (name?.trim()) user.name = name.trim();
     if (bio !== undefined) user.bio = bio.trim();
@@ -879,6 +970,20 @@ router.put('/profile', requireAuth, async (req, res) => {
 
     await user.save();
     req.session.user.name = user.name;
+
+    // Emit real-time update to linked partners if due date changed
+    const io = req.app.get('io');
+    if (io && dueDateChanged && user.linkedAccounts?.length > 0) {
+      user.linkedAccounts.forEach(link => {
+        if (link.status === 'accepted') {
+          io.to(`user:${link.userId}`).emit('partnerUpdate', {
+            type: 'profile-updated',
+            partnerId: req.session.user.id,
+            partnerName: user.fullName || user.firstName
+          });
+        }
+      });
+    }
 
     res.json({ success: true, user: user.toPublic() });
   } catch (err) {

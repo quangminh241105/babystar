@@ -1,49 +1,65 @@
 // DOM Elements - accessed globally
-let loadingState, errorState, mainContent;
+let loadingState, errorState, partnerErrorState, mainContent;
+let currentViewUserId = null; // Track whose plan we're viewing
+let isViewingPartner = false; // Track if viewing partner's plan
 
 // Show loading
 function showLoading() {
 	loadingState.classList.remove('hidden');
 	errorState.classList.add('hidden');
+	partnerErrorState.classList.add('hidden');
 	mainContent.classList.add('hidden');
 }
 
 // Show error/no plan
-function showError() {
+function showError(viewingPartner = false) {
 	loadingState.classList.add('hidden');
-	errorState.classList.remove('hidden');
 	mainContent.classList.add('hidden');
+	
+	if (viewingPartner) {
+		partnerErrorState.classList.remove('hidden');
+		errorState.classList.add('hidden');
+	} else {
+		errorState.classList.remove('hidden');
+		partnerErrorState.classList.add('hidden');
+	}
 }
 
 // Show main content
 function showMainContent() {
 	loadingState.classList.add('hidden');
 	errorState.classList.add('hidden');
+	partnerErrorState.classList.add('hidden');
 	mainContent.classList.remove('hidden');
 }
 
 // Generate new exercise plan
 async function generateNewPlan() {
+	if (!confirm('Are you sure you want to regenerate your exercise plan? This will replace your current plan.')) {
+		return;
+	}
+
 	showLoading();
 
 	try {
 		const response = await fetch('/api/exercise/generate', {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ forceRegenerate: true })
 		});
 
 		const result = await response.json();
 
 		if (response.ok && result.success && result.data) {
-			console.log('✅ Exercise plan generated successfully');
-			renderAIExercisePlan(result.data, mainContent);
+			console.log('✅ Exercise plan regenerated successfully');
+			renderAIExercisePlan(result.data, mainContent, isViewingPartner);
 			showMainContent();
 		} else {
-			throw new Error(result.message || 'Failed to generate exercise plan');
+			throw new Error(result.message || 'Failed to regenerate exercise plan');
 		}
 	} catch (error) {
 		console.error('❌ Error generating exercise plan:', error);
-		alert('Failed to generate exercise plan: ' + error.message);
+		CustomModal.alert('Failed to generate exercise plan: ' + error.message, { titleText: 'Error', danger: true });
 		showError();
 	}
 }
@@ -53,13 +69,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 	// Initialize DOM elements
 	loadingState = document.getElementById('loadingState');
 	errorState = document.getElementById('errorState');
+	partnerErrorState = document.getElementById('partnerErrorState');
 	mainContent = document.getElementById('mainContent');
 	
 	showLoading();
 	
 	try {
+		// Get partnerId from URL query params
+		const urlParams = new URLSearchParams(window.location.search);
+		const partnerId = urlParams.get('partnerId');
+		
+		let targetUserId = partnerId || null;
+		isViewingPartner = !!partnerId;
+		
+		if (partnerId) {
+			currentViewUserId = partnerId;
+			console.log(`👥 Viewing partner's exercise plan (Partner ID: ${partnerId})`);
+		} else {
+			console.log('👤 Viewing own exercise plan');
+		}
+		
+		// Build API URL with optional userId parameter
+		const apiUrl = targetUserId 
+			? `/api/exercise/weekly-plan?userId=${targetUserId}` 
+			: '/api/exercise/weekly-plan';
+		
 		// Try to load AI exercise plan
-		const response = await fetch('/api/exercise/weekly-plan');
+		const response = await fetch(apiUrl);
 		const result = await response.json();
 
 		if (response.ok && result.success && result.data) {
@@ -72,26 +108,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 			
 			if (!hasExercises) {
 				console.warn('⚠️ Plan has no exercises');
-				showError();
+				showError(isViewingPartner);
 				return;
 			}
 			
-			renderAIExercisePlan(result.data, mainContent);
+			renderAIExercisePlan(result.data, mainContent, isViewingPartner);
 			showMainContent();
 		} else {
 			console.log('⚠️ No AI plan found');
-			showError();
+			showError(isViewingPartner);
 		}
 	} catch (error) {
 		console.error('Error loading exercise plan:', error);
-		showError();
+		showError(isViewingPartner);
 	}
 });
 
 /**
  * Render AI-generated exercise plan in original static format
  */
-function renderAIExercisePlan(plan, container) {
+function renderAIExercisePlan(plan, container, isViewingPartner = false) {
 	// Check if plan has any actual exercises
 	const hasExercises = plan.dailyExercisePlan?.some(day => 
 		!day.restDay && day.exercises?.length > 0
@@ -99,7 +135,7 @@ function renderAIExercisePlan(plan, container) {
 	
 	if (!hasExercises) {
 		console.warn('⚠️ Plan has no exercises');
-		alert('No exercises found in plan. Please try regenerating.');
+		CustomModal.alert('No exercises found in plan. Please try regenerating.', { titleText: 'No Exercises' });
 		return;
 	}
 	
@@ -113,9 +149,12 @@ function renderAIExercisePlan(plan, container) {
 			totalActiveDays++;
 			day.exercises.forEach(ex => {
 				if (ex.category) exerciseTypes.add(ex.category);
-				// Parse duration (e.g., "20min" -> 20)
-				if (ex.duration) {
-					const match = ex.duration.match(/(\d+)/);
+				// Use durationMinutes from database or parse duration string
+				const duration = ex.durationMinutes || ex.duration;
+				if (typeof duration === 'number') {
+					totalMinutes += duration;
+				} else if (duration) {
+					const match = String(duration).match(/(\d+)/);
 					if (match) totalMinutes += parseInt(match[1]);
 				}
 			});
@@ -159,9 +198,11 @@ function renderAIExercisePlan(plan, container) {
 		let exercisesHTML = '';
 		
 		if (dayPlan && !dayPlan.restDay && dayPlan.exercises?.length > 0) {
-			exercisesHTML = dayPlan.exercises.map(ex => 
-				`<div class="activity-item">${ex.duration ? ex.duration + ' ' : ''}${ex.name}</div>`
-			).join('');
+			exercisesHTML = dayPlan.exercises.map(ex => {
+				const duration = ex.durationMinutes || ex.duration;
+				const durationText = duration ? (typeof duration === 'number' ? `${duration} min` : duration) : '';
+				return `<div class="activity-item">${durationText ? durationText + ' ' : ''}${ex.name}</div>`;
+			}).join('');
 		} else if (dayPlan && dayPlan.restDay) {
 			exercisesHTML = '<div class="activity-item">Rest Day or Gentle Stretching</div>';
 		} else {
@@ -202,14 +243,17 @@ function renderAIExercisePlan(plan, container) {
 			tips.push(ex.modifications);
 		}
 		
+		const duration = ex.durationMinutes || ex.duration;
+		const durationText = duration ? (typeof duration === 'number' ? `${duration} min` : duration) : '';
+		
 		recommendedHTML += `
 			<div class="exercise-card">
 				<div class="exercise-header">
 					<div class="exercise-title-group">
 						<h3>${ex.name}</h3>
 						<div class="exercise-meta">
-							${ex.duration ? `<span class="exercise-duration">${ex.duration}</span>` : ''}
-							${ex.duration && ex.sets ? '<span class="exercise-separator">•</span>' : ''}
+							${durationText ? `<span class="exercise-duration">${durationText}</span>` : ''}
+							${durationText && ex.sets ? '<span class="exercise-separator">•</span>' : ''}
 							${ex.sets && ex.reps ? `<span class="exercise-frequency">${ex.sets} sets × ${ex.reps} reps</span>` : ''}
 						</div>
 					</div>
@@ -236,6 +280,24 @@ function renderAIExercisePlan(plan, container) {
 		'Consult your healthcare provider before starting any new routine'
 	]).map(tip => `<div class="safety-item">⚠️ ${tip}</div>`).join('');
 	
+	// Build regenerate button HTML (only show if viewing own plan)
+	const regenerateButtonHTML = !isViewingPartner ? `
+		<button onclick="generateNewPlan()" style="
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			padding: 12px 30px;
+			font-size: 16px;
+			border-radius: 8px;
+			cursor: pointer;
+			box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+			transition: transform 0.2s;
+			margin-top: 15px;
+		" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+			🔄 Regenerate Exercise Plan
+		</button>
+	` : '';
+	
 	container.innerHTML = `
 		<!-- AI Weekly Summary -->
 		${weeklySummaryHTML}
@@ -244,27 +306,24 @@ function renderAIExercisePlan(plan, container) {
 		<header class="page-header">
 			<h1>Personalized Exercise Plan</h1>
 			<p class="subtitle">Safe and effective workouts for your pregnancy</p>
-			<button onclick="generateNewPlan()" style="
-				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-				color: white;
-				border: none;
-				padding: 12px 30px;
-				font-size: 16px;
-				border-radius: 8px;
-				cursor: pointer;
-				box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-				transition: transform 0.2s;
-				margin-top: 15px;
-			" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-				🔄 Regenerate Exercise Plan
-			</button>
+			${regenerateButtonHTML}
 		</header>
 
 		<!-- Weekly Goal -->
 		<section class="goal-banner">
 			<h2 class="goal-title">💪 Weekly Exercise Goal</h2>
-			<p class="goal-description">Aim for at least <strong>${plan.weeklyGoals?.totalMinutes || 150} minutes</strong> of moderate-intensity aerobic activity per week, spread throughout the week.</p>
-			<p class="goal-benefits">Regular exercise during pregnancy can help reduce back pain, prevent excess weight gain, improve sleep, and prepare your body for labor and delivery.</p>
+			<p class="goal-description">
+				${plan.weeklyGoals?.description || 'Build and maintain fitness throughout your pregnancy'}
+			</p>
+			<p class="goal-description">
+				Aim for <strong>${plan.weeklyGoals?.totalMinutes || 150} minutes</strong> 
+				of ${plan.weeklyGoals?.intensityLevel || 'moderate-intensity'} aerobic activity per week, 
+				spread over <strong>${plan.weeklyGoals?.daysPerWeek || 5} days</strong>.
+			</p>
+			<p class="goal-benefits">
+				${plan.weeklyGoals?.benefits || 'Regular exercise during pregnancy can help reduce back pain, prevent excess weight gain, improve sleep, and prepare your body for labor and delivery.'}
+			</p>
+			${plan.weeklyGoals?.cautionNote ? `<p class="goal-caution">⚠️ ${plan.weeklyGoals.cautionNote}</p>` : ''}
 		</section>
 
 		<!-- Recommended Exercises -->

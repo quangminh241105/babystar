@@ -228,8 +228,15 @@
 <script>
 (function() {
   // ==================== STATE ====================
-  let currentWeekOffset = 0;
+  // Always start with last week's report (offset 1) since reports are only generated on Sundays
+  const initialOffset = 1;
+  
+  let currentWeekOffset = initialOffset;
   let charts = {};
+  
+  // Check if partnerId is in URL query parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const partnerId = urlParams.get('partnerId');
   
   // ==================== DOM ELEMENTS ====================
   const loadingState = document.getElementById('loadingState');
@@ -310,7 +317,15 @@
   function formatDateRange(start, end) {
     const s = new Date(start);
     const e = new Date(end);
-    return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    
+    // Use UTC methods to prevent timezone conversion issues
+    const startMonth = s.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+    const startDay = s.getUTCDate();
+    const endMonth = e.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+    const endDay = e.getUTCDate();
+    const endYear = e.getUTCFullYear();
+    
+    return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${endYear}`;
   }
 
   function getTrimesterLabel(t) {
@@ -323,6 +338,18 @@
   function destroyCharts() {
     Object.values(charts).forEach(chart => chart?.destroy());
     charts = {};
+  }
+
+  function getOverallStatus(report) {
+    const { summary, vitalsSummary, activities } = report;
+    const highSeverityFlags = summary.aiFlags?.filter(f => f.severity === 'high').length || 0;
+    const mediumSeverityFlags = summary.aiFlags?.filter(f => f.severity === 'medium').length || 0;
+    
+    if (highSeverityFlags > 0) return 'Needs Attention';
+    if (mediumSeverityFlags > 2) return 'Needs Attention';
+    if (summary.daysLogged >= 6 && summary.avgCompletionPercentage >= 80) return 'Excellent';
+    if (summary.daysLogged >= 4) return 'Good';
+    return 'Fair';
   }
 
   // ==================== RENDER FUNCTIONS ====================
@@ -338,27 +365,31 @@
     const statusValue = document.getElementById('statusValue');
     const statusDetails = document.getElementById('statusDetails');
     
-    statusValue.textContent = summary.overallStatus || 'No Data';
-    statusBanner.className = 'status-banner status-' + (summary.overallStatus || 'stable').toLowerCase().replace(' ', '-');
+    const overallStatus = getOverallStatus(report);
+    statusValue.textContent = overallStatus;
+    statusBanner.className = 'status-banner status-' + overallStatus.toLowerCase().replace(' ', '-');
     
-    if (summary.overallStatus === 'Excellent') statusIcon.textContent = '🌟';
-    else if (summary.overallStatus === 'Good') statusIcon.textContent = '✓';
-    else if (summary.overallStatus === 'Needs Attention') statusIcon.textContent = '⚠️';
+    if (overallStatus === 'Excellent') statusIcon.textContent = '🌟';
+    else if (overallStatus === 'Good') statusIcon.textContent = '✓';
+    else if (overallStatus === 'Needs Attention') statusIcon.textContent = '⚠️';
     else statusIcon.textContent = '📊';
     
-    statusDetails.textContent = `${summary.daysLogged}/7 days logged • ${summary.logCompletionRate}% completion`;
+    const completionRate = Math.round(summary.daysLogged / 7 * 100);
+    statusDetails.textContent = `${summary.daysLogged || 0}/7 days logged • ${completionRate.toFixed(0)}% completion`;
 
-    document.getElementById('avgWeight').textContent = vitalsSummary.avgWeightKg ? `${vitalsSummary.avgWeightKg} kg` : '-- kg';
+    // Weight
+    document.getElementById('avgWeight').textContent = vitalsSummary.avgWeightKg ? `${vitalsSummary.avgWeightKg.toFixed(1)} kg` : '-- kg';
     const weightChange = document.getElementById('weightChange');
-    if (summary.weightChangeKg != null) {
-      const sign = summary.weightChangeKg >= 0 ? '+' : '';
-      weightChange.textContent = `${sign}${summary.weightChangeKg.toFixed(1)} kg this week`;
-      weightChange.className = 'stat-change ' + (Math.abs(summary.weightChangeKg) <= 0.5 ? 'neutral' : summary.weightChangeKg > 0 ? 'positive' : 'negative');
+    if (vitalsSummary.weightChangeKg != null) {
+      const sign = vitalsSummary.weightChangeKg >= 0 ? '+' : '';
+      weightChange.textContent = `${sign}${vitalsSummary.weightChangeKg.toFixed(1)} kg this week`;
+      weightChange.className = 'stat-change ' + (Math.abs(vitalsSummary.weightChangeKg) <= 0.5 ? 'neutral' : vitalsSummary.weightChangeKg > 0 ? 'positive' : 'negative');
     } else {
       weightChange.textContent = '';
     }
 
-    document.getElementById('avgSleep').textContent = activities.avgSleepHours ? `${activities.avgSleepHours} hours` : '-- hours';
+    // Sleep
+    document.getElementById('avgSleep').textContent = activities.avgSleepHours ? `${activities.avgSleepHours.toFixed(1)} hours` : '-- hours';
     const sleepStatus = document.getElementById('sleepStatus');
     if (activities.avgSleepHours) {
       if (activities.avgSleepHours >= 7) { sleepStatus.textContent = '✓ Good sleep'; sleepStatus.className = 'stat-status positive'; }
@@ -366,7 +397,8 @@
       else { sleepStatus.textContent = '⚠ Low sleep'; sleepStatus.className = 'stat-status negative'; }
     } else { sleepStatus.textContent = ''; }
 
-    document.getElementById('avgEnergy').textContent = summary.avgEnergyLevel ? `${summary.avgEnergyLevel}/5` : '--/5';
+    // Energy
+    document.getElementById('avgEnergy').textContent = summary.avgEnergyLevel ? `${summary.avgEnergyLevel.toFixed(1)}/5` : '--/5';
     const energyStatus = document.getElementById('energyStatus');
     if (summary.avgEnergyLevel) {
       if (summary.avgEnergyLevel >= 4) { energyStatus.textContent = '⚡ High energy'; energyStatus.className = 'stat-status positive'; }
@@ -374,94 +406,146 @@
       else { energyStatus.textContent = '😴 Low energy'; energyStatus.className = 'stat-status warning'; }
     } else { energyStatus.textContent = ''; }
 
-    document.getElementById('daysLogged').textContent = `${summary.daysLogged}/7`;
+    // Days Logged
+    document.getElementById('daysLogged').textContent = summary.daysLogged ? `${summary.daysLogged}/7` : '--/7';
     const logsStatus = document.getElementById('logsStatus');
-    if (summary.logCompletionRate >= 80) { logsStatus.textContent = '🎉 Excellent!'; logsStatus.className = 'stat-status positive'; }
-    else if (summary.logCompletionRate >= 50) { logsStatus.textContent = '👍 Good job'; logsStatus.className = 'stat-status neutral'; }
+    if (completionRate >= 80) { logsStatus.textContent = '🎉 Excellent!'; logsStatus.className = 'stat-status positive'; }
+    else if (completionRate >= 50) { logsStatus.textContent = '👍 Good job'; logsStatus.className = 'stat-status neutral'; }
     else { logsStatus.textContent = '📝 Log more!'; logsStatus.className = 'stat-status warning'; }
 
-    document.getElementById('avgWater').textContent = `${activities.avgWaterIntakeLiters} L`;
+    // Water
+    const avgWater = activities.avgWaterIntakeLiters || 0;
+    document.getElementById('avgWater').textContent = activities.avgWaterIntakeLiters ? `${activities.avgWaterIntakeLiters.toFixed(1)} L` : '-- L';
     const waterStatus = document.getElementById('waterStatus');
-    if (activities.hydrationGoalMet) { waterStatus.textContent = '💧 Well hydrated'; waterStatus.className = 'stat-status positive'; }
-    else if (activities.avgWaterIntakeLiters >= 1.5) { waterStatus.textContent = '👍 Almost there'; waterStatus.className = 'stat-status neutral'; }
+    if (avgWater >= 2) { waterStatus.textContent = '💧 Well hydrated'; waterStatus.className = 'stat-status positive'; }
+    else if (avgWater >= 1.5) { waterStatus.textContent = '👍 Almost there'; waterStatus.className = 'stat-status neutral'; }
     else { waterStatus.textContent = '⚠ Drink more water'; waterStatus.className = 'stat-status warning'; }
 
-    document.getElementById('totalExercise').textContent = `${activities.totalExerciseMinutes} min`;
+    // Exercise
+    const totalExercise = activities.totalExerciseMinutes || 0;
+    document.getElementById('totalExercise').textContent = activities.totalExerciseMinutes ? `${activities.totalExerciseMinutes} min` : '-- min';
     const exerciseStatus = document.getElementById('exerciseStatus');
-    if (activities.exerciseGoalMet) { exerciseStatus.textContent = '🏆 Goal met!'; exerciseStatus.className = 'stat-status positive'; }
-    else if (activities.totalExerciseMinutes >= 75) { exerciseStatus.textContent = `${activities.exerciseDaysCount} active days`; exerciseStatus.className = 'stat-status neutral'; }
+    const exerciseDays = activities.exercisesByType?.length || 0;
+    if (totalExercise >= 150) { exerciseStatus.textContent = '🏆 Keep up the good work!'; exerciseStatus.className = 'stat-status positive'; }
+    else if (totalExercise >= 75) { exerciseStatus.textContent = `${exerciseDays} types logged`; exerciseStatus.className = 'stat-status neutral'; }
     else { exerciseStatus.textContent = 'Keep moving!'; exerciseStatus.className = 'stat-status warning'; }
   }
 
   function renderCharts(report) {
     destroyCharts();
-    const { dailyData, moodFrequency, symptomDetails } = report;
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const { vitalsSummary, activities, summary } = report;
 
-    const dataByDay = {};
-    dailyData.forEach(d => {
-      const dayIndex = new Date(d.date).getDay();
-      const dayName = days[dayIndex === 0 ? 6 : dayIndex - 1];
-      dataByDay[dayName] = d;
-    });
-
-    // Weight Chart
-    const weightData = days.map(d => dataByDay[d]?.weight || null);
-    const hasWeightData = weightData.some(w => w != null);
+    // Since we don't have daily breakdown in schema, we'll show aggregate data differently
+    // Weight Chart - showing min, avg, max
+    const hasWeightData = vitalsSummary.avgWeightKg != null;
     
     if (hasWeightData) {
       document.getElementById('weightChartEmpty').style.display = 'none';
       document.getElementById('weightChart').style.display = 'block';
+      
+      const weightData = {
+        labels: ['Min', 'Average', 'Max'],
+        datasets: [{
+          label: 'Weight (kg)',
+          data: [vitalsSummary.minWeightKg, vitalsSummary.avgWeightKg, vitalsSummary.maxWeightKg],
+          backgroundColor: [chartColors.purpleLight, chartColors.pinkLight, chartColors.purpleLight],
+          borderColor: [chartColors.purple, chartColors.pink, chartColors.purple],
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      };
+      
       charts.weight = new Chart(document.getElementById('weightChart').getContext('2d'), {
-        type: 'line',
-        data: { labels: days, datasets: [{ label: 'Weight (kg)', data: weightData, borderColor: chartColors.pink, backgroundColor: chartColors.pinkLight, fill: true, tension: 0.4, spanGaps: true }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+        type: 'bar',
+        data: weightData,
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { display: false } }, 
+          scales: { y: { beginAtZero: false } } 
+        }
       });
     } else {
       document.getElementById('weightChart').style.display = 'none';
       document.getElementById('weightChartEmpty').style.display = 'flex';
     }
 
-    // Sleep Chart
-    const sleepData = days.map(d => dataByDay[d]?.sleep || null);
-    const hasSleepData = sleepData.some(s => s != null);
+    // Sleep Chart - showing total and average
+    const hasSleepData = activities.avgSleepHours != null;
     
     if (hasSleepData) {
       document.getElementById('sleepChartEmpty').style.display = 'none';
       document.getElementById('sleepChart').style.display = 'block';
+      
+      const sleepData = {
+        labels: ['Total Hours', 'Avg per Night', 'Target (7h)'],
+        datasets: [{
+          label: 'Sleep (hours)',
+          data: [activities.totalSleepHours, activities.avgSleepHours, 7],
+          backgroundColor: [chartColors.purpleLight, chartColors.pinkLight, 'rgba(34, 197, 94, 0.2)'],
+          borderColor: [chartColors.purple, chartColors.pink, chartColors.green],
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      };
+      
       charts.sleep = new Chart(document.getElementById('sleepChart').getContext('2d'), {
         type: 'bar',
-        data: { labels: days, datasets: [{ label: 'Sleep (hours)', data: sleepData, backgroundColor: chartColors.purpleLight, borderColor: chartColors.purple, borderWidth: 2, borderRadius: 8 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 12 } } }
+        data: sleepData,
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { display: false } }, 
+          scales: { y: { beginAtZero: true } } 
+        }
       });
     } else {
       document.getElementById('sleepChart').style.display = 'none';
       document.getElementById('sleepChartEmpty').style.display = 'flex';
     }
 
-    // Mood Chart
-    const moodLabels = Object.keys(moodFrequency || {});
-    if (moodLabels.length > 0) {
+    // Mood Chart - using dominantMoods from schema
+    const dominantMoods = summary.dominantMoods || [];
+    if (dominantMoods.length > 0) {
       document.getElementById('moodChartEmpty').style.display = 'none';
       document.getElementById('moodChart').style.display = 'block';
+      
       charts.mood = new Chart(document.getElementById('moodChart').getContext('2d'), {
         type: 'doughnut',
-        data: { labels: moodLabels.map(m => `${moodEmojis[m] || ''} ${m.replace('_', ' ')}`), datasets: [{ data: moodLabels.map(m => moodFrequency[m]), backgroundColor: moodLabels.map(m => moodColors[m] || chartColors.gray), borderWidth: 2, borderColor: '#fff' }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        data: { 
+          labels: dominantMoods.map(m => `${moodEmojis[m.mood] || ''} ${m.mood.replace('_', ' ')}`), 
+          datasets: [{ 
+            data: dominantMoods.map(m => m.frequency), 
+            backgroundColor: dominantMoods.map(m => moodColors[m.mood] || chartColors.gray), 
+            borderWidth: 2, 
+            borderColor: '#fff' 
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { position: 'right' } } 
+        }
       });
     } else {
       document.getElementById('moodChart').style.display = 'none';
       document.getElementById('moodChartEmpty').style.display = 'flex';
     }
 
-    // Symptoms
+    // Symptoms - using mostFrequentSymptoms from schema
     const symptomsList = document.getElementById('symptomsList');
-    if (symptomDetails && symptomDetails.length > 0) {
-      symptomsList.innerHTML = symptomDetails.map(s => `
+    const symptoms = summary.mostFrequentSymptoms || [];
+    if (symptoms.length > 0) {
+      symptomsList.innerHTML = symptoms.map(s => `
         <div class="symptom-item">
-          <div class="symptom-info"><span class="symptom-emoji">${symptomEmojis[s.symptom] || symptomEmojis.default}</span><span class="symptom-name">${s.symptom.replace(/_/g, ' ')}</span></div>
-          <div class="symptom-bar"><div class="symptom-fill" style="width: ${Math.min(100, s.count * 15)}%;"></div></div>
-          <span class="symptom-days">${s.count} day${s.count > 1 ? 's' : ''}</span>
+          <div class="symptom-info">
+            <span class="symptom-emoji">${symptomEmojis[s.symptom] || symptomEmojis.default}</span>
+            <span class="symptom-name">${s.symptom.replace(/_/g, ' ')}</span>
+          </div>
+          <div class="symptom-bar">
+            <div class="symptom-fill" style="width: ${Math.min(100, s.frequency * 15)}%;"></div>
+          </div>
+          <span class="symptom-days">${s.frequency}x • Severity: ${s.avgSeverity ? s.avgSeverity.toFixed(1) : 'N/A'}/10</span>
         </div>
       `).join('');
     } else {
@@ -470,19 +554,36 @@
   }
 
   function renderHighlights(report) {
-    const { summary } = report;
+    const { summary, activities, vitalsSummary, comparisonWithPreviousWeek } = report;
     const positivesList = document.getElementById('positivesList');
-    if (summary.positiveHighlights && summary.positiveHighlights.length > 0) {
-      positivesList.innerHTML = summary.positiveHighlights.map(p => `<li>✓ ${p}</li>`).join('');
+    const positives = [];
+    
+    // Generate positive highlights
+    if (summary.daysLogged >= 5) positives.push(`Logged ${summary.daysLogged} days this week!`);
+    if (summary.avgCompletionPercentage >= 80) positives.push('High completion rate on health logs');
+    if (activities.avgSleepHours >= 7) positives.push('Getting adequate sleep');
+    if (activities.totalExerciseMinutes >= 150) positives.push('Met weekly exercise goals');
+    if (activities.avgWaterIntakeLiters >= 2) positives.push('Excellent hydration');
+    if (summary.avgEnergyLevel >= 4) positives.push('High energy levels maintained');
+    if (comparisonWithPreviousWeek?.sleepTrend === 'better') positives.push('Sleep quality improved from last week');
+    if (comparisonWithPreviousWeek?.exerciseTrend === 'more') positives.push('Increased physical activity');
+    
+    if (positives.length > 0) {
+      positivesList.innerHTML = positives.map(p => `<li>✓ ${p}</li>`).join('');
     } else {
       positivesList.innerHTML = '<li>Keep logging to see your highlights!</li>';
     }
 
+    // Generate concerns from aiFlags
     const concernsCard = document.getElementById('concernsCard');
     const concernsList = document.getElementById('concernsList');
-    if (summary.concernsDetected && summary.concernsDetected.length > 0) {
+    const concerns = (summary.aiFlags || [])
+      .filter(f => f.severity === 'medium' || f.severity === 'high')
+      .map(f => f.message);
+    
+    if (concerns.length > 0) {
       concernsCard.style.display = 'block';
-      concernsList.innerHTML = summary.concernsDetected.map(c => `<li>⚠️ ${c}</li>`).join('');
+      concernsList.innerHTML = concerns.map(c => `<li>⚠️ ${c}</li>`).join('');
     } else {
       concernsCard.style.display = 'none';
     }
@@ -506,28 +607,140 @@
 
   async function renderTrends() {
     try {
-      const resp = await fetch('/api/weekly-report/trends?weeks=4', { credentials: 'include' });
+      let apiUrl = '/api/weekly-report/trends?weeks=2';
+      if (partnerId) {
+        apiUrl += `&partnerId=${partnerId}`;
+      }
+      
+      const resp = await fetch(apiUrl, { credentials: 'include' });
       const result = await resp.json();
       if (result.success && result.trends && result.trends.length > 0) {
-        const labels = result.trends.map(t => t.weekLabel);
-        const sleeps = result.trends.map(t => t.avgSleep);
-        const energies = result.trends.map(t => t.avgEnergy);
+        const labels = result.trends.map(t => `Week ${t.weekNumber}`);
+        const weights = result.trends.map(t => t.vitalsSummary?.avgWeightKg || null);
+        const sleeps = result.trends.map(t => t.activities?.avgSleepHours || null);
+        const energies = result.trends.map(t => t.summary?.avgEnergyLevel || null);
+        const exercises = result.trends.map(t => t.activities?.totalExerciseMinutes || null);
+        const waters = result.trends.map(t => t.activities?.avgWaterIntakeLiters || null);
         
         charts.trends = new Chart(document.getElementById('trendsChart').getContext('2d'), {
           type: 'line',
           data: {
             labels,
             datasets: [
-              { label: 'Avg Sleep (hrs)', data: sleeps, borderColor: chartColors.purple, backgroundColor: 'transparent', tension: 0.4, yAxisID: 'y' },
-              { label: 'Avg Energy', data: energies, borderColor: chartColors.orange, backgroundColor: 'transparent', tension: 0.4, yAxisID: 'y1' }
+              { 
+                label: 'Weight (kg)', 
+                data: weights, 
+                borderColor: chartColors.pink, 
+                backgroundColor: 'transparent', 
+                tension: 0.4, 
+                yAxisID: 'y-weight',
+                borderWidth: 2,
+                spanGaps: true
+              },
+              { 
+                label: 'Sleep (hrs)', 
+                data: sleeps, 
+                borderColor: chartColors.purple, 
+                backgroundColor: 'transparent', 
+                tension: 0.4, 
+                yAxisID: 'y-sleep',
+                borderWidth: 2,
+                spanGaps: true
+              },
+              { 
+                label: 'Energy (1-5)', 
+                data: energies, 
+                borderColor: chartColors.orange, 
+                backgroundColor: 'transparent', 
+                tension: 0.4, 
+                yAxisID: 'y-energy',
+                borderWidth: 2,
+                spanGaps: true
+              },
+              { 
+                label: 'Exercise (min)', 
+                data: exercises, 
+                borderColor: chartColors.green, 
+                backgroundColor: 'transparent', 
+                tension: 0.4, 
+                yAxisID: 'y-exercise',
+                borderWidth: 2,
+                spanGaps: true
+              },
+              { 
+                label: 'Water (L)', 
+                data: waters, 
+                borderColor: chartColors.blue, 
+                backgroundColor: 'transparent', 
+                tension: 0.4, 
+                yAxisID: 'y-water',
+                borderWidth: 2,
+                spanGaps: true
+              }
             ]
           },
           options: {
-            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' } },
+            responsive: true, 
+            maintainAspectRatio: false, 
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+              legend: { 
+                position: 'top',
+                labels: { boxWidth: 40, padding: 15 }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    if (context.parsed.y !== null) {
+                      label += context.parsed.y.toFixed(1);
+                    } else {
+                      label += 'No data';
+                    }
+                    return label;
+                  }
+                }
+              }
+            },
             scales: {
-              y: { type: 'linear', position: 'left', title: { display: true, text: 'Sleep (hrs)' }, min: 0, max: 12 },
-              y1: { type: 'linear', position: 'right', min: 0, max: 5, title: { display: true, text: 'Energy' }, grid: { drawOnChartArea: false } }
+              'y-weight': { 
+                type: 'linear', 
+                position: 'left', 
+                title: { display: true, text: 'Weight (kg)' },
+                beginAtZero: false,
+                grid: { color: 'rgba(0, 0, 0, 0.1)' }
+              },
+              'y-sleep': { 
+                type: 'linear', 
+                position: 'right', 
+                min: 0, 
+                max: 12, 
+                title: { display: true, text: 'Sleep (hrs)' }, 
+                grid: { drawOnChartArea: false }
+              },
+              'y-energy': { 
+                type: 'linear', 
+                min: 1, 
+                max: 5, 
+                display: false,
+                grid: { drawOnChartArea: false }
+              },
+              'y-exercise': { 
+                type: 'linear', 
+                min: 0,
+                display: false,
+                grid: { drawOnChartArea: false }
+              },
+              'y-water': { 
+                type: 'linear', 
+                min: 0,
+                max: 4,
+                display: false,
+                grid: { drawOnChartArea: false }
+              }
             }
           }
         });
@@ -544,7 +757,12 @@
     reportContent.style.display = 'none';
 
     try {
-      const resp = await fetch(`/api/weekly-report/week/${weekOffset}`, { credentials: 'include' });
+      let apiUrl = `/api/weekly-report/week/${weekOffset}`;
+      if (partnerId) {
+        apiUrl += `?partnerId=${partnerId}`;
+      }
+      
+      const resp = await fetch(apiUrl, { credentials: 'include' });
       const result = await resp.json();
 
       loadingState.style.display = 'none';
@@ -552,11 +770,11 @@
       if (result.success && result.report) {
         const { report } = result;
         
-        if (report.summary.daysLogged === 0) {
+        if (!report.summary || report.summary.daysLogged === 0) {
           noDataState.style.display = 'flex';
-          weekRange.textContent = formatDateRange(report.startDate, report.endDate);
-          document.getElementById('weekNumber').textContent = report.weekNumber ? `Week ${report.weekNumber}` : 'Current Week';
-          document.getElementById('trimesterLabel').textContent = report.trimester ? getTrimesterLabel(report.trimester) : '';
+          document.getElementById('weekNumber').textContent =  '--';
+          document.getElementById('trimesterLabel').textContent =  '--';
+          weekRange.textContent = '--';
           return;
         }
 
@@ -565,12 +783,16 @@
         renderCharts(report);
         renderHighlights(report);
         renderBabyDevelopment(report);
-        
-        if (weekOffset === 0) {
+
+        if (currentWeekOffset === initialOffset) {
           renderTrends();
         }
+        
       } else {
         noDataState.style.display = 'flex';
+        document.getElementById('weekNumber').textContent = '--';
+        document.getElementById('trimesterLabel').textContent = '--';
+        weekRange.textContent = '--';
       }
     } catch (err) {
       console.error('Failed to load report:', err);
@@ -587,9 +809,9 @@
   });
 
   nextWeekBtn.addEventListener('click', () => {
-    if (currentWeekOffset > 0) {
+    if (currentWeekOffset > initialOffset) {
       currentWeekOffset--;
-      if (currentWeekOffset === 0) {
+      if (currentWeekOffset === initialOffset) {
         nextWeekBtn.disabled = true;
       }
       loadReport(currentWeekOffset);
@@ -597,6 +819,10 @@
   });
 
   // ==================== INITIALIZE ====================
-  loadReport(0);
+  // Disable next button initially if we're already at the most recent available report
+  if (currentWeekOffset === initialOffset) {
+    nextWeekBtn.disabled = true;
+  }
+  loadReport(currentWeekOffset);
 })();
 </script>

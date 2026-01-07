@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const router = express.Router();
-const { requireAuth, requireAuthRedirect } = require('../middleware');
+const { requireAuth, requireAuthRedirect, requirePregnancyProfile } = require('../middleware');
 const User = require('../models/user');
 const HealthLog = require('../models/healthlogs');
 const WeeklyReport = require('../models/weeklyreports');
@@ -9,6 +9,7 @@ const { Notification } = require('../models/notification');
 const axios = require('axios');
 const puppeteer = require('puppeteer');
 const path = require('path');
+const { generateWeeklyReportForUser } = require('../services/weeklyReportService');
 
 // Helper function to emit real-time notification via Socket.IO
 function emitNotification(req, userId, notification) {
@@ -53,12 +54,33 @@ function emitLinkAccountUpdate(req, userId, data) {
 router.get('/', async (req, res) => {
   if (req.session && req.session.user) {
       try {
-        // Fetch user data to get pregnancy information
-        const user = await User.findById(req.session.user.id);
+        // Fetch only needed fields with lean() for faster read
+        const user = await User.findById(req.session.user.id)
+          .select('pregnancyProfile')
+          .lean();
         
-        // Get pregnancy week and days until due date
-        const pregnancyWeek = user?.currentPregnancyWeek;
-        const daysUntilDueDate = user?.daysUntilDueDate;
+        // Calculate pregnancy week inline (faster than virtual)
+        let pregnancyWeek = null;
+        let daysUntilDueDate = null;
+        
+        if (user?.pregnancyProfile?.lastMenstrualPeriod) {
+          const lmp = new Date(user.pregnancyProfile.lastMenstrualPeriod);
+          const now = new Date();
+          if (lmp <= now) {
+            const diffDays = Math.floor((now - lmp) / (1000 * 60 * 60 * 24));
+            const weeks = Math.floor(diffDays / 7);
+            const days = diffDays % 7;
+            if (weeks >= 0 && weeks <= 42) {
+              pregnancyWeek = { weeks, days, totalDays: diffDays };
+            }
+          }
+        }
+        
+        if (user?.pregnancyProfile?.dueDate) {
+          const dueDate = new Date(user.pregnancyProfile.dueDate);
+          const diffTime = dueDate - new Date();
+          daysUntilDueDate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        }
         
         res.render('pages/home', { 
           title: 'Home',
@@ -81,7 +103,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/weekly-report', requireAuthRedirect, (req, res) => {
+router.get('/weekly-report', requireAuthRedirect, requirePregnancyProfile, (req, res) => {
   res.render('pages/weekly-report', { title: 'Weekly Report' });
 });
 
@@ -131,6 +153,59 @@ router.get('/link-account', requireAuthRedirect, async (req, res) => {
   } catch (err) {
     console.error('Link account error:', err);
     res.redirect('/');
+  }
+});
+
+// GET /api/link-account/data - API endpoint to get link account data (for real-time updates)
+router.get('/api/link-account/data', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    
+    // Expire old pending associations
+    await user.expirePendingAssociations();
+    
+    // Populate associated users for display
+    await user.populate('associatedUsers.userId', 'firstName lastName email profileImageUrl');
+    
+    // Get invitations where this user is the receiver (others invited them)
+    const receivedInvitations = await User.findAssociationsForUser(req.session.user.id);
+    
+    res.json({
+      success: true,
+      // Associations where this user is the SENDER (others used their code)
+      linkedAccounts: (user.associatedUsers || []).map(account => ({
+        _id: account._id,
+        status: account.status,
+        relationship: account.relationship,
+        customLabel: account.customLabel,
+        userId: account.userId ? {
+          _id: account.userId._id,
+          firstName: account.userId.firstName,
+          lastName: account.userId.lastName,
+          email: account.userId.email,
+          profileImageUrl: account.userId.profileImageUrl
+        } : null
+      })),
+      // Associations where this user is the RECEIVER (they used others' code)
+      receivedInvitations: receivedInvitations.map(u => {
+        const assoc = u.associatedUsers.find(a => a.userId.toString() === req.session.user.id);
+        return {
+          ownerId: u._id,
+          ownerName: u.fullName || u.email,
+          ownerEmail: u.email,
+          ownerImage: u.profileImageUrl,
+          relationship: assoc?.relationship,
+          status: assoc?.status,
+          associationId: assoc?._id
+        };
+      })
+    });
+  } catch (err) {
+    console.error('API link account data error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -384,6 +459,12 @@ router.post('/link-account/cancel/:ownerId', requireAuth, async (req, res) => {
     association.deleteOne();
     await owner.save();
     
+    // Emit link-account update to the owner (the one who received the request)
+    emitLinkAccountUpdate(req, req.params.ownerId, {
+      type: 'request_cancelled',
+      by: { id: req.session.user.id }
+    });
+    
     res.json({ success: true, message: 'Request cancelled' });
   } catch (err) {
     console.error('Cancel request error:', err);
@@ -412,6 +493,16 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
     association.respondedAt = new Date();
     await owner.save();
     
+    // Get current user's name for notification
+    const currentUser = await User.findById(req.session.user.id);
+    const userName = currentUser?.fullName || currentUser?.email || 'A user';
+    
+    // Emit link-account update to the owner
+    emitLinkAccountUpdate(req, req.params.ownerId, {
+      type: 'partner_left',
+      by: { id: req.session.user.id, name: userName }
+    });
+    
     res.json({ success: true, message: 'Left association' });
   } catch (err) {
     console.error('Leave association error:', err);
@@ -420,7 +511,7 @@ router.post('/link-account/leave/:ownerId', requireAuth, async (req, res) => {
 });
 
 // AI-Powered Diet Planner
-router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
+router.get('/diet-plan', requireAuthRedirect, requirePregnancyProfile, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
     const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
@@ -428,6 +519,7 @@ router.get('/diet-plan', requireAuthRedirect, async (req, res) => {
 
     res.render('pages/dietplanner', { 
       title: 'AI Diet Planner',
+      isPartnerView: false,
       pregnancyWeek,
       trimester,
       userName: user?.name || user?.username || 'there'
@@ -483,7 +575,7 @@ router.get('/notifications', requireAuthRedirect, async (req, res) => {
 router.get('/api/notifications', requireAuth, async (req, res) => {
   try {
     const { category, read, limit = 20 } = req.query;
-    const options = { limit: parseInt(limit) };
+    const options = { limit: Math.min(parseInt(limit), 100) }; // Cap at 100 for performance
     
     if (category && category !== 'all') {
       options.category = category;
@@ -492,7 +584,8 @@ router.get('/api/notifications', requireAuth, async (req, res) => {
       options.read = read === 'true';
     }
     
-    const notifications = await Notification.getAll(req.session.user.id, options);
+    // Use lean() for faster read-only queries
+    const notifications = await Notification.getAll(req.session.user.id, { ...options, lean: true });
     
     res.json({ success: true, notifications });
   } catch (err) {
@@ -585,7 +678,7 @@ router.post('/api/notifications/:id/click', requireAuth, async (req, res) => {
 
 // ==================== END NOTIFICATION ROUTES ====================
 
-router.get('/exercise-plan', requireAuthRedirect, (req, res) => {
+router.get('/exercise-plan', requireAuthRedirect, requirePregnancyProfile, (req, res) => {
   res.render('pages/exerciseplanner', { title: 'Exercise Planner' });
 });
 
@@ -593,13 +686,15 @@ router.get('/share-records', requireAuthRedirect, async (req, res) => {
   try {
     const userId = req.session.user.id;
     
-    // Fetch weekly reports for the user
+    // Fetch weekly reports with lean() and only needed fields
     const reports = await WeeklyReport.find({
       userId,
       deletedAt: null,
       status: 'complete'
     })
-    .sort({ weekNumber: -1 });
+    .sort({ weekNumber: -1 })
+    // .select('weekNumber trimester startDate endDate summary.daysLogged summary.avgEnergyLevel vitalsSummary.avgWeightKg')
+    // .lean();
 
     
     res.render('pages/share-report', { 
@@ -761,9 +856,10 @@ router.get('/nearby-healthcare', requireAuthRedirect, (req, res) => {
   res.render('pages/nearbyhealthcare', { title: 'Nearby Healthcare' });
 });
 
-router.get('/log-health', requireAuthRedirect, async (req, res) => {
+router.get('/log-health', requireAuthRedirect, requirePregnancyProfile, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
+    
     const currentWeek = user?.currentPregnancyWeek?.weeks || null;
     const trimester = user?.currentTrimester || null;
     
@@ -773,6 +869,7 @@ router.get('/log-health', requireAuthRedirect, async (req, res) => {
       currentTrimester: trimester
     });
   } catch (err) {
+    console.error('Health log page error:', err);
     res.render('pages/health-log', { 
       title: 'Health Log',
       currentPregnancyWeek: null,
@@ -781,7 +878,7 @@ router.get('/log-health', requireAuthRedirect, async (req, res) => {
   }
 });
 
-router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
+router.get('/past-health-records', requireAuthRedirect, requirePregnancyProfile, async (req, res) => {
   try {
     const { startDate, endDate, range } = req.query;
     const userId = req.session.user.id;
@@ -823,6 +920,7 @@ router.get('/past-health-records', requireAuthRedirect, async (req, res) => {
     
     res.render('pages/past-health-log', { 
       title: 'Past Health Records', 
+      canDelete: true,
       logs,
       filters: {
         activeFilter,
@@ -881,9 +979,22 @@ router.post('/past-health-records/:id/delete', requireAuth, async (req, res) => 
 router.get('/api/health-log/today', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
+    
+    // Validate user has set Last Menstrual Period
+    if (!user.pregnancyProfile?.lastMenstrualPeriod) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Last Menstrual Period not set',
+        requiresProfile: true,
+        message: 'Please set your Last Menstrual Period in your profile to use health log features.',
+        redirectUrl: '/auth/profile'
+      });
+    }
+    
     const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
     const trimester = user?.currentTrimester || null;
     
+    // Create log with calculated pregnancy week
     const log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
     
     res.json({ 
@@ -892,7 +1003,7 @@ router.get('/api/health-log/today', requireAuth, async (req, res) => {
       userContext: {
         pregnancyWeek,
         trimester,
-        dueDate: user?.pregnancyProfile?.dueDate
+        dueDate: user.pregnancyProfile.dueDate || null
       }
     });
   } catch (err) {
@@ -963,10 +1074,56 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     console.log('Request body keys:', Object.keys(req.body));
     
     const user = await User.findById(req.session.user.id);
-    const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
-    const trimester = user?.currentTrimester || null;
     
-    // Get or create today's log
+    // CRITICAL VALIDATION: Check if user has set Last Menstrual Period
+    if (!user.pregnancyProfile?.lastMenstrualPeriod) {
+      console.log('ERROR: User has not set LMP');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Last Menstrual Period not set',
+        requiresProfile: true,
+        message: 'Please set your Last Menstrual Period in your profile before logging health data.',
+        redirectUrl: '/auth/profile'
+      });
+    }
+    
+    // DEBUG: Check pregnancyProfile structure
+    console.log('=== PREGNANCY PROFILE DEBUG ===');
+    console.log('Full pregnancyProfile:', JSON.stringify(user.pregnancyProfile, null, 2));
+    console.log('LMP:', user.pregnancyProfile.lastMenstrualPeriod);
+    console.log('LMP type:', typeof user.pregnancyProfile.lastMenstrualPeriod);
+    console.log('Due Date:', user.pregnancyProfile.dueDate);
+    
+    // Calculate pregnancy week and trimester from LMP
+    console.log('=== CALCULATING PREGNANCY WEEK ===');
+    console.log('Calling user.currentPregnancyWeek...');
+    const currentPregnancyWeekObj = user.currentPregnancyWeek;
+    console.log('currentPregnancyWeek result:', currentPregnancyWeekObj);
+    
+    // FIX: Use nullish coalescing (??) instead of || to handle week 0 correctly
+    // Week 0 is a valid value, but 0 || null returns null (falsy issue)
+    const pregnancyWeek = currentPregnancyWeekObj?.weeks ?? null;
+    const trimester = user?.currentTrimester ?? null;
+    
+    console.log('Extracted pregnancyWeek (weeks):', pregnancyWeek);
+    console.log('Calculated Trimester:', trimester);
+    
+    // Manual calculation for debugging
+    if (user.pregnancyProfile.lastMenstrualPeriod) {
+      const lmp = new Date(user.pregnancyProfile.lastMenstrualPeriod);
+      const now = new Date();
+      const diffTime = now - lmp;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const manualWeeks = Math.floor(diffDays / 7);
+      console.log('=== MANUAL CALCULATION ===');
+      console.log('LMP Date object:', lmp);
+      console.log('Today:', now);
+      console.log('Difference in ms:', diffTime);
+      console.log('Difference in days:', diffDays);
+      console.log('Manual weeks calculation:', manualWeeks);
+    }
+    
+    // Get or create today's log with calculated pregnancy week
     let log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
     
     console.log('Existing log ID:', log._id);
@@ -986,6 +1143,157 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       });
     }
     
+    // SERVER-SIDE VALIDATION: Validate numeric boundaries
+    const validationErrors = [];
+    
+    // Validate weight (20-300 kg)
+    if (req.body.weightKg !== undefined && req.body.weightKg !== null) {
+      const weight = parseFloat(req.body.weightKg);
+      if (weight < 20 || weight > 300) {
+        validationErrors.push('Weight must be between 20-300 kg');
+      }
+    }
+    
+    // Validate heart rate (40-200 bpm)
+    if (req.body.heartRateBpm !== undefined && req.body.heartRateBpm !== null) {
+      const hr = parseInt(req.body.heartRateBpm);
+      if (hr < 40 || hr > 200) {
+        validationErrors.push('Heart rate must be between 40-200 bpm');
+      }
+    }
+    
+    // Validate blood pressure
+    if (req.body.bloodPressure) {
+      if (req.body.bloodPressure.systolic !== undefined && req.body.bloodPressure.systolic !== null) {
+        const systolic = parseInt(req.body.bloodPressure.systolic);
+        if (systolic < 70 || systolic > 200) {
+          validationErrors.push('Systolic blood pressure must be between 70-200 mmHg');
+        }
+      }
+      if (req.body.bloodPressure.diastolic !== undefined && req.body.bloodPressure.diastolic !== null) {
+        const diastolic = parseInt(req.body.bloodPressure.diastolic);
+        if (diastolic < 40 || diastolic > 130) {
+          validationErrors.push('Diastolic blood pressure must be between 40-130 mmHg');
+        }
+      }
+    }
+    
+    // Validate energy and stress levels (1-5)
+    if (req.body.energyLevel !== undefined && req.body.energyLevel !== null) {
+      const energy = parseInt(req.body.energyLevel);
+      if (energy < 1 || energy > 5) {
+        validationErrors.push('Energy level must be between 1-5');
+      }
+    }
+    if (req.body.stressLevel !== undefined && req.body.stressLevel !== null) {
+      const stress = parseInt(req.body.stressLevel);
+      if (stress < 1 || stress > 5) {
+        validationErrors.push('Stress level must be between 1-5');
+      }
+    }
+    
+    // Validate sleep (0-24 hours, quality 1-5)
+    if (req.body.sleep) {
+      if (req.body.sleep.totalHours !== undefined && req.body.sleep.totalHours !== null) {
+        const sleepHours = parseFloat(req.body.sleep.totalHours);
+        if (sleepHours < 0 || sleepHours > 24) {
+          validationErrors.push('Sleep hours must be between 0-24');
+        }
+      }
+      if (req.body.sleep.quality !== undefined && req.body.sleep.quality !== null) {
+        const quality = parseInt(req.body.sleep.quality);
+        if (quality < 1 || quality > 5) {
+          validationErrors.push('Sleep quality must be between 1-5');
+        }
+      }
+    }
+    
+    // Validate hydration (0-10 liters)
+    if (req.body.hydration) {
+      if (req.body.hydration.waterLiters !== undefined && req.body.hydration.waterLiters !== null) {
+        const water = parseFloat(req.body.hydration.waterLiters);
+        if (water < 0 || water > 10) {
+          validationErrors.push('Water intake must be between 0-10 liters');
+        }
+      }
+      if (req.body.hydration.otherFluidsLiters !== undefined && req.body.hydration.otherFluidsLiters !== null) {
+        const fluids = parseFloat(req.body.hydration.otherFluidsLiters);
+        if (fluids < 0 || fluids > 10) {
+          validationErrors.push('Other fluids must be between 0-10 liters');
+        }
+      }
+    }
+    
+    // Validate caffeine (>= 0)
+    if (req.body.caffeineIntakeMg !== undefined && req.body.caffeineIntakeMg !== null) {
+      const caffeine = parseInt(req.body.caffeineIntakeMg);
+      if (caffeine < 0) {
+        validationErrors.push('Caffeine cannot be negative');
+      }
+    }
+    
+    // Validate exercises
+    if (req.body.exercises && Array.isArray(req.body.exercises)) {
+      req.body.exercises.forEach((ex, i) => {
+        if (ex.durationMinutes !== undefined && ex.durationMinutes !== null) {
+          const duration = parseInt(ex.durationMinutes);
+          if (duration < 0 || duration > 300) {
+            validationErrors.push(`Exercise ${i + 1}: Duration must be 0-300 minutes`);
+          }
+        }
+      });
+    }
+    
+    // Validate symptoms
+    if (req.body.symptoms && Array.isArray(req.body.symptoms)) {
+      req.body.symptoms.forEach((sym, i) => {
+        if (sym.severity !== undefined && sym.severity !== null) {
+          const severity = parseInt(sym.severity);
+          if (severity < 1 || severity > 10) {
+            validationErrors.push(`Symptom ${i + 1}: Severity must be 1-10`);
+          }
+        }
+      });
+    }
+    
+    // Return validation errors if any
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Validation failed: ' + validationErrors.join('; '),
+        validationErrors
+      });
+    }
+    
+    // SERVER-SIDE VALIDATION: Ensure the log has at least some data
+    // Don't allow saving completely empty health logs
+    const hasAnyData = (
+      req.body.weightKg ||
+      req.body.heartRateBpm ||
+      (req.body.bloodPressure?.systolic || req.body.bloodPressure?.diastolic) ||
+      req.body.bloodSugar?.value ||
+      req.body.energyLevel ||
+      req.body.stressLevel ||
+      (req.body.moodLog && req.body.moodLog.length > 0) ||
+      (req.body.sleep?.totalHours || req.body.sleep?.quality) ||
+      (req.body.symptoms && req.body.symptoms.length > 0) ||
+      (req.body.exercises && req.body.exercises.length > 0) ||
+      (req.body.hydration?.waterLiters > 0 || req.body.hydration?.otherFluidsLiters > 0) ||
+      req.body.caffeineIntakeMg > 0 ||
+      (req.body.foodIntake && req.body.foodIntake.length > 0) ||
+      req.body.fetalMovement?.count > 0 ||
+      req.body.doctorVisit?.visited ||
+      (req.body.notes && req.body.notes.trim())
+    );
+    
+    if (!hasAnyData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot save an empty health log. Please fill in at least one field.',
+        isEmpty: true
+      });
+    }
+
     const {
       // Vitals
       weightKg,
@@ -1030,6 +1338,10 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       // Status
       isComplete
     } = req.body;
+    
+    // Update pregnancy week and trimester (ensure they're always current)
+    log.pregnancyWeek = pregnancyWeek;
+    log.trimester = trimester;
     
     // Update vitals
     if (weightKg !== undefined) log.weightKg = weightKg || null;
@@ -1174,6 +1486,8 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
     
     console.log('Log saved successfully! ID:', log._id);
     console.log('Updated fields:', {
+      pregnancyWeek: log.pregnancyWeek,
+      trimester: log.trimester,
       weightKg: log.weightKg,
       heartRateBpm: log.heartRateBpm,
       bloodPressure: log.bloodPressure,
@@ -1183,6 +1497,21 @@ router.post('/api/health-log', requireAuth, async (req, res) => {
       exercisesCount: log.exercises?.length,
       mealsCount: log.foodIntake?.length
     });
+    console.log('=== PREGNANCY WEEK SAVED:', log.pregnancyWeek, '===');
+    
+    // Emit real-time update to linked partners
+    const io = req.app.get('io');
+    if (io && user?.linkedAccounts?.length > 0) {
+      user.linkedAccounts.forEach(link => {
+        if (link.status === 'accepted') {
+          io.to(`user:${link.userId}`).emit('partnerUpdate', {
+            type: 'health-log-added',
+            partnerId: req.session.user.id,
+            partnerName: user.fullName || user.firstName
+          });
+        }
+      });
+    }
     
     res.json({ success: true, log, message: isComplete ? 'Log saved and marked complete' : 'Log saved' });
   } catch (err) {
@@ -1314,16 +1643,23 @@ router.delete('/api/health-log/:id', requireAuth, async (req, res) => {
 // Helper function to get week date range
 function getWeekDateRange(weekOffset = 0) {
   const now = new Date();
-  const currentDay = now.getDay(); // 0 = Sunday
+  const currentDay = now.getUTCDay(); // Use UTC instead of local timezone
   const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
   
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() + mondayOffset - (weekOffset * 7));
-  startOfWeek.setHours(0, 0, 0, 0);
+  // Use UTC dates to match how reports are stored in database
+  const startOfWeek = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + mondayOffset - (weekOffset * 7),
+    0, 0, 0, 0
+  ));
   
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
+  const endOfWeek = new Date(Date.UTC(
+    startOfWeek.getUTCFullYear(),
+    startOfWeek.getUTCMonth(),
+    startOfWeek.getUTCDate() + 6,
+    23, 59, 59, 999
+  ));
   
   return { startDate: startOfWeek, endDate: endOfWeek };
 }
@@ -1586,35 +1922,47 @@ router.get('/api/weekly-report/current', requireAuth, async (req, res) => {
 router.get('/api/weekly-report/week/:offset', requireAuth, async (req, res) => {
   try {
     const offset = parseInt(req.params.offset) || 0;
-    const user = await User.findById(req.session.user.id);
+    
+    // Check if partnerId is provided, otherwise use session user ID
+    const targetUserId = req.query.partnerId || req.session.user.id;
     
     const { startDate, endDate } = getWeekDateRange(offset);
     
-    // Calculate pregnancy week for that period
-    let pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
-    if (pregnancyWeek && offset > 0) {
-      pregnancyWeek = Math.max(1, pregnancyWeek - offset);
-    }
-    const trimester = pregnancyWeek ? (pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3) : null;
+    // DEBUG: Log the calculated date range
+    console.log(`[WEEKLY REPORT QUERY] Offset: ${offset}`);
+    console.log(`[WEEKLY REPORT QUERY] Target User ID: ${targetUserId}`);
+    console.log(`[WEEKLY REPORT QUERY] Looking for startDate: ${startDate.toISOString()}`);
+    console.log(`[WEEKLY REPORT QUERY] Looking for endDate: ${endDate.toISOString()}`);
     
-    const stats = await aggregateWeeklyStats(
-      req.session.user.id,
-      startDate,
-      endDate,
-      pregnancyWeek,
-      trimester
-    );
+    
+    console.log(`[WEEKLY REPORT QUERY] Query range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    
+    const report = await WeeklyReport.findOne({
+      userId: targetUserId,
+      startDate: { $gte: startDate, $lte: startDate },
+      endDate: { $gte: endDate, $lte: endDate },
+      deletedAt: null,
+      status: 'complete'
+    });
+    
+    if (!report) {
+      console.log(`[WEEKLY REPORT QUERY] No report found`);
+      return res.status(404).json({
+        success: false,
+        message: `No completed weekly report found for the requested week (offset: ${offset})`,
+        error: 'Weekly reports are generated at the end of each week on Sunday.',
+        debug: {
+          searchedStartDate: startDate.toISOString(),
+          searchedEndDate: endDate.toISOString()
+        }
+      });
+    }
+    
+    console.log(`[WEEKLY REPORT QUERY] Found report with startDate: ${report.startDate.toISOString()}`);
     
     res.json({
       success: true,
-      report: {
-        weekNumber: pregnancyWeek,
-        trimester,
-        startDate,
-        endDate,
-        weekOffset: offset,
-        ...stats
-      }
+      report
     });
   } catch (err) {
     console.error('Get weekly report error:', err);
@@ -1667,38 +2015,34 @@ router.get('/api/weekly-report/history', requireAuth, async (req, res) => {
 // GET /api/weekly-report/trends - Get trends across multiple weeks
 router.get('/api/weekly-report/trends', requireAuth, async (req, res) => {
   try {
-    const weeksToAnalyze = parseInt(req.query.weeks) || 4;
-    const user = await User.findById(req.session.user.id);
+    const weeksToAnalyze = parseInt(req.query.weeks) || 2;
     
-    const weeklyData = [];
+    // Check if partnerId is provided, otherwise use session user ID
+    const targetUserId = req.query.partnerId || req.session.user.id;
+
+    // Fetch completed weekly reports, sorted by week number descending, limit to requested weeks
+    const reports = await WeeklyReport.find({
+      userId: targetUserId,
+      deletedAt: null,
+      status: 'complete'
+    })
+    .sort({ weekNumber: -1 })
+    .limit(weeksToAnalyze);
     
-    for (let i = weeksToAnalyze - 1; i >= 0; i--) {
-      const { startDate, endDate } = getWeekDateRange(i);
-      
-      const logs = await HealthLog.find({
-        userId: req.session.user.id,
-        logDate: { $gte: startDate, $lte: endDate },
-        deletedAt: null
-      });
-      
-      const weights = logs.map(l => l.weightKg).filter(w => w != null);
-      const sleeps = logs.map(l => l.sleep?.totalHours || l.hoursSleept).filter(s => s != null);
-      const energies = logs.map(l => l.energyLevel).filter(e => e != null);
-      const waters = logs.map(l => l.hydration?.waterLiters || 0);
-      
-      weeklyData.push({
-        weekOffset: i,
-        weekLabel: i === 0 ? 'This Week' : `Week -${i}`,
-        startDate,
-        avgWeight: weights.length ? weights.reduce((a, b) => a + b, 0) / weights.length : null,
-        avgSleep: sleeps.length ? sleeps.reduce((a, b) => a + b, 0) / sleeps.length : null,
-        avgEnergy: energies.length ? energies.reduce((a, b) => a + b, 0) / energies.length : null,
-        avgWater: waters.length ? waters.reduce((a, b) => a + b, 0) / waters.length : 0,
-        daysLogged: logs.length
+    if (!reports || reports.length === 0) {
+      return res.json({ 
+        success: true, 
+        trends: [],
+        count: 0,
+        message: 'No completed weekly reports found. Reports are generated automatically every Sunday.'
       });
     }
     
-    res.json({ success: true, trends: weeklyData });
+    res.json({ 
+      success: true, 
+      trends: reports.reverse(), // Reverse to show oldest to newest
+      count: reports.length
+    });
   } catch (err) {
     console.error('Get trends error:', err);
     res.status(500).json({ success: false, error: 'Failed to get trends' });
@@ -1735,6 +2079,7 @@ router.get('/api/nearby-healthcare', async (req, res) => {
     
     if (!response.ok) {
       throw new Error(`Geoapify API error: ${response.status}`);
+   
     }
 
     const data = await response.json();
@@ -1752,6 +2097,49 @@ router.get('/api/nearby-healthcare', async (req, res) => {
       success: false, 
       error: 'Failed to fetch nearby healthcare providers',
       details: error.message
+    });
+  }
+});
+
+// ==================== TEST ROUTE - Generate Weekly Report ====================
+// POST /test/generate-weekly-report - Manually trigger weekly report generation
+router.get('/test/generate-weekly-report', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    
+    console.log(`[TEST] Manually generating weekly report for user: ${userId}`);
+    
+    const report = await generateWeeklyReportForUser(userId);
+    
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'No health logs found for this week. Cannot generate report.'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Weekly report generated successfully!',
+      report: {
+        _id: report._id,
+        weekNumber: report.weekNumber,
+        trimester: report.trimester,
+        startDate: report.startDate,
+        endDate: report.endDate,
+        status: report.status,
+        daysLogged: report.summary?.daysLogged,
+        avgWeight: report.vitalsSummary?.avgWeightKg,
+        avgSleep: report.activities?.avgSleepHours,
+        totalExercise: report.activities?.totalExerciseMinutes
+      }
+    });
+  } catch (error) {
+    console.error('[TEST] Error generating weekly report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate weekly report',
+      error: error.message
     });
   }
 });

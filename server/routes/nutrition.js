@@ -14,8 +14,9 @@ router.use(requireAuth);
 router.post('/generate', nutritionController.generateNutritionSuggestions);
 
 /**
- * @route   GET /api/nutrition/current
+ * @route   GET /api/nutrition/current?userId=<userId>
  * @desc    Get current week's diet plan (auto-generates if none exists)
+ * @query   userId (optional) - View another user's plan (defaults to current user, only auto-generates for own plan)
  * @access  Private
  */
 router.get('/current', nutritionController.getCurrentDietPlan);

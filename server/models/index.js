@@ -18,6 +18,7 @@ const Appointment = require('./appointment');
 const { Article, UserArticleInteraction } = require('./article');
 const { Notification, NotificationPreferences, ScheduledNotification } = require('./notification');
 const DietPlan = require('./dietplan');
+const ExercisePlan = require('./exerciseplan');
 
 module.exports = {
 	// User & Authentication
@@ -27,6 +28,7 @@ module.exports = {
 	HealthLog,
 	WeeklyReport,
 	DietPlan,
+	ExercisePlan,
 	
 	// AI Chatbot
 	Conversation,

@@ -1,3 +1,15 @@
+<% 
+  // Helper function for UTC date formatting in EJS (server-side)
+  function formatDateUTC(dateStr) {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+%>
+
 <link rel="stylesheet" href="/css/share-report.css">
 
 <div class="page-container">
@@ -26,12 +38,12 @@
                       </div>
                       <div class="report-content">
                         <header class="report-header">
-                          <h2 id="rpt-<%= report._id %>-title" class="report-title">Check-in — <%= new Date(report.startDate).toISOString().split('T')[0] %></h2>
+                          <h2 id="rpt-<%= report._id %>-title" class="report-title">Check-in — Week <%= report.weekNumber %></h2>
                         </header>
                         <dl class="report-meta">
                           <div>
                             <dt>Date</dt>
-                            <dd><%= new Date(report.endDate).toISOString().split('T')[0] %></dd>
+                            <dd><%= formatDateUTC(report.startDate) %> - <%= formatDateUTC(report.endDate) %></dd>
                           </div>
                           <div>
                             <dt>Report ID</dt>
@@ -50,7 +62,7 @@
                           <div class="symptoms-title">Include symptoms</div>
                           <ul class="symptoms-list">
                             <% if (report.summary?.keySymptoms && report.summary.keySymptoms.length > 0) { %>
-                              <% report.summary.keySymptoms.slice(0, 3).forEach(symptom => { %>
+                              <% report.summary.keySymptoms.forEach(symptom => { %>
                                 <li><%= symptom.replace(/_/g, ' ').charAt(0).toUpperCase() + symptom.replace(/_/g, ' ').slice(1) %></li>
                               <% }) %>
                             <% } else { %>
@@ -94,22 +106,7 @@
                 </div>
               </article>
 
-              <!-- Send Email Card -->
-              <article class="share-card">
-                <div class="share-card-inner">
-                  <div class="share-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-                    </svg>
-                  </div>
-                  <div class="share-content">
-                    <h3>Send via Email</h3>
-                    <p>Send the report PDF to your email address</p>
-                    <button type="button" class="action-button">Send Email</button>
-                  </div>
-                </div>
-              </article>
+      
 
             </div>
           </section>
@@ -191,19 +188,36 @@
     
     if (!report || !previewContent) return;
     
-    // Helper function to format date
+    // Helper function to format date - USE UTC to match database storage
     const formatDate = (dateStr) => {
-      return new Date(dateStr).toISOString().split('T')[0];
+      const date = new Date(dateStr);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     };
     
-    // Helper function to format mood
-    const formatMood = (mood) => {
+    // Helper function to format mood from dominantMoods array
+    const formatMood = (dominantMoods) => {
+      if (!dominantMoods || dominantMoods.length === 0) return 'N/A';
+      
+      const sortedMoods = dominantMoods.sort((a, b) => (b.frequency || 0) - (a.frequency || 0));
+      const topMood = sortedMoods[0];
+
+      if (!topMood || !topMood.mood) return 'N/A';
+
+      const mood = topMood.mood;
+
       const moodMap = {
+        'very_happy': '😊 Very Happy',
         'happy': '😊 Happy',
-        'very_happy': '😊 Happy',
         'neutral': '😐 Neutral',
         'anxious': '😰 Anxious',
-        'sad': '😢 Sad'
+        'sad': '😢 Sad',
+        'stressed': '😫 Stressed',
+        'irritable': '😠 Irritable',
+        'emotional': '😢 Emotional',
+        'overwhelmed': '😵 Overwhelmed'
       };
       return moodMap[mood] || 'N/A';
     };
@@ -230,11 +244,58 @@
       return formatted.charAt(0).toUpperCase() + formatted.slice(1);
     };
     
+    // Helper function to get highest concern severity from aiFlags
+    const getHighestSeverity = (aiFlags) => {
+      if (!aiFlags || aiFlags.length === 0) return 'none';
+      
+      const severityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+      let highest = 'low';
+      
+      aiFlags.forEach(flag => {
+        if (severityOrder[flag.severity] > severityOrder[highest]) {
+          highest = flag.severity;
+        }
+      });
+      
+      return highest;
+    };
+    
     // Helper function to format concern severity
     const formatConcernSeverity = (severity) => {
       if (!severity || severity === 'none') return 'None';
       return severity.charAt(0).toUpperCase() + severity.slice(1);
     };
+    
+    // Helper function to calculate blood pressure status
+    const getBloodPressureStatus = (systolic, diastolic) => {
+      if (!systolic || !diastolic) return { status: 'N/A', class: 'normal' };
+      
+      // Hypertensive Crisis
+      if (systolic > 180 || diastolic > 120) {
+        return { status: 'Hypertensive Crisis', class: 'high' };
+      }
+      // Stage 2 Hypertension
+      if (systolic >= 140 || diastolic >= 90) {
+        return { status: 'High (Stage 2)', class: 'high' };
+      }
+      // Stage 1 Hypertension
+      if (systolic >= 130 || diastolic >= 80) {
+        return { status: 'High (Stage 1)', class: 'high' };
+      }
+      // Elevated
+      if (systolic >= 120 && systolic < 130 && diastolic < 80) {
+        return { status: 'Elevated', class: 'normal' };
+      }
+      // Low
+      if (systolic < 90 || diastolic < 60) {
+        return { status: 'Low', class: 'low' };
+      }
+      // Normal
+      return { status: 'Normal', class: 'normal' };
+    };
+
+    // Get highest severity from aiFlags
+    const highestSeverity = getHighestSeverity(report.summary?.aiFlags);
     
     // Build the HTML content
     const html = `
@@ -242,7 +303,7 @@
       <section class="pdf-title-section">
         <div class="pdf-title-left">
           <div class="pdf-label">PREGNANCY CHECK-IN REPORT</div>
-          <h1>Check-in — ${formatDate(report.startDate)}</h1>
+          <h1>Check-in — Week ${report.weekNumber}</h1>
         </div>
         <div class="pdf-title-right">
           <div class="pdf-label">Report ID</div>
@@ -261,7 +322,7 @@
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span>Check-in Date</span>
+              <span>Start Date</span>
             </div>
             <div class="pdf-info-value">${formatDate(report.startDate)}</div>
           </div>
@@ -273,7 +334,7 @@
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span>Report Generated</span>
+              <span>End Date</span>
             </div>
             <div class="pdf-info-value">${formatDate(report.endDate)}</div>
           </div>
@@ -319,7 +380,7 @@
           </div>
           <div class="metric-card">
             <div class="metric-label">Energy Level</div>
-            <div class="metric-value metric-value-tag energy-moderate">${formatEnergyLevel(report.summary?.avgEnergyLevel)}</div>
+            <div class="metric-value metric-value-tag energy-${formatEnergyLevel(report.summary?.avgEnergyLevel)}">${formatEnergyLevel(report.summary?.avgEnergyLevel)}</div>
           </div>
         </div>
       </section>
@@ -336,12 +397,12 @@
           <div class="bp-card">
             <div class="bp-label">Avg Systolic</div>
             <div class="bp-value">${report.vitalsSummary.avgSystolic || 'N/A'} <span class="bp-unit">mmHg</span></div>
-            <div class="bp-status normal">${report.vitalsSummary.bloodPressureStatus || 'Normal'}</div>
+            <div class="bp-status ${getBloodPressureStatus(report.vitalsSummary.avgSystolic, report.vitalsSummary.avgDiastolic).class}">${getBloodPressureStatus(report.vitalsSummary.avgSystolic, report.vitalsSummary.avgDiastolic).status}</div>
           </div>
           <div class="bp-card">
             <div class="bp-label">Avg Diastolic</div>
             <div class="bp-value">${report.vitalsSummary.avgDiastolic || 'N/A'} <span class="bp-unit">mmHg</span></div>
-            <div class="bp-status normal">${report.vitalsSummary.bloodPressureStatus || 'Normal'}</div>
+            <div class="bp-status ${getBloodPressureStatus(report.vitalsSummary.avgSystolic, report.vitalsSummary.avgDiastolic).class}">${getBloodPressureStatus(report.vitalsSummary.avgSystolic, report.vitalsSummary.avgDiastolic).status}</div>
           </div>
         </div>
       </section>
@@ -361,11 +422,11 @@
         <div class="mood-grid">
           <div class="mood-card">
             <div class="mood-label">Overall Mood</div>
-            <div class="mood-value">${formatMood(report.summary?.avgMood)}</div>
+            <div class="mood-value">${formatMood(report.summary?.dominantMoods)}</div>
           </div>
           <div class="mood-card">
-            <div class="mood-label">Concern Severity</div>
-            <div class="mood-value">${formatConcernSeverity(report.summary?.concernSeverity)}</div>
+            <div class="mood-label">Stress Level</div>
+            <div class="mood-value">${formatEnergyLevel(report.summary?.avgStressLevel)}</div>
           </div>
         </div>
       </section>
@@ -381,12 +442,12 @@
           <h2>Concerns Detected</h2>
         </header>
         <div class="concerns-box">
-          ${report.summary?.concernsDetected && report.summary.concernsDetected.length > 0 ? `
+          ${report.summary?.aiFlags && report.summary.aiFlags.length > 0 ? `
             <ul class="concerns-list">
-              ${report.summary.concernsDetected.map(concern => `
-                <li class="concern-item ${report.summary.concernSeverity}">
+              ${report.summary.aiFlags.map(flag => `
+                <li class="concern-item ${flag.severity}">
                   <span class="concern-indicator"></span>
-                  <span class="concern-text">${concern}</span>
+                  <span class="concern-text">${flag.message}</span>
                 </li>
               `).join('')}
             </ul>
@@ -429,12 +490,62 @@
 
       <!-- PDF Footer -->
       <footer class="pdf-footer">
-        <p>This report was automatically generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <p>This report was automatically generated on ${formatDate(report.createdAt)}</p>
         <p>For medical advice, please consult with your healthcare provider</p>
       </footer>
     `;
     
     previewContent.innerHTML = html;
+  }
+  
+  // ===== Real-time Socket.IO Updates =====
+  // Listen for new report generation
+  window.addEventListener('reportUpdate', async (e) => {
+    const data = e.detail;
+    if (data.type === 'new-report') {
+      showToast('New weekly report generated! Refreshing...', 'success');
+      setTimeout(() => location.reload(), 2000);
+    }
+  });
+  
+  // Set up socket event dispatcher if socket is available
+  if (typeof io !== 'undefined') {
+    const existingSocket = window.notificationSocket;
+    if (existingSocket) {
+      existingSocket.on('reportUpdate', (data) => {
+        window.dispatchEvent(new CustomEvent('reportUpdate', { detail: data }));
+      });
+    }
+  }
+  
+  // Toast notification function
+  function showToast(message, type = 'info') {
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.className = 'toast-container';
+      toastContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.style.cssText = `
+      background: ${type === 'success' ? '#22c55e' : type === 'info' ? '#3b82f6' : '#ef4444'};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease forwards';
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
   }
 </script>
 <% } %>

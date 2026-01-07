@@ -338,17 +338,22 @@ const healthLogSchema = new mongoose.Schema({
 });
 
 // ============================================================================
-// INDEXES
+// INDEXES - Optimized for common query patterns
 // ============================================================================
-healthLogSchema.index({ userId: 1, logDate: -1 });
-healthLogSchema.index({ userId: 1, logDate: 1 }, { unique: true }); // One log per day per user
-healthLogSchema.index({ userId: 1, pregnancyWeek: 1 });
-healthLogSchema.index({ userId: 1, 'symptoms.symptom': 1 });
-healthLogSchema.index({ logDate: -1 });
-healthLogSchema.index({ deletedAt: 1 });
-healthLogSchema.index({ sharedWith: 1 });
-// [IMPROVED] Index for finding logs with concerns
-healthLogSchema.index({ 'aiFlags.severity': 1 });
+// Primary lookup: user's logs by date (most common query)
+healthLogSchema.index({ userId: 1, logDate: -1, deletedAt: 1 });
+// Unique constraint with soft delete consideration
+healthLogSchema.index({ userId: 1, logDate: 1, deletedAt: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });
+// For weekly report generation (date range queries)
+healthLogSchema.index({ userId: 1, pregnancyWeek: 1, deletedAt: 1 });
+// Symptom search across user logs
+healthLogSchema.index({ userId: 1, 'symptoms.symptom': 1, logDate: -1 });
+// For shared logs access
+healthLogSchema.index({ sharedWith: 1, logDate: -1 });
+// For AI analysis queue
+healthLogSchema.index({ aiAnalyzed: 1, deletedAt: 1 });
+// TTL for soft-deleted logs (auto-cleanup after 90 days)
+healthLogSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60, partialFilterExpression: { deletedAt: { $ne: null } } });
 
 // ============================================================================
 // VIRTUALS
@@ -419,6 +424,29 @@ healthLogSchema.methods.calculateSectionsCompleted = function() {
 // ============================================================================
 // STATIC METHODS
 // ============================================================================
+
+// Helper: Query conditions to check if a log has any actual content
+// Used to filter out empty logs that were auto-created but never filled
+const hasContentConditions = [
+	{ completionPercentage: { $gt: 0 } },
+	{ weightKg: { $exists: true, $ne: null } },
+	{ heartRateBpm: { $exists: true, $ne: null } },
+	{ 'bloodPressure.systolic': { $exists: true, $ne: null } },
+	{ 'bloodPressure.diastolic': { $exists: true, $ne: null } },
+	{ 'sleep.totalHours': { $exists: true, $ne: null } },
+	{ hoursSleept: { $exists: true, $ne: null } },
+	{ energyLevel: { $exists: true, $ne: null } },
+	{ stressLevel: { $exists: true, $ne: null } },
+	{ 'moodLog.0': { $exists: true } },
+	{ 'symptoms.0': { $exists: true } },
+	{ 'exercises.0': { $exists: true } },
+	{ 'foodIntake.0': { $exists: true } },
+	{ 'fetalMovement.count': { $exists: true, $ne: null } },
+	{ 'hydration.waterLiters': { $gt: 0 } },
+	{ notes: { $exists: true, $ne: null, $ne: '' } },
+	{ 'doctorVisit.visited': true }
+];
+
 // [IMPROVED] Get log for specific date
 healthLogSchema.statics.getByDate = function(userId, date) {
 	const startOfDay = new Date(date);
@@ -435,36 +463,98 @@ healthLogSchema.statics.getByDate = function(userId, date) {
 };
 
 // [IMPROVED] Get or create log for today
+// Uses native MongoDB to bypass Mongoose middleware issues
 healthLogSchema.statics.getOrCreateToday = async function(userId, pregnancyWeek = null, trimester = null) {
-	const today = new Date();
-	// Use UTC to avoid timezone issues
-	today.setUTCHours(0, 0, 0, 0);
+	const mongoose = require('mongoose');
 	
-	let log = await this.findOne({
-		userId,
-		logDate: today,
-		deletedAt: null
-	});
+	// Get today's date based on USER'S LOCAL DATE (not UTC date)
+	const now = new Date();
+	const today = new Date(Date.UTC(
+		now.getFullYear(),
+		now.getMonth(),
+		now.getDate(),
+		0, 0, 0, 0
+	));
 	
-	if (!log) {
-		log = new this({
-			userId,
-			logDate: today,
-			pregnancyWeek,
-			trimester
-		});
-		await log.save();
+	// Use native MongoDB collection to bypass Mongoose middleware entirely
+	const collection = mongoose.connection.db.collection('healthlogs');
+	
+	// Convert userId to ObjectId if it's a string
+	const userObjectId = typeof userId === 'string' 
+		? new mongoose.Types.ObjectId(userId) 
+		: userId;
+	
+	// Step 1: Find existing document directly via native driver
+	let doc = await collection.findOne({ userId: userObjectId, logDate: today });
+	
+	if (doc) {
+		// Update existing document
+		const updateFields = {};
+		if (doc.deletedAt) {
+			updateFields.deletedAt = null;
+		}
+		if (pregnancyWeek !== null) {
+			updateFields.pregnancyWeek = pregnancyWeek;
+		}
+		if (trimester !== null) {
+			updateFields.trimester = trimester;
+		}
+		
+		if (Object.keys(updateFields).length > 0) {
+			await collection.updateOne(
+				{ _id: doc._id },
+				{ $set: updateFields }
+			);
+			// Re-fetch to get updated document
+			doc = await collection.findOne({ _id: doc._id });
+		}
+		
+		// Convert to Mongoose document and return
+		return this.hydrate(doc);
 	}
 	
-	return log;
+	// Step 2: Create new document
+	try {
+		const newDoc = {
+			userId: userObjectId,
+			logDate: today,
+			pregnancyWeek,
+			trimester,
+			deletedAt: null,
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
+		
+		const result = await collection.insertOne(newDoc);
+		newDoc._id = result.insertedId;
+		
+		return this.hydrate(newDoc);
+	} catch (err) {
+		if (err.code === 11000) {
+			// Race condition - fetch the document that was just created
+			doc = await collection.findOne({ userId: userObjectId, logDate: today });
+			if (doc) {
+				return this.hydrate(doc);
+			}
+		}
+		throw err;
+	}
 };
 
 // [IMPROVED] Get logs for date range
-healthLogSchema.statics.getByDateRange = function(userId, startDate, endDate) {
+// Only returns logs that have actual content (completionPercentage > 0)
+healthLogSchema.statics.getByDateRange = function(userId, startDate, endDate, options = {}) {
+	const { includeEmpty = false } = options;
+	
 	const query = {
 		userId,
 		deletedAt: null
 	};
+	
+	// By default, exclude empty logs (logs with no actual data entered)
+	if (!includeEmpty) {
+		query.$or = hasContentConditions;
+	}
 	
 	// Add date range filter if provided
 	if (startDate || endDate) {
@@ -494,24 +584,42 @@ healthLogSchema.statics.getBySymptom = function(userId, symptom) {
 	}).sort({ logDate: -1 });
 };
 
-// [IMPROVED] Get recent logs
-healthLogSchema.statics.getRecent = function(userId, days = 7) {
+// [IMPROVED] Get recent logs (excludes empty logs by default)
+healthLogSchema.statics.getRecent = function(userId, days = 7, options = {}) {
+	const { includeEmpty = false } = options;
+	
 	const startDate = new Date();
 	startDate.setDate(startDate.getDate() - days);
 	
-	return this.find({
+	const query = {
 		userId,
 		logDate: { $gte: startDate },
 		deletedAt: null
-	}).sort({ logDate: -1 });
+	};
+	
+	// By default, exclude empty logs
+	if (!includeEmpty) {
+		query.$or = hasContentConditions;
+	}
+	
+	return this.find(query).sort({ logDate: -1 });
 };
 
-// Get all logs
-healthLogSchema.statics.getAllLogs = function(userId) {
-	return this.find({
+// Get all logs (excludes empty logs by default)
+healthLogSchema.statics.getAllLogs = function(userId, options = {}) {
+	const { includeEmpty = false } = options;
+	
+	const query = {
 		userId,
 		deletedAt: null
-	}).sort({ logDate: -1 });
+	};
+	
+	// By default, exclude empty logs
+	if (!includeEmpty) {
+		query.$or = hasContentConditions;
+	}
+	
+	return this.find(query).sort({ logDate: -1 });
 }
 
 // [IMPROVED] Get logs with concerns
@@ -633,7 +741,10 @@ healthLogSchema.pre('save', function(next) {
 // ============================================================================
 // Exclude soft-deleted logs by default
 healthLogSchema.pre(/^find/, function(next) {
-	if (!this.getQuery().deletedAt) {
+	// Only add deletedAt: null if it's not already specified in the query
+	// Use 'in' operator to check if the key exists (not just truthy/falsy value)
+	const query = this.getQuery();
+	if (!('deletedAt' in query)) {
 		this.where({ deletedAt: null });
 	}
 	next();

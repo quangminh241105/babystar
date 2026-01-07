@@ -12,7 +12,14 @@ class ExerciseSuggestionService {
 		}
 
 		this.genAI = new GoogleGenerativeAI(this.apiKey);
-		this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+		this.model = this.genAI.getGenerativeModel({ 
+			model: 'gemini-2.0-flash',
+			generationConfig: {
+				maxOutputTokens: 8192,  // Increased to handle full 7-day plan
+				temperature: 0.7,
+				responseMimeType: 'application/json'  // Force JSON output
+			}
+		});
 		
 		// Reuse shared loader instance
 		if (!sharedExerciseLoader) {
@@ -90,10 +97,50 @@ class ExerciseSuggestionService {
 	}
 
 	/**
+	 * Get trimester-specific exercise goals and guidelines
+	 */
+	getExerciseGoalsByTrimester(trimester, pregnancyWeek) {
+		const goals = {
+			1: {
+				totalMinutes: 150,
+				daysPerWeek: 4,
+				intensityLevel: "moderate",
+				focusAreas: ["cardiovascular health", "pelvic floor strength", "flexibility"],
+				description: "Build a foundation of fitness while managing early pregnancy symptoms",
+				benefits: "Regular exercise in the first trimester can help reduce nausea, improve energy levels, and establish healthy habits for pregnancy.",
+				cautionNote: "Listen to your body - fatigue is common. Rest when needed."
+			},
+			2: {
+				totalMinutes: 150,
+				daysPerWeek: 5,
+				intensityLevel: "moderate",
+				focusAreas: ["core stability", "cardiovascular health", "strength training", "pelvic floor"],
+				description: "Maintain fitness and prepare your body for the physical demands of later pregnancy",
+				benefits: "Exercise in the second trimester can help reduce back pain, prevent excess weight gain, improve sleep quality, and boost your mood and energy.",
+				cautionNote: "Avoid exercises lying flat on back after 20 weeks. Stay well hydrated."
+			},
+			3: {
+				totalMinutes: 120,
+				daysPerWeek: 4,
+				intensityLevel: "light to moderate",
+				focusAreas: ["pelvic floor strength", "breathing exercises", "gentle stretching", "labor preparation"],
+				description: "Focus on mobility, pelvic floor strength, and preparation for labor and delivery",
+				benefits: "Exercise in the third trimester can help prepare your body for labor, reduce swelling, improve posture, and maintain stamina for delivery.",
+				cautionNote: "Reduce intensity as needed. Focus on comfort and breathing. Avoid overheating."
+			}
+		};
+
+		return goals[trimester] || goals[2];
+	}
+
+	/**
 	 * Build AI prompt for exercise recommendations
 	 */
 	buildExercisePrompt(pregnancyWeek, trimester, healthSummary, exerciseContext, weeklyReport) {
 		const { trimesterExercises, exercisesToAvoid, weeklyGuidance } = exerciseContext;
+
+		// Get trimester-specific goals
+		const exerciseGoals = this.getExerciseGoalsByTrimester(trimester, pregnancyWeek);
 
 		// Weekly context from report
 		let weeklyWeight = 'N/A';
@@ -138,6 +185,12 @@ class ExerciseSuggestionService {
 - Common Symptoms from Logs: ${healthSummary.commonSymptoms.map(s => s.symptom).join(', ') || 'None'}
 - Current Exercise Activity: ${healthSummary.totalExerciseMinutes} minutes/week over ${healthSummary.exerciseDaysCount} days
 - Recent Exercises: ${healthSummary.currentExercises.map(e => `${e.type} (${e.count}x)`).join(', ') || 'None logged'}
+
+**TRIMESTER ${trimester} EXERCISE GOALS:**
+- Target: ${exerciseGoals.totalMinutes} minutes per week over ${exerciseGoals.daysPerWeek} days
+- Intensity: ${exerciseGoals.intensityLevel}
+- Focus Areas: ${exerciseGoals.focusAreas.join(', ')}
+- Goal: ${exerciseGoals.description}
 ${weeklyGuide}
 
 **RECOMMENDED EXERCISES FOR TRIMESTER ${trimester}:**
@@ -190,9 +243,13 @@ Example format:
     }
   ],
   "weeklyGoals": {
-    "totalMinutes": 150,
-    "daysPerWeek": 5,
-    "focusAreas": ["pelvic floor strength", "cardiovascular health"]
+    "totalMinutes": ${exerciseGoals.totalMinutes},
+    "daysPerWeek": ${exerciseGoals.daysPerWeek},
+    "intensityLevel": "${exerciseGoals.intensityLevel}",
+    "focusAreas": ${JSON.stringify(exerciseGoals.focusAreas)},
+    "description": "${exerciseGoals.description}",
+    "benefits": "${exerciseGoals.benefits}",
+    "cautionNote": "${exerciseGoals.cautionNote}"
   },
   "safetyGuidelines": [
     "Consult your doctor before starting any exercise program",
@@ -302,6 +359,12 @@ Generate the plan now:`;
 				return prefix + fixed + '"';
 			});
 
+			// 2. Fix truncated JSON - attempt to close incomplete structures
+			if (!cleanText.endsWith('}')) {
+				console.warn('⚠️ JSON appears truncated, attempting to fix...');
+				cleanText = this.attemptFixTruncatedJson(cleanText);
+			}
+
 			const parsed = JSON.parse(cleanText);
 
 			// Validate structure
@@ -323,14 +386,69 @@ Generate the plan now:`;
 	}
 
 	/**
+	 * Attempt to fix truncated JSON by closing open structures
+	 */
+	attemptFixTruncatedJson(text) {
+		// Count open brackets/braces
+		let openBraces = 0;
+		let openBrackets = 0;
+		let inString = false;
+		let escape = false;
+
+		for (const char of text) {
+			if (escape) {
+				escape = false;
+				continue;
+			}
+			if (char === '\\') {
+				escape = true;
+				continue;
+			}
+			if (char === '"') {
+				inString = !inString;
+				continue;
+			}
+			if (!inString) {
+				if (char === '{') openBraces++;
+				else if (char === '}') openBraces--;
+				else if (char === '[') openBrackets++;
+				else if (char === ']') openBrackets--;
+			}
+		}
+
+		// If we're in a string, close it
+		if (inString) {
+			text += '"';
+		}
+
+		// Remove incomplete property (like "sets": nul)
+		text = text.replace(/,\s*"[^"]+"\s*:\s*[^,}\]]*$/, '');
+		text = text.replace(/,\s*$/, '');
+
+		// Close arrays and objects
+		while (openBrackets > 0) {
+			text += ']';
+			openBrackets--;
+		}
+		while (openBraces > 0) {
+			text += '}';
+			openBraces--;
+		}
+
+		return text;
+	}
+
+	/**
 	 * Get default safe exercise plan if AI fails
 	 */
 	getDefaultSafePlan(trimester, pregnancyWeek) {
+		const exerciseGoals = this.getExerciseGoalsByTrimester(trimester, pregnancyWeek);
+		
 		return {
 			summary: {
-				planReason: `Safe, evidence-based exercise plan for week ${pregnancyWeek} of your pregnancy`,
+				planReason: `Safe, evidence-based exercise plan for week ${pregnancyWeek} of your pregnancy (Trimester ${trimester})`,
 				keyBenefits: ["Improves cardiovascular health", "Strengthens pelvic floor", "Reduces back pain", "Prepares body for labor"],
-				weeklyFocus: "Building strength and endurance with gentle, pregnancy-safe exercises"
+				weeklyFocus: exerciseGoals.description
 			},
 			dailyExercisePlan: [
 				{
@@ -470,9 +588,13 @@ Generate the plan now:`;
 				}
 			],
 			weeklyGoals: {
-				totalMinutes: 150,
-				daysPerWeek: 5,
-				focusAreas: ["cardiovascular health", "pelvic floor strength", "flexibility", "core stability"]
+				totalMinutes: exerciseGoals.totalMinutes,
+				daysPerWeek: exerciseGoals.daysPerWeek,
+				intensityLevel: exerciseGoals.intensityLevel,
+				focusAreas: exerciseGoals.focusAreas,
+				description: exerciseGoals.description,
+				benefits: exerciseGoals.benefits,
+				cautionNote: exerciseGoals.cautionNote
 			},
 			safetyGuidelines: [
 				"Consult your doctor before starting any exercise program",

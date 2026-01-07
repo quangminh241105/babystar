@@ -233,17 +233,15 @@ const userSchema = new mongoose.Schema({
 });
 
 // ============================================================================
-// INDEXES
+// INDEXES - Optimized for common query patterns
 // ============================================================================
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
-userSchema.index({ invitationCode: 1 }, { unique: true, sparse: true });
-userSchema.index({ role: 1 });
-userSchema.index({ isActive: 1 });
-userSchema.index({ 'associatedUsers.userId': 1 });
-userSchema.index({ 'associatedUsers.status': 1 });
-userSchema.index({ email: 1, authProvider: 1 });
-userSchema.index({ deletedAt: 1, isActive: 1 });
+userSchema.index({ invitationCode: 1, invitationCodeExpiresAt: 1 }, { sparse: true }); // Compound for code lookup
+userSchema.index({ role: 1, isActive: 1, deletedAt: 1 }); // Compound for role-based queries
+userSchema.index({ 'associatedUsers.userId': 1, 'associatedUsers.status': 1 }); // Compound for association lookups
+userSchema.index({ email: 1, authProvider: 1 }); // For auth queries
+userSchema.index({ deletedAt: 1, isActive: 1 }); // For active user queries
 
 // ============================================================================
 // VIRTUALS
@@ -267,11 +265,16 @@ userSchema.virtual('currentPregnancyWeek').get(function() {
 		
 		const diffTime = now - lmp;
 		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-		const weeks = Math.floor(diffDays / 7);
+		let weeks = Math.floor(diffDays / 7);
 		const days = diffDays % 7;
 		
-		// Valid pregnancy range: 0-42 weeks
-		if (weeks >= 0 && weeks <= 42) {
+		// Pregnancy weeks start at 1, not 0
+		if (weeks === 0) {
+			weeks = 1;
+		}
+		
+		// Valid pregnancy range: 1-42 weeks
+		if (weeks >= 1 && weeks <= 42) {
 			return { weeks, days, totalDays: diffDays };
 		}
 	}

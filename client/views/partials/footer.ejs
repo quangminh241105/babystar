@@ -38,5 +38,354 @@
   </div>
 </footer> -->
 
+<!-- Custom Modal Component -->
+<div id="customModal" class="custom-modal-overlay">
+  <div class="custom-modal">
+    <div class="custom-modal-header">
+      <h3 class="custom-modal-title" id="modalTitle">Title</h3>
+      <button type="button" class="custom-modal-close" id="modalCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="custom-modal-body" id="modalBody">
+      <p id="modalMessage"></p>
+      <input type="text" id="modalInput" class="custom-modal-input" style="display: none;">
+    </div>
+    <div class="custom-modal-footer" id="modalFooter">
+      <button type="button" class="custom-modal-btn btn-secondary" id="modalCancelBtn">Cancel</button>
+      <button type="button" class="custom-modal-btn btn-primary" id="modalConfirmBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ===== Custom Modal Styles ===== */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.custom-modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.custom-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 420px;
+  transform: scale(0.9) translateY(-20px);
+  transition: transform 0.2s ease;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.custom-modal-overlay.show .custom-modal {
+  transform: scale(1) translateY(0);
+}
+
+.custom-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-modal-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.custom-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.15s ease;
+}
+
+.custom-modal-close:hover {
+  background: #e8e8e8;
+  color: #333;
+}
+
+.custom-modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.custom-modal-body {
+  padding: 20px 24px;
+  overflow: visible;
+}
+
+.custom-modal-body p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4a4a4a;
+  line-height: 1.6;
+}
+
+.custom-modal-input {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  -webkit-user-select: text;
+  user-select: text;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.custom-modal-input:focus {
+  outline: none;
+  border-color: #D91E8F;
+  box-shadow: 0 0 0 3px rgba(217, 30, 143, 0.1);
+}
+
+.custom-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  justify-content: flex-end;
+}
+
+.custom-modal-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.custom-modal-btn.btn-secondary {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.custom-modal-btn.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.custom-modal-btn.btn-primary {
+  background: linear-gradient(135deg, #D91E8F 0%, #E03FAD 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(217, 30, 143, 0.3);
+}
+
+.custom-modal-btn.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(217, 30, 143, 0.4);
+}
+
+.custom-modal-btn.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.custom-modal-btn.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* Alert-only mode (single button) */
+.custom-modal-overlay.alert-mode .custom-modal-footer {
+  justify-content: center;
+}
+
+.custom-modal-overlay.alert-mode #modalCancelBtn {
+  display: none;
+}
+
+/* Danger/Warning mode */
+.custom-modal-overlay.danger-mode .custom-modal-header {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.custom-modal-overlay.danger-mode .custom-modal-title {
+  color: #dc2626;
+}
+</style>
+
+<script>
+// ===== Custom Modal Utility =====
+window.CustomModal = (function() {
+  const overlay = document.getElementById('customModal');
+  const title = document.getElementById('modalTitle');
+  const message = document.getElementById('modalMessage');
+  const input = document.getElementById('modalInput');
+  const confirmBtn = document.getElementById('modalConfirmBtn');
+  const cancelBtn = document.getElementById('modalCancelBtn');
+  const closeBtn = document.getElementById('modalCloseBtn');
+  
+  let resolvePromise = null;
+  
+  function show() {
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function hide() {
+    overlay.classList.remove('show', 'alert-mode', 'danger-mode');
+    document.body.style.overflow = '';
+    input.style.display = 'none';
+    input.value = '';
+    confirmBtn.className = 'custom-modal-btn btn-primary';
+    confirmBtn.textContent = 'OK';
+    cancelBtn.textContent = 'Cancel';
+  }
+  
+  function handleConfirm() {
+    const value = input.style.display !== 'none' ? input.value : true;
+    hide();
+    if (resolvePromise) resolvePromise(value);
+  }
+  
+  function handleCancel() {
+    hide();
+    if (resolvePromise) resolvePromise(input.style.display !== 'none' ? null : false);
+  }
+  
+  confirmBtn.addEventListener('click', handleConfirm);
+  cancelBtn.addEventListener('click', handleCancel);
+  closeBtn.addEventListener('click', handleCancel);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) handleCancel();
+  });
+  
+  // Handle Enter/Escape keys
+  document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('show')) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleConfirm();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  });
+  
+  return {
+    /**
+     * Show an alert dialog (single OK button)
+     * @param {string} msg - Message to display
+     * @param {string} titleText - Optional title (default: "Notice")
+     * @returns {Promise<boolean>} - Always resolves to true
+     */
+    alert: function(msg, titleText = 'Notice') {
+      return new Promise((resolve) => {
+        resolvePromise = resolve;
+        title.textContent = titleText;
+        message.textContent = msg;
+        overlay.classList.add('alert-mode');
+        show();
+        confirmBtn.focus();
+      });
+    },
+    
+    /**
+     * Show a confirm dialog (OK/Cancel buttons)
+     * @param {string} msg - Message to display
+     * @param {Object} options - Optional settings
+     * @returns {Promise<boolean>} - true if confirmed, false if cancelled
+     */
+    confirm: function(msg, options = {}) {
+      const { 
+        titleText = 'Confirm', 
+        confirmText = 'Confirm', 
+        cancelText = 'Cancel',
+        danger = false 
+      } = options;
+      
+      return new Promise((resolve) => {
+        resolvePromise = resolve;
+        title.textContent = titleText;
+        message.textContent = msg;
+        confirmBtn.textContent = confirmText;
+        cancelBtn.textContent = cancelText;
+        
+        if (danger) {
+          overlay.classList.add('danger-mode');
+          confirmBtn.className = 'custom-modal-btn btn-danger';
+        }
+        
+        show();
+        confirmBtn.focus();
+      });
+    },
+    
+    /**
+     * Show a prompt dialog (input field + OK/Cancel)
+     * @param {string} msg - Message to display
+     * @param {string} defaultValue - Default input value
+     * @param {Object} options - Optional settings
+     * @returns {Promise<string|null>} - Input value or null if cancelled
+     */
+    prompt: function(msg, defaultValue = '', options = {}) {
+      const { 
+        titleText = 'Input Required', 
+        confirmText = 'OK', 
+        cancelText = 'Cancel',
+        placeholder = ''
+      } = options;
+      
+      return new Promise((resolve) => {
+        resolvePromise = resolve;
+        title.textContent = titleText;
+        message.textContent = msg;
+        confirmBtn.textContent = confirmText;
+        cancelBtn.textContent = cancelText;
+        input.style.display = 'block';
+        input.value = defaultValue;
+        input.placeholder = placeholder;
+        
+        show();
+        // Delay focus to ensure modal is fully visible and interactive
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 250);
+        });
+      });
+    }
+  };
+})();
+</script>
+
 </body>
 </html>

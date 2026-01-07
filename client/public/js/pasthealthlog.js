@@ -147,6 +147,10 @@
     const today = new Date().toISOString().split('T')[0];
     const isToday = isoDate === today;
     
+    // Get delete flag from page container (set by server in EJS)
+    const pageContainer = document.querySelector('.page-container');
+    const deleteAllowed = pageContainer && pageContainer.dataset.deleteAllowed === 'true';
+    
     // Build detail HTML
     let detailHTML = `
       <div class="detail-header">
@@ -161,15 +165,17 @@
       
       <div class="detail-actions">
         ${isToday ? `
-          <a href="/health-log" class="action-button edit-btn">
+          <a href="/log-health" class="action-button edit-btn">
             Edit Today's Log
           </a>
         ` : ''}
-        <form method="POST" action="/past-health-records/${logId}/delete" class="delete-form">
-          <button type="submit" class="action-button delete-btn">
-            Delete Log
-          </button>
-        </form>
+        ${deleteAllowed ? `
+          <form method="POST" action="/past-health-records/${logId}/delete" class="delete-form">
+            <button type="submit" class="action-button delete-btn">
+              Delete Log
+            </button>
+          </form>
+        ` : ''}
       </div>
     `;
     
