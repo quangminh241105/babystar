@@ -1,6 +1,270 @@
 <link rel="stylesheet" href="/css/adminuser.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+<style>
+.admin-users-main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.admin-header {
+  margin-bottom: 32px;
+}
+
+.admin-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.admin-header p {
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+}
+
+.generator-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
+  border: 1px solid #e8e8e8;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-group select,
+.form-group input[type="number"] {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  background: white;
+}
+
+.form-group select:focus,
+.form-group input[type="number"]:focus {
+  outline: none;
+  border-color: #D91E8F;
+  box-shadow: 0 0 0 3px rgba(217, 30, 143, 0.1);
+}
+
+.form-group small {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.message {
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message.success {
+  background: #e0ffe8;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.message.error {
+  background: #ffe0e0;
+  color: #d91e8f;
+  border: 1px solid #ffb3b3;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #E00072 0%, #D91E8F 100%);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 30, 143, 0.3);
+}
+
+.btn-secondary {
+  background: white;
+  color: #D91E8F;
+  border: 2px solid #D91E8F;
+}
+
+.btn-secondary:hover {
+  background: #FFF5F9;
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+.btn-icon {
+  font-size: 1.1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 16px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #D91E8F;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.quiz-preview {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.quiz-preview h2 {
+  color: #D91E8F;
+  margin-bottom: 16px;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+#previewContent {
+  background: #f9f9f9;
+  padding: 24px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e8e8e8;
+}
+
+.preview-item {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.preview-item strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.info-section {
+  background: #FFF5F9;
+  border-radius: 16px;
+  padding: 32px;
+  border: 2px solid #FFE3F0;
+}
+
+.info-section h3 {
+  color: #D91E8F;
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.info-section ol,
+.info-section ul {
+  color: #666;
+  line-height: 1.8;
+  padding-left: 24px;
+}
+
+.info-section li {
+  margin-bottom: 8px;
+}
+
+.info-section li strong {
+  color: #333;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .generator-card {
+    padding: 24px 20px;
+  }
+
+  .info-section {
+    padding: 24px 20px;
+  }
+}
+</style>
+
 <main class="container admin-users-main">
   <div style="margin-bottom: 16px;">
     <a href="/admin" style="color: #D91E8F; text-decoration: none; font-weight: 600;">← Back to Admin Dashboard</a>
@@ -43,8 +307,6 @@
         </div>
       </div>
 
-      <div id="message" class="message" style="display: none;"></div>
-
       <div class="button-group">
         <button type="submit" id="generateBtn" class="btn-primary">
           <span class="btn-icon">✨</span>
@@ -86,72 +348,12 @@
   </div>
 </main>
 
-<style>
-.generator-card {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 24px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.button-group {
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #E00072 0%, #D91E8F 100%);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(217, 30, 143, 0.3);
-}
-
-.btn-secondary {
-  background: white;
-  color: #D91E8F;
-  border: 2px solid #D91E8F;
-}
-
-.btn-secondary:hover {
-  background: #FFF5F9;
-}
-
-.btn-primary:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  transform: none;
-}
-
 .loading {
   text-align: center;
   padding: 40px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  margin-top: 20px;
 }
 
 .spinner {
@@ -169,6 +371,12 @@
   100% { transform: rotate(360deg); }
 }
 
+.loading p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
 .quiz-preview {
   margin-top: 32px;
   padding-top: 32px;
@@ -178,40 +386,57 @@
 .quiz-preview h2 {
   color: #D91E8F;
   margin-bottom: 16px;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 #previewContent {
   background: #f9f9f9;
-  padding: 20px;
+  padding: 24px;
   border-radius: 8px;
   margin-bottom: 20px;
+  border: 1px solid #e8e8e8;
 }
 
 .preview-item {
   margin-bottom: 12px;
+  font-size: 1rem;
 }
 
 .preview-item strong {
   color: #333;
+  font-weight: 600;
 }
 
 .info-section {
   background: #FFF5F9;
   border-radius: 16px;
-  padding: 24px;
+  padding: 32px;
   border: 2px solid #FFE3F0;
 }
 
 .info-section h3 {
   color: #D91E8F;
   margin-top: 0;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .info-section ol,
 .info-section ul {
   color: #666;
   line-height: 1.8;
+  padding-left: 24px;
+}
+
+.info-section li {
+  margin-bottom: 8px;
+}
+
+.info-section li strong {
+  color: #333;
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {
@@ -221,6 +446,14 @@
 
   .button-group {
     flex-direction: column;
+  }
+
+  .generator-card {
+    padding: 24px 20px;
+  }
+
+  .info-section {
+    padding: 24px 20px;
   }
 }
 </style>
@@ -233,8 +466,6 @@
   const quizPreview = document.getElementById('quizPreview');
   const previewContent = document.getElementById('previewContent');
   const message = document.getElementById('message');
-  const viewQuizLink = document.getElementById('viewQuizLink');
-  const generateAnotherBtn = document.getElementById('generateAnotherBtn');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -262,6 +493,12 @@
         body: JSON.stringify(formData)
       });
 
+      // Check if response is OK before parsing
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Server error' }));
+        throw new Error(errorData.error || `Server returned ${response.status}`);
+      }
+
       const result = await response.json();
 
       if (result.success) {
@@ -278,7 +515,9 @@
           <div class="preview-item"><strong>Quiz ID:</strong> ${result.quiz.id}</div>
         `;
         quizPreview.style.display = 'block';
-        viewQuizLink.href = `/quiz/category/${result.quiz.category}`;
+        if (viewQuizLink) {
+          viewQuizLink.href = `/quiz/category/${result.quiz.category}`;
+        }
 
       } else {
         message.className = 'message error';
@@ -289,7 +528,7 @@
     } catch (error) {
       console.error('Error:', error);
       message.className = 'message error';
-      message.textContent = 'Network error. Please try again.';
+      message.textContent = error.message || 'Network error. Please try again.';
       message.style.display = 'block';
     } finally {
       // Hide loading
@@ -297,14 +536,6 @@
       generateBtn.disabled = false;
       generateBtn.innerHTML = '<span class="btn-icon">✨</span> Generate Quiz with AI';
     }
-  });
-
-  generateAnotherBtn.addEventListener('click', () => {
-    quizPreview.style.display = 'none';
-    message.style.display = 'none';
-    form.reset();
-    document.getElementById('difficulty').value = 'medium';
-    document.getElementById('numQuestions').value = '10';
   });
 })();
 </script>
