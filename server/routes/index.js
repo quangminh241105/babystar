@@ -693,8 +693,8 @@ router.get('/share-records', requireAuthRedirect, async (req, res) => {
       status: 'complete'
     })
     .sort({ weekNumber: -1 })
-    .select('weekNumber trimester startDate endDate summary.daysLogged summary.avgEnergyLevel vitalsSummary.avgWeightKg')
-    .lean();
+    // .select('weekNumber trimester startDate endDate summary.daysLogged summary.avgEnergyLevel vitalsSummary.avgWeightKg')
+    // .lean();
 
     
     res.render('pages/share-report', { 

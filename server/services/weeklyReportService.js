@@ -576,15 +576,6 @@ async function generateWeeklyReportForUser(userId) {
 			return await WeeklyReport.findById(existingReport._id);
 		}
 
-		// Get health logs for the calendar week with lean() and field selection
-		// const healthLogs = await HealthLog.find({
-		// 	userId,
-		// 	logDate: { $gte: startDate, $lte: endDate },
-		// 	deletedAt: null
-		// })
-		// .sort({ logDate: 1 })
-		// .select('symptoms energyLevel stressLevel moodLog bloodPressure weightKg heartRateBpm bloodSugar fetalMovement exercises sleep hoursSleept hydration caffeineIntakeMg foodIntake completionPercentage aiFlags logDate')
-		// .lean();
 
 		const healthLogIds = healthLogs.map(log => log._id);
 
