@@ -12,6 +12,7 @@
 const User = require('./user');
 const HealthLog = require('./healthlogs');
 const WeeklyReport = require('./weeklyreports');
+const WeeklyAdvice = require('./weeklyAdvice');
 const Conversation = require('./aichatbot');
 const { Quiz, QuizAttempt } = require('./quizzes');
 const Appointment = require('./appointment');
@@ -27,6 +28,7 @@ module.exports = {
 	// Health Tracking
 	HealthLog,
 	WeeklyReport,
+	WeeklyAdvice,
 	DietPlan,
 	ExercisePlan,
 	

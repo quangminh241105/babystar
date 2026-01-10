@@ -13,7 +13,7 @@ class ExerciseSuggestionService {
 
 		this.genAI = new GoogleGenerativeAI(this.apiKey);
 		this.model = this.genAI.getGenerativeModel({ 
-			model: 'gemini-2.0-flash',
+			model: 'gemini-2.5-flash',
 			generationConfig: {
 				maxOutputTokens: 8192,  // Increased to handle full 7-day plan
 				temperature: 0.7,

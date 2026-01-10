@@ -5,6 +5,7 @@ const { requireAuth, requireAuthRedirect, requirePregnancyProfile } = require('.
 const User = require('../models/user');
 const HealthLog = require('../models/healthlogs');
 const WeeklyReport = require('../models/weeklyreports');
+const WeeklyAdvice = require('../models/weeklyAdvice');
 const { Notification } = require('../models/notification');
 const axios = require('axios');
 const puppeteer = require('puppeteer');
@@ -1636,6 +1637,111 @@ router.delete('/api/health-log/:id', requireAuth, async (req, res) => {
     console.error('Delete health log error:', err);
     res.status(500).json({ success: false, error: 'Failed to delete health log' });
   }
+});
+
+// ==================== WEEKLY ADVICE API ROUTES ====================
+const WeeklyAdviceService = require('../personalized_suggestion/weeklyAdviceService');
+const weeklyAdviceService = new WeeklyAdviceService();
+
+router.get('/api/weekly-advice', requireAuth, async (req, res) => {
+	try {
+		const userId = req.session?.user?.id;
+		if (!userId) {
+			return res.status(401).json({ 
+				success: false, 
+				message: 'User not authenticated' 
+			});
+		}
+
+		const user = await User.findById(userId);
+		if (!user || !user.pregnancyProfile?.lastMenstrualPeriod) {
+			return res.status(400).json({
+				success: false,
+				message: 'Please complete your pregnancy profile first'
+			});
+		}
+
+		// Calculate pregnancy week and trimester
+		const pregnancyWeekObj = user.currentPregnancyWeek;
+		const pregnancyWeek = Math.min(42, Math.max(1, pregnancyWeekObj.weeks));
+		const trimester = pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3;
+
+		// Check for existing advice (generated within last 24 hours)
+		const existingAdvice = await WeeklyAdvice.findRecentForWeek(userId, pregnancyWeek, 24);
+		
+		if (existingAdvice) {
+			console.log(`✅ Loaded existing weekly advice for week ${pregnancyWeek}`);
+			return res.status(200).json({
+				success: true,
+				data: {
+					weekNumber: existingAdvice.pregnancyWeek,
+					trimester: existingAdvice.trimester,
+					symptomAdvice: existingAdvice.symptomAdvice,
+					weeklyGuidance: existingAdvice.weeklyGuidance,
+					focusAreas: existingAdvice.focusAreas,
+					riskAssessment: existingAdvice.riskAssessment
+				},
+				fromCache: true
+			});
+		}
+
+		// No existing advice found - generate new
+		console.log(`🤖 Generating new weekly advice for week ${pregnancyWeek}...`);
+		
+		// Get recent health logs (last 7 days)
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+		const healthLogs = await HealthLog.find({
+			userId,
+			logDate: { $gte: sevenDaysAgo },
+			deletedAt: null
+		}).sort({ logDate: -1 });
+
+		// Generate AI advice
+		const advice = await weeklyAdviceService.generateWeeklyAdvice({
+			pregnancyWeek,
+			trimester,
+			healthLogs,
+			userProfile: {
+				name: user.name || user.username,
+				email: user.email,
+				age: user.age || user.pregnancyProfile?.age || 28
+			}
+		});
+
+		// Save to database
+		try {
+			await WeeklyAdvice.saveWeeklyAdvice({
+				userId,
+				pregnancyWeek,
+				trimester,
+				symptomAdvice: advice.symptomAdvice,
+				weeklyGuidance: advice.weeklyGuidance,
+				focusAreas: advice.focusAreas,
+				riskAssessment: advice.riskAssessment,
+				healthLogIds: healthLogs.map(log => log._id),
+				aiModel: 'gemini-2.5-flash'
+			});
+			console.log('💾 Weekly advice saved to database');
+		} catch (saveError) {
+			console.error('⚠️ Failed to save advice to database:', saveError.message);
+			// Continue anyway - don't fail the request
+		}
+
+		return res.status(200).json({
+			success: true,
+			data: advice,
+			fromCache: false
+		});
+
+	} catch (error) {
+		console.error('❌ Error generating weekly advice:', error);
+		return res.status(500).json({
+			success: false,
+			message: 'Failed to generate weekly advice'
+		});
+	}
 });
 
 // ==================== WEEKLY REPORT API ROUTES ====================

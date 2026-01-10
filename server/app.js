@@ -249,7 +249,7 @@ app.set('connectedUsers', connectedUsers);
 // Connect to MongoDB then start server
 // -----------------------------
 function startServer() {
-	server.listen(PORT, () => {
+	server.listen(PORT, '0.0.0.0', () => {
 		console.log(`Server running on http://localhost:${PORT}`);
 	});
 }

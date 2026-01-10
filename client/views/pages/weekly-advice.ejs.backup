@@ -261,3 +261,32 @@
     `).join('');
   }
 </script>
+            <div class="box-actions">
+              <button class="btn tiny">View exercises</button>
+            </div>
+          </div>
+
+          <div class="focus-box" data-focus="sleep">
+            <div class="box-icon">🛏️</div>
+            <div class="box-title">Rest & sleep</div>
+            <div class="box-desc">Practice bedtime routines; side-sleeping with pillows can be helpful in later weeks.</div>
+            <div class="box-actions">
+              <button class="btn tiny">Sleep tips</button>
+            </div>
+          </div>
+
+          <div class="focus-box" data-focus="mental">
+            <div class="box-icon">🧘‍♀️</div>
+            <div class="box-title">Mental wellbeing</div>
+            <div class="box-desc">Breathing exercises, peer support and pausing for self-care reduce stress and anxiety.</div>
+            <div class="box-actions">
+              <button class="btn tiny">Try a short practice</button>
+            </div>
+          </div>
+        </div>
+
+      </article>
+    </section>
+
+    <footer class="note">Tip: Edit your profile to improve personalization of advice. Data used locally in-app unless you opt-in to sharing.</footer>
+  </main>
