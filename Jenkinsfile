@@ -6,7 +6,7 @@ pipeline {
         SEPM_USER = 'deployer'
         DEPLOY_PATH = '/opt/myapp'
         APP_NAME = 'myapp'
-        APP_PORT = '3000'
+        APP_PORT = '9000'
         PID_FILE = '/opt/myapp/app.pid'
     }
     
@@ -83,19 +83,19 @@ pipeline {
                                 rm -f /opt/myapp/app.pid
                             fi
                             
-                            # Kill ANY process on port 3000
-                            PID_ON_PORT=\\$(lsof -ti:3000 2>/dev/null || true)
+                            # Kill ANY process on port 9000
+                            PID_ON_PORT=\\$(lsof -ti:9000 2>/dev/null || true)
                             if [ !  -z \\\"\\$PID_ON_PORT\\\" ]; then
-                                echo 'Killing process on port 3000: '\\$PID_ON_PORT
+                                echo 'Killing process on port 9000: '\\$PID_ON_PORT
                                 kill -9 \\$PID_ON_PORT 2>/dev/null || true
                                 sleep 2
                             fi
                             
                             # Double-check port is free
                             sleep 1
-                            if lsof -ti:3000 > /dev/null 2>&1; then
-                                echo 'Port 3000 still in use, forcing kill'
-                                fuser -k 3000/tcp 2>/dev/null || true
+                            if lsof -ti:9000 > /dev/null 2>&1; then
+                                echo 'Port 9000 still in use, forcing kill'
+                                fuser -k 9000/tcp 2>/dev/null || true
                             fi
                             
                             echo '✓ Old application stopped'
@@ -171,7 +171,7 @@ pipeline {
                             
                             echo 'Testing application endpoint...'
                             
-                            if curl -f -s -o /dev/null http://localhost:3000; then
+                            if curl -f -s -o /dev/null http://localhost:9000; then
                                 echo '✓ Health check passed - application is responding'
                             else
                                 echo '��� Health check failed - application not responding'
@@ -189,7 +189,7 @@ pipeline {
     post {
         success {
             echo '✅ Deployment successful!'
-            echo '🚀 Application running at http://172.31.31.101:3000'
+            echo '🚀 Application running at http://172.31.31.101:9000'
             echo '🌐 Access via: https://babystar.mom'
         }
         failure {
