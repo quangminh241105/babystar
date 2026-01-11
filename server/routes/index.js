@@ -975,7 +975,7 @@ router.post('/past-health-records/:id/delete', requireAuth, async (req, res) => 
 
 // ==================== HEALTH LOG API ROUTES ====================
 
-// GET /api/health-log/today - Get or create today's health log
+// GET /api/health-log/today - Get today's health log (read-only, no creation)
 // SPECIFIC ROUTES FIRST
 router.get('/api/health-log/today', requireAuth, async (req, res) => {
   try {
@@ -995,12 +995,23 @@ router.get('/api/health-log/today', requireAuth, async (req, res) => {
     const pregnancyWeek = user?.currentPregnancyWeek?.weeks || null;
     const trimester = user?.currentTrimester || null;
     
-    // Create log with calculated pregnancy week
-    const log = await HealthLog.getOrCreateToday(req.session.user.id, pregnancyWeek, trimester);
+    // READ-ONLY: Find today's log without creating
+    const today = new Date(Date.UTC(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate(),
+      0, 0, 0, 0
+    ));
+    
+    const log = await HealthLog.findOne({
+      userId: req.session.user.id,
+      logDate: today,
+      deletedAt: null
+    });
     
     res.json({ 
       success: true, 
-      log,
+      log: log || null,
       userContext: {
         pregnancyWeek,
         trimester,
