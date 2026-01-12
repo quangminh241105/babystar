@@ -299,9 +299,6 @@ function renderAIExercisePlan(plan, container, isViewingPartner = false) {
 	` : '';
 	
 	container.innerHTML = `
-		<!-- AI Weekly Summary -->
-		${weeklySummaryHTML}
-		
 		<!-- Page Header -->
 		<header class="page-header">
 			<h1>Personalized Exercise Plan</h1>
