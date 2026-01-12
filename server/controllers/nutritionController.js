@@ -72,7 +72,7 @@ async function generateNutritionSuggestions(req, res) {
 
 		const today = new Date();
 		const due = new Date(dueDate);
-		const gestationalDays = 280 - Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+		const gestationalDays = 280 - Math.floor((due - today) / (1000 * 60 * 60 * 24));
 		const pregnancyWeek = Math.min(42, Math.max(1, Math.ceil(gestationalDays / 7)));
 		const trimester = pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3;
 
@@ -363,7 +363,7 @@ async function getCurrentDietPlan(req, res) {
 
 		const today = new Date();
 		const due = new Date(dueDate);
-		const gestationalDays = 280 - Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+		const gestationalDays = 280 - Math.floor((due - today) / (1000 * 60 * 60 * 24));
 		const pregnancyWeek = Math.min(42, Math.max(1, Math.ceil(gestationalDays / 7)));
 		const trimester = pregnancyWeek <= 12 ? 1 : pregnancyWeek <= 27 ? 2 : 3;
 
@@ -483,7 +483,7 @@ async function getQuickAdvice(req, res) {
 
 		const today = new Date();
 		const due = new Date(dueDate);
-		const gestationalDays = 280 - Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+		const gestationalDays = 280 - Math.floor((due - today) / (1000 * 60 * 60 * 24));
 		const pregnancyWeek = Math.min(42, Math.max(1, Math.ceil(gestationalDays / 7)));
 
 		// Get recent symptoms

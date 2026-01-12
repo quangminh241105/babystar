@@ -43,7 +43,7 @@ function calculatePregnancyWeek(dueDate) {
 	
 	const today = new Date();
 	const due = new Date(dueDate);
-	const gestationalDays = 280 - Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+	const gestationalDays = 280 - Math.floor((due - today) / (1000 * 60 * 60 * 24));
 	return Math.min(42, Math.max(1, Math.ceil(gestationalDays / 7)));
 }
 
