@@ -87,7 +87,7 @@ pipeline {
                             echo 'NPM:'
                             npm -v
 
-                            npm ci
+                            npm install
                         "
                     '''
                 }
