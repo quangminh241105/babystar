@@ -107,7 +107,7 @@ pipeline {
 
                             pm2 start npm \
                                 --name ${APP_NAME} \
-                                -- run dev
+                                -- run start
 
                             pm2 save
 
