@@ -123,21 +123,20 @@ pipeline {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
                         ssh ${TARGET_USER}@${TARGET_SERVER} "
-                            sleep 15
+                            echo 'Waiting for application to start...'
+                            
+                            for i in {1..12}; do
+                                if curl -s -f -L http://localhost:${APP_PORT} > /dev/null 2>&1; then
+                                    echo '✓ babystar healthy'
+                                    exit 0
+                                fi
+                                echo \"Attempt \$i failed. Waiting 5s...\"
+                                sleep 5
+                            done
 
-                            echo 'Running health check...'
-
-                            if curl -f http://localhost:${APP_PORT} > /dev/null 2>&1; then
-                                echo '✓ babystar healthy'
-                            else
-                                echo '✗ Health check failed'
-
-                                pm2 logs ${APP_NAME} \
-                                    --lines 30 \
-                                    --nostream
-
-                                exit 1
-                            fi
+                            echo '✗ Health check failed after 60 seconds'
+                            pm2 logs ${APP_NAME} --lines 50 --nostream
+                            exit 1
                         "
                     '''
                 }
