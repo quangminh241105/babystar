@@ -1,182 +1,134 @@
 pipeline {
     agent any
-    
+
     environment {
-        SEPM_SERVER = '172.31.31.101'
-        SEPM_USER = 'deployer'
+        TARGET_SERVER = '192.168.1.199'
+        TARGET_USER = 'deployer'
         DEPLOY_PATH = '/opt/myapp'
         APP_NAME = 'myapp'
         APP_PORT = '9000'
-        PID_FILE = '/opt/myapp/app.pid'
     }
-    
+
     triggers {
         githubPush()
     }
-    
+
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'Checking out code from GitHub...'
+                echo 'Checking out source code...'
                 checkout scm
             }
         }
-        
-        stage('Display Info') {
+
+        stage('Verify Files') {
             steps {
                 sh '''
-                    echo "=== Jenkins Server Info ==="
-                    echo "Current directory:"
+                    echo "=== Build Info ==="
                     pwd
-                    echo "Files to deploy:"
                     ls -la
-                    echo "Git commit:"
+
+                    if [ ! -f "package.json" ]; then
+                        echo "ERROR: package.json not found"
+                        exit 1
+                    fi
+
+                    echo "Latest commit:"
                     git log -1 --oneline
                 '''
             }
         }
-        
-        stage('Deploy to SEPM Server') {
+
+        stage('Deploy Files') {
             steps {
-                echo 'Deploying to SEPM server...'
                 sshagent(['sepm-ssh-credentials']) {
                     sh '''
-                        # Safety check: verify we have package.json
-                        if [ !  -f "package.json" ]; then
-                            echo "❌ ERROR: package.json not found!  Wrong directory?"
-                            exit 1
-                        fi
-                        
-                        echo "✓ Safety check passed"
-                        echo "Syncing from: $(pwd)"
-                        
-                        # Create directory on SEPM server
-                        ssh -o StrictHostKeyChecking=no ${SEPM_USER}@${SEPM_SERVER} "mkdir -p ${DEPLOY_PATH}"
-                        
-                        # Sync code (NO space between .  and /)
-                        rsync -avz \
-                            --exclude node_modules \
-                            --exclude .git \
-                            --exclude '*.log' \
-                            --exclude '*.pid' \
-                            ./ ${SEPM_USER}@${SEPM_SERVER}:${DEPLOY_PATH}/
-                        
-                        echo "✓ Code synced to SEPM server"
-                    '''
-                }
-            }
-        }
-        
-        stage('Stop Existing Application') {
-            steps {
-                echo 'Stopping existing application on SEPM...'
-                sshagent(['sepm-ssh-credentials']) {
-                    sh '''
-                        ssh deployer@172.31.31.101 "
-                            # Kill using PID file
-                            if [ -f /opt/myapp/app.pid ]; then
-                                PID=\\$(cat /opt/myapp/app.pid)
-                                if ps -p \\$PID > /dev/null 2>&1; then
-                                    echo 'Stopping process '\\$PID
-                                    kill -9 \\$PID 2>/dev/null || true
-                                fi
-                                rm -f /opt/myapp/app.pid
-                            fi
-                            
-                            # Kill ANY process on port 9000
-                            PID_ON_PORT=\\$(lsof -ti:9000 2>/dev/null || true)
-                            if [ !  -z \\\"\\$PID_ON_PORT\\\" ]; then
-                                echo 'Killing process on port 9000: '\\$PID_ON_PORT
-                                kill -9 \\$PID_ON_PORT 2>/dev/null || true
-                                sleep 2
-                            fi
-                            
-                            # Double-check port is free
-                            sleep 1
-                            if lsof -ti:9000 > /dev/null 2>&1; then
-                                echo 'Port 9000 still in use, forcing kill'
-                                fuser -k 9000/tcp 2>/dev/null || true
-                            fi
-                            
-                            echo '✓ Old application stopped'
+                        echo "Creating deployment directory..."
+
+                        ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "
+                            mkdir -p ${DEPLOY_PATH}
                         "
+
+                        echo "Syncing files to target server..."
+
+                        rsync -avz --delete \
+                            --exclude '.git' \
+                            --exclude 'node_modules' \
+                            --exclude '.env' \
+                            --exclude '*.log' \
+                            ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
+
+                        echo "Deployment sync completed"
                     '''
                 }
             }
         }
-        
+
         stage('Install Dependencies') {
             steps {
-                echo 'Installing npm dependencies on SEPM server...'
                 sshagent(['sepm-ssh-credentials']) {
                     sh '''
-                        ssh deployer@172.31.31.101 "
-                            cd /opt/myapp
-                            
-                            if [ ! -f package.json ]; then
-                                echo '❌ ERROR: No package.json in /opt/myapp'
-                                exit 1
-                            fi
-                            
-                            echo '=== SEPM Server Info ==='
+                        ssh ${TARGET_USER}@${TARGET_SERVER} "
+                            cd ${DEPLOY_PATH}
+
                             echo 'Node version:'
-                            node --version
+                            node -v
+
                             echo 'NPM version:'
-                            npm --version
-                            
-                            echo 'Installing dependencies...'
-                            npm install
-                            
-                            echo '✓ Dependencies installed'
+                            npm -v
+
+                            npm ci
                         "
                     '''
                 }
             }
         }
-        
+
         stage('Start Application') {
             steps {
-                echo 'Starting application on SEPM...'
                 sshagent(['sepm-ssh-credentials']) {
                     sh '''
-                        ssh deployer@172.31.31.101 "
-                            cd /opt/myapp
-                            
-                            nohup npm run dev > /opt/myapp/app.log 2>&1 &
-                            echo \\$! > /opt/myapp/app.pid
-                            
-                            echo 'Application started with PID: '\\$(cat /opt/myapp/app.pid)
-                            sleep 3
-                            
-                            if ps -p \\$(cat /opt/myapp/app.pid) > /dev/null 2>&1; then
-                                echo '✓ Application is running'
-                            else
-                                echo '✗ Failed to start'
-                                tail -20 /opt/myapp/app.log
-                                exit 1
-                            fi
+                        ssh ${TARGET_USER}@${TARGET_SERVER} "
+                            cd ${DEPLOY_PATH}
+
+                            echo 'Stopping old app if exists...'
+
+                            pm2 delete ${APP_NAME} || true
+
+                            echo 'Starting application...'
+
+                            pm2 start npm \
+                                --name ${APP_NAME} \
+                                -- run dev
+
+                            pm2 save
+
+                            echo 'PM2 process list:'
+                            pm2 list
                         "
                     '''
                 }
             }
         }
-        
+
         stage('Health Check') {
             steps {
-                echo 'Checking application health...'
                 sshagent(['sepm-ssh-credentials']) {
                     sh '''
-                        ssh deployer@172.31.31.101 "
+                        ssh ${TARGET_USER}@${TARGET_SERVER} "
                             sleep 5
-                            
-                            echo 'Testing application endpoint...'
-                            
-                            if curl -f -s -o /dev/null http://localhost:9000; then
-                                echo '✓ Health check passed - application is responding'
+
+                            echo 'Checking application health...'
+
+                            if curl -f http://localhost:${APP_PORT} > /dev/null 2>&1; then
+                                echo 'Application is healthy'
                             else
-                                echo '��� Health check failed - application not responding'
-                                echo 'Recent logs:'
-                                tail -30 /opt/myapp/app.log
+                                echo 'Health check failed'
+
+                                echo 'Recent PM2 logs:'
+                                pm2 logs ${APP_NAME} --lines 30 --nostream
+
                                 exit 1
                             fi
                         "
@@ -185,16 +137,18 @@ pipeline {
             }
         }
     }
-    
+
     post {
+
         success {
-            echo '✅ Deployment successful!'
-            echo '🚀 Application running at http://172.31.31.101:9000'
-            echo '🌐 Access via: https://babystar.mom'
+            echo 'Deployment successful'
+            echo 'Application deployed to 192.168.1.199:9000'
         }
+
         failure {
-            echo '❌ Deployment failed!'
+            echo 'Deployment failed'
         }
+
         always {
             cleanWs()
         }
