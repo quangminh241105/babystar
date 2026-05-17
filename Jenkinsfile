@@ -123,7 +123,7 @@ pipeline {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
                         ssh ${TARGET_USER}@${TARGET_SERVER} "
-                            sleep 5
+                            sleep 15
 
                             echo 'Running health check...'
 
