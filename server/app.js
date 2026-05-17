@@ -254,6 +254,9 @@ function startServer() {
 	});
 }
 
+// Start the server FIRST to pass health checks and keep app alive
+startServer();
+
 mongoose.connect(MONGO_URI, {
 	useNewUrlParser: true,
 	ssl: true,
@@ -277,12 +280,10 @@ mongoose.connect(MONGO_URI, {
 	const io = app.get('io');
 	initializeWeeklyReportScheduler(io);
 	initializeStreakReminderScheduler(io);
-	
-	startServer();
 })
 .catch(err => {
 	console.error('❌ MongoDB connection error:', err);
-	process.exit(1);
+	// process.exit(1); // REMOVED exit so app stays alive to show errors
 });
 
 // Graceful shutdown
