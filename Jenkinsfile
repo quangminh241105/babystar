@@ -36,6 +36,11 @@ pipeline {
                         echo "ERROR: package.json missing"
                         exit 1
                     fi
+                    
+                    if [ ! -f Dockerfile ]; then
+                        echo "ERROR: Dockerfile missing"
+                        exit 1
+                    fi
 
                     echo "Git commit:"
                     git log -1 --oneline
@@ -74,44 +79,29 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build & Start Application') {
             steps {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
                         ssh ${TARGET_USER}@${TARGET_SERVER} "
                             cd ${DEPLOY_PATH}
 
-                            echo 'Node:'
-                            node -v
+                            echo 'Building Docker image...'
+                            docker build -t ${APP_NAME}:latest .
 
-                            echo 'NPM:'
-                            npm -v
+                            echo 'Stopping old container...'
+                            docker stop ${APP_NAME} || true
+                            docker rm ${APP_NAME} || true
 
-                            npm install
-                        "
-                    '''
-                }
-            }
-        }
-
-        stage('Start Application') {
-            steps {
-                sshagent(['ubuntu-vm-jenkins']) {
-                    sh '''
-                        ssh ${TARGET_USER}@${TARGET_SERVER} "
-                            cd ${DEPLOY_PATH}
-
-                            echo 'Restarting ${APP_NAME}...'
-
-                            pm2 delete ${APP_NAME} || true
-
-                            pm2 start npm \
-                                --name ${APP_NAME} \
-                                -- run start
-
-                            pm2 save
-
-                            pm2 list
+                            echo 'Starting ${APP_NAME} in Docker...'
+                            docker run -d \\
+                                --name ${APP_NAME} \\
+                                -p ${APP_PORT}:${APP_PORT} \\
+                                --env-file .env \\
+                                --restart unless-stopped \\
+                                ${APP_NAME}:latest
+                            
+                            docker ps | grep ${APP_NAME}
                         "
                     '''
                 }
@@ -135,7 +125,7 @@ pipeline {
                             done
 
                             echo '✗ Health check failed after 60 seconds'
-                            pm2 logs ${APP_NAME} --lines 50 --nostream
+                            docker logs ${APP_NAME} --tail 50
                             exit 1
                         "
                     '''
