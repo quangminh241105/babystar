@@ -16,14 +16,15 @@ pipeline {
             steps {
                 sh '''
                     set -eu
-                    venv_dir="${WORKSPACE}@tmp/babystar-api-venv"
-                    rm -rf "$venv_dir"
-                    trap 'rm -rf "$venv_dir"' EXIT
-                    python3 -m venv "$venv_dir"
-                    "$venv_dir/bin/python" -m pip install --upgrade pip
-                    "$venv_dir/bin/python" -m pip install -r apps/api/requirements.txt
-                    "$venv_dir/bin/python" -m compileall -q apps/api/app
-                    (cd apps/api && "$venv_dir/bin/python" -m pytest)
+                    if ! python3 -m pip --version > /dev/null 2>&1; then
+                        bootstrap="${WORKSPACE}@tmp/get-pip.py"
+                        curl -fsSL https://bootstrap.pypa.io/get-pip.py -o "$bootstrap"
+                        python3 "$bootstrap" --user
+                        rm -f "$bootstrap"
+                    fi
+                    python3 -m pip install --user --break-system-packages -r apps/api/requirements.txt
+                    python3 -m compileall -q apps/api/app
+                    (cd apps/api && python3 -m pytest)
                 '''
                 dir('apps/web') { sh 'npm install && npm run build' }
             }
