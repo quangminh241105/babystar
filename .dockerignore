@@ -2,6 +2,8 @@ node_modules
 .git
 .env
 *.log
-Dockerfile
-.dockerignore
-Jenkinsfile
+client
+server
+dataset
+**/.next
+**/__pycache__

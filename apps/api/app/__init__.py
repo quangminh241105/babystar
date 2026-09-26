@@ -1,0 +1,2 @@
+"""BabyStar FastAPI application."""
+

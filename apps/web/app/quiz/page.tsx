@@ -1,0 +1,13 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import AppShell from "../../components/AppShell";
+import Loading from "../../components/Loading";
+import PageHeader from "../../components/PageHeader";
+import RequireUser from "../../components/RequireUser";
+import { apiFetch } from "../../lib/api";
+
+export default function QuizPage() { return <AppShell><RequireUser><QuizList /></RequireUser></AppShell>; }
+function QuizList() { const [quizzes, setQuizzes] = useState<any[] | null>(null); const [active, setActive] = useState<any>(); useEffect(() => { apiFetch<{ quizzes: any[] }>("/quizzes").then((body) => setQuizzes(body.quizzes)); }, []); if (!quizzes) return <Loading />; async function start(id: number) { const body = await apiFetch<{ quiz: any; attempt_id: number }>(`/quizzes/${id}/start`, { method: "POST" }); setActive({ ...body.quiz, attempt_id: body.attempt_id }); } if (active) return <QuizRunner quiz={active} onDone={() => setActive(undefined)} />; return <><PageHeader eyebrow="Learn together" title="Little quizzes" description="A light way to explore pregnancy and prepare questions." /><div className="card-grid">{quizzes.length === 0 ? <div className="card"><p className="muted">Quizzes will appear here when an admin publishes them.</p></div> : quizzes.map((quiz) => <div className="card" key={quiz.id}><div className="pill">{quiz.category}</div><h3>{quiz.title}</h3><p>{quiz.description}</p><button className="btn btn-primary" onClick={() => start(quiz.id)}>Start quiz</button></div>)}</div></>; }
+function QuizRunner({ quiz, onDone }: { quiz: any; onDone: () => void }) { const [index, setIndex] = useState(0); const [result, setResult] = useState<any>(); const question = quiz.questions[index]; if (result) return <div className="card"><div className="eyebrow">Finished</div><h2>{result.score} points</h2><p>{result.explanation || "Nice work. Keep exploring at your own pace."}</p><button className="btn btn-primary" onClick={onDone}>Back to quizzes</button></div>; return <div className="form-card card"><div className="eyebrow">{quiz.title} · {index + 1}/{quiz.questions.length}</div><h2>{question.question_text}</h2><div className="list">{question.options.map((option: string, answer: number) => <button key={option} className="btn btn-secondary" onClick={async () => { const body = await apiFetch<any>(`/quizzes/${quiz.id}/attempts/${quiz.attempt_id}/answer`, { method: "POST", body: JSON.stringify({ question_index: question.position, selected_answer: answer }) }); if (body.completed) setResult(body); else setIndex((value) => value + 1); }}>{option}</button>)}</div></div>; }
+

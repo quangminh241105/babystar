@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-babystar}
+      POSTGRES_USER: ${POSTGRES_USER:-babystar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-babystar}
+    volumes:
+      - babystar_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build: ./apps/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-babystar}:${POSTGRES_PASSWORD:-babystar}@db:5432/${POSTGRES_DB:-babystar}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:9000}
+      SESSION_SECURE: ${SESSION_SECURE:-false}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GEOAPIFY_API_KEY: ${GEOAPIFY_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_KEY_WEEKLY_ADVICE: ${GEMINI_API_KEY_WEEKLY_ADVICE:-}
+      GEMINI_API_KEY_NUTRITION_SUGGESTIONS: ${GEMINI_API_KEY_NUTRITION_SUGGESTIONS:-}
+      GEMINI_API_KEY_EXERCISE_SUGGESTIONS: ${GEMINI_API_KEY_EXERCISE_SUGGESTIONS:-}
+      GEMINI_API_KEY_QUIZ: ${GEMINI_API_KEY_QUIZ:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  worker:
+    build: ./apps/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-babystar}:${POSTGRES_PASSWORD:-babystar}@db:5432/${POSTGRES_DB:-babystar}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python -m app.worker
+    restart: unless-stopped
+
+  web:
+    build: ./apps/web
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      NEXT_PUBLIC_API_URL: /api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - "${APP_PORT:-9000}:80"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+volumes:
+  babystar_postgres:
+
