@@ -16,17 +16,32 @@ pipeline {
             steps {
                 sh '''
                     set -eu
-                    if ! python3 -m pip --version > /dev/null 2>&1; then
-                        bootstrap="${WORKSPACE}@tmp/get-pip.py"
-                        curl -fsSL https://bootstrap.pypa.io/get-pip.py -o "$bootstrap"
-                        python3 "$bootstrap" --user
-                        rm -f "$bootstrap"
-                    fi
-                    python3 -m pip install --user --break-system-packages -r apps/api/requirements.txt
-                    python3 -m compileall -q apps/api/app
-                    (cd apps/api && python3 -m pytest)
+                    docker version
+                    docker run --rm \
+                        -v "$WORKSPACE/apps/api:/workspace:ro" \
+                        python:3.12-slim \
+                        sh -ec '
+                            rm -rf /tmp/babystar-api
+                            cp -a /workspace /tmp/babystar-api
+                            cd /tmp/babystar-api
+                            python -m pip install --no-cache-dir -r requirements.txt
+                            python -m compileall -q app alembic tests
+                            python -m pytest -p no:cacheprovider
+                        '
                 '''
-                dir('apps/web') { sh 'npm install && npm run build' }
+                sh '''
+                    set -eu
+                    docker run --rm \
+                        -v "$WORKSPACE/apps/web:/workspace:ro" \
+                        node:22-alpine \
+                        sh -ec '
+                            rm -rf /tmp/babystar-web
+                            cp -a /workspace /tmp/babystar-web
+                            cd /tmp/babystar-web
+                            npm install
+                            npm run build
+                        '
+                '''
             }
         }
 
