@@ -59,7 +59,7 @@ def attach_session_cookie(response: Response, token: str) -> None:
         max_age=settings.session_hours * 3600,
         httponly=True,
         secure=settings.session_secure,
-        samesite="lax",
+        samesite=settings.session_samesite,
         path="/",
     )
 

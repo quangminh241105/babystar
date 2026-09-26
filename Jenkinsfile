@@ -14,8 +14,17 @@ pipeline {
 
         stage('Validate') {
             steps {
-                sh 'python3 -m compileall -q apps/api/app'
-                dir('apps/api') { sh 'python3 -m pytest' }
+                sh '''
+                    set -eu
+                    venv_dir="${WORKSPACE}@tmp/babystar-api-venv"
+                    rm -rf "$venv_dir"
+                    trap 'rm -rf "$venv_dir"' EXIT
+                    python3 -m venv "$venv_dir"
+                    "$venv_dir/bin/python" -m pip install --upgrade pip
+                    "$venv_dir/bin/python" -m pip install -r apps/api/requirements.txt
+                    "$venv_dir/bin/python" -m compileall -q apps/api/app
+                    (cd apps/api && "$venv_dir/bin/python" -m pytest)
+                '''
                 dir('apps/web') { sh 'npm install && npm run build' }
             }
         }

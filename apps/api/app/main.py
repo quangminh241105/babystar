@@ -988,6 +988,10 @@ def report_pdf(report_id: int, db: Session = Depends(get_db), user: User = Depen
 
 @api.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
+    origin = websocket.headers.get("origin")
+    if origin and origin.rstrip("/") not in settings.cors_origins:
+        await websocket.close(code=1008)
+        return
     token = websocket.cookies.get(settings.session_cookie)
     if not token:
         await websocket.close(code=1008)
@@ -1007,7 +1011,23 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 
 app = FastAPI(title=settings.app_name, version="2.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=[settings.web_origin], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Accept", "Content-Type"],
+)
+
+
+@app.middleware("http")
+async def enforce_allowed_origin(request: Request, call_next):
+    origin = request.headers.get("origin")
+    if origin and origin.rstrip("/") not in settings.cors_origins:
+        return JSONResponse(status_code=403, content={"detail": "Origin not allowed"})
+    return await call_next(request)
+
+
 app.include_router(api)
 
 
