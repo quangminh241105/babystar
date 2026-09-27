@@ -6,11 +6,13 @@ export const metadata: Metadata = {
   description: "Track your pregnancy journey with thoughtful health insights and personalized guidance.",
 };
 
+const themeInitScript = `(() => { try { const saved = localStorage.getItem("babystar-theme"); const theme = saved === "dark" || saved === "light" ? saved : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); document.documentElement.dataset.theme = theme; } catch {} })()`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeInitScript }} /></head>
       <body>{children}</body>
     </html>
   );
 }
-
