@@ -3,7 +3,6 @@ const User = require('../models/user');
 const HealthLog = require('../models/healthlogs');
 const { Notification } = require('../models/notification');
 
-
 // Store io instance for socket emissions
 let socketIO = null;
 
