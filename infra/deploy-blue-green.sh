@@ -37,9 +37,11 @@ fi
 if [[ "$active_color" == "blue" ]]; then
   next_color="green"
   next_api_port=9201
+  next_web_port=9202
 else
   next_color="blue"
   next_api_port=9101
+  next_web_port=9102
 fi
 
 next_project="babystar-${next_color}"
@@ -105,12 +107,14 @@ for attempt in $(seq 1 30); do
 done
 
 export API_PORT="$next_api_port"
+export WEB_PORT="$next_web_port"
 trap cleanup_failed_rollout EXIT
 
 docker compose --project-name "$next_project" --env-file .env -f docker-compose.app.yml up -d --build --remove-orphans
 wait_for_url "http://127.0.0.1:${next_api_port}/api/v1/health"
+wait_for_url "http://127.0.0.1:${next_web_port}/"
 
-sed -e "s/__API_PORT__/${next_api_port}/g" \
+sed -e "s/__API_PORT__/${next_api_port}/g" -e "s/__WEB_PORT__/${next_web_port}/g" \
   infra/nginx.gateway.conf.template > .gateway-nginx.conf.tmp
 if [[ -f .gateway-nginx.conf ]]; then
   cp .gateway-nginx.conf .gateway-nginx.conf.previous
@@ -131,6 +135,7 @@ else
 fi
 
 wait_for_url "http://127.0.0.1:9000/api/v1/health"
+wait_for_url "http://127.0.0.1:9000/"
 
 if [[ "$active_color" == "blue" || "$active_color" == "green" ]]; then
   docker compose --project-name "babystar-${active_color}" --env-file .env -f docker-compose.app.yml down --remove-orphans >/dev/null 2>&1 || true
@@ -142,4 +147,4 @@ if [[ -n "$deployment_commit" ]]; then
 fi
 trap - EXIT
 rm -f .gateway-nginx.conf.previous
-echo "BabyStar ${next_color} API is active on port ${next_api_port}. Static frontend is served by Render."
+echo "BabyStar ${next_color} is active on API/web ports ${next_api_port}/${next_web_port}."

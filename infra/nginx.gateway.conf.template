@@ -5,6 +5,10 @@ http {
     server 127.0.0.1:__API_PORT__;
   }
 
+  upstream babystar_web {
+    server 127.0.0.1:__WEB_PORT__;
+  }
+
   server {
     listen 9000;
     client_max_body_size 10m;
@@ -26,8 +30,11 @@ http {
     }
 
     location / {
-      default_type application/json;
-      return 404 '{"detail":"API gateway. Use /api/v1."}';
+      proxy_pass http://babystar_web;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
     }
   }
 }

@@ -26,9 +26,9 @@ npm run dev
 
 The frontend is available at `http://localhost:3000`. For local development with the Next.js dev server, set `NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1` before starting it. For local Docker Compose, the browser uses the gateway's same-origin `/api/v1` route.
 
-Production CORS defaults to only `https://babystar.qminh.com` and `https://babystar.mom`. The static Render frontend calls the public FastAPI endpoint directly, so `NEXT_PUBLIC_API_URL` must be set at build time and `CORS_ALLOWED_ORIGINS` must include the exact frontend origin. Use `https://api-babystar.qminh.com/api/v1` as the API URL. The frontend and API remain under the same site, so `SESSION_SECURE=true` and `SESSION_SAMESITE=lax` cookies work. The temporary `onrender.com` URL is cross-site and may not retain sessions in browsers that block third-party cookies; use the custom domain for login testing.
+Production CORS defaults to `https://babystar.qminh.com` and `https://babystar.mom`. The host frontend uses the same-origin `/api/v1` gateway route. The Render copy also uses `/api/v1`, with a Render rewrite proxying that path to `https://api-babystar.qminh.com/api/v1`; add the exact Render site origin to `CORS_ALLOWED_ORIGINS` in Jenkins `babystar-env`. The rewrite keeps API calls and session cookies on each frontend's own origin. Keep `SESSION_SECURE=true` and `SESSION_SAMESITE=lax` for HTTPS production.
 
-Google sign-in uses the public `GOOGLE_CLIENT_ID` from the API environment. Add the production domains (and any Render/Vercel frontend origin) to the Google OAuth client's authorized JavaScript origins. The frontend reads the configured client ID from `/api/v1/auth/google/config`; the client secret is never exposed.
+Google sign-in uses the public `GOOGLE_CLIENT_ID` from the API environment. Add `https://babystar.qminh.com` and the Render site's exact `onrender.com` origin to the Google OAuth client's authorized JavaScript origins. The frontend reads the configured client ID from `/api/v1/auth/google/config`; the client secret is never exposed.
 
 The verified Google account `phamlequangminh2411@gmail.com` receives the admin role on Google sign-in and is sent to `/admin`. If that email had a password account, its password and previous sessions are removed on promotion so admin access uses Google authentication. Admin API routes still enforce the role server-side.
 
@@ -45,14 +45,19 @@ The complete stack is then available at `http://localhost:9000` through the reve
 
 For local HTTP testing, change `SESSION_SECURE=false` and set `CORS_ALLOWED_ORIGINS=http://localhost:9000` in `.env`. Keep `SESSION_SECURE=true` for HTTPS production deployments.
 
-## Production deployment: Render web + Jenkins backend
+## Production deployment: host server and Render
 
-1. In Render, create a **Static Site** from this repository. Set Branch to `main`, Root Directory to `apps/web`, Build Command to `npm install && npm run build`, and Publish Directory to `out`. Set the build-time environment variable `NEXT_PUBLIC_API_URL` to `https://api-babystar.qminh.com/api/v1`, and use Node 22. There is no Start Command. The `api-babystar.qminh.com` DNS record must route to the existing server's gateway on port `9000`, with HTTPS at the edge.
-2. Wait until the Render site URL works. Keep the existing PostgreSQL, Google and API keys in the Jenkins `babystar-env` file credential. Set `CORS_ALLOWED_ORIGINS` to include the Render origin if it will be used directly. The Render service does **not** need database credentials or `GOOGLE_CLIENT_ID`; the browser gets the public client ID from the API.
-3. Deploy the backend with Jenkins. It now validates only FastAPI, builds only API/worker containers, verifies Render first, then switches the port-9000 gateway to the new API color and proxies web requests to Render. If Render is not configured or unavailable, the rollout stops before touching the running deployment. The previous API color remains until gateway health checks pass.
-4. Add `https://babystar.qminh.com` and the Render URL to the Google OAuth client's authorized JavaScript origins if both will be used. When ready, point the frontend domain to Render; the gateway's Render proxy also keeps the old webserver routing working during DNS propagation. Ensure the separate API hostname still routes to the backend. HTTPS is required for secure session cookies.
+Jenkins deploys the API, worker, and static-export web container to the host. The blue/green API and web containers alternate together; Nginx switches traffic on port `9000` after both services pass health checks. The previous color remains available until the new color is healthy. Point `babystar.qminh.com` to the host's HTTPS reverse proxy.
 
-The deployment host must provide Docker access to the Jenkins deploy user. Local `docker compose up --build` remains available for development; it is not the production frontend deployment path.
+The Render Static Site remains available as a second frontend. Configure it with Branch `main`, Root Directory `apps/web`, Build Command `npm install && npm run build`, Publish Directory `out`, and build environment variable `NEXT_PUBLIC_API_URL=/api/v1`. Add this rewrite in the Render dashboard under Redirects/Rewrites (then redeploy Render):
+
+| Source | Destination | Action |
+| --- | --- | --- |
+| `/api/*` | `https://api-babystar.qminh.com/api/*` | Rewrite |
+
+Point `api-babystar.qminh.com` to the host's HTTPS gateway (port `9000`). In Jenkins `babystar-env`, set `CORS_ALLOWED_ORIGINS` to `https://babystar.qminh.com,https://babystar.mom,https://<your-render-site>.onrender.com`, replacing the last value with the exact Render origin. Add both frontend origins to the Google OAuth client's authorized JavaScript origins if Google login should work on both sites.
+
+The deployment host must provide Docker access to the Jenkins deploy user. Local `docker compose up --build` remains available for development.
 
 Useful commands:
 
