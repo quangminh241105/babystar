@@ -29,17 +29,6 @@ POSTGRES_DB="${POSTGRES_DB:-babystar}"
 POSTGRES_USER="${POSTGRES_USER:-babystar}"
 export POSTGRES_DB POSTGRES_USER
 
-# Do not remove the existing web container until its Render replacement is reachable.
-if [[ ! "${RENDER_WEB_ORIGIN:-}" =~ ^https://[A-Za-z0-9.-]+$ ]]; then
-  echo "Set RENDER_WEB_ORIGIN=https://<service>.onrender.com in the Jenkins babystar-env credential before deploying." >&2
-  exit 1
-fi
-render_web_host="${RENDER_WEB_ORIGIN#https://}"
-if ! curl --fail --silent --show-error --max-time 15 "${RENDER_WEB_ORIGIN}/" >/dev/null; then
-  echo "Render frontend is unreachable; keeping the current deployment active." >&2
-  exit 1
-fi
-
 active_color=""
 if [[ -f .active-color ]]; then
   active_color="$(tr -d '[:space:]' < .active-color)"
@@ -121,7 +110,7 @@ trap cleanup_failed_rollout EXIT
 docker compose --project-name "$next_project" --env-file .env -f docker-compose.app.yml up -d --build --remove-orphans
 wait_for_url "http://127.0.0.1:${next_api_port}/api/v1/health"
 
-sed -e "s/__API_PORT__/${next_api_port}/g" -e "s/__RENDER_WEB_HOST__/${render_web_host}/g" \
+sed -e "s/__API_PORT__/${next_api_port}/g" \
   infra/nginx.gateway.conf.template > .gateway-nginx.conf.tmp
 if [[ -f .gateway-nginx.conf ]]; then
   cp .gateway-nginx.conf .gateway-nginx.conf.previous
@@ -142,7 +131,6 @@ else
 fi
 
 wait_for_url "http://127.0.0.1:9000/api/v1/health"
-wait_for_url "http://127.0.0.1:9000/"
 
 if [[ "$active_color" == "blue" || "$active_color" == "green" ]]; then
   docker compose --project-name "babystar-${active_color}" --env-file .env -f docker-compose.app.yml down --remove-orphans >/dev/null 2>&1 || true
@@ -154,4 +142,4 @@ if [[ -n "$deployment_commit" ]]; then
 fi
 trap - EXIT
 rm -f .gateway-nginx.conf.previous
-echo "BabyStar ${next_color} API is active on port ${next_api_port}; the web gateway proxies ${RENDER_WEB_ORIGIN}."
+echo "BabyStar ${next_color} API is active on port ${next_api_port}. Static frontend is served by Render."

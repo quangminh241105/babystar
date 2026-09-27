@@ -26,11 +26,8 @@ http {
     }
 
     location / {
-      proxy_pass https://__RENDER_WEB_HOST__;
-      proxy_ssl_server_name on;
-      proxy_set_header Host __RENDER_WEB_HOST__;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
+      default_type application/json;
+      return 404 '{"detail":"API gateway. Use /api/v1."}';
     }
   }
 }
