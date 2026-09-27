@@ -1,5 +1,6 @@
 pipeline {
-    agent any
+    // Deployment runs against this machine's filesystem and Docker daemon.
+    agent { label 'built-in || master' }
 
     options {
         // GitHub can deliver duplicate push events. Do not deploy two builds at once.
@@ -8,8 +9,6 @@ pipeline {
     }
 
     environment {
-        TARGET_SERVER = '192.168.1.199'
-        TARGET_USER = 'deployer'
         DEPLOY_PATH = '/opt/webapps/babystar'
     }
 
@@ -40,53 +39,66 @@ pipeline {
 
         stage('Deploy files') {
             steps {
-                sshagent(['ubuntu-vm-jenkins']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "mkdir -p ${DEPLOY_PATH}"
-                        ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "rm -rf ${DEPLOY_PATH}/server ${DEPLOY_PATH}/client ${DEPLOY_PATH}/dataset"
-                        rsync -avz --delete --exclude '.git' --exclude '.env' --exclude '.active-color' --exclude '.deployed-state' --exclude '.gateway-nginx.conf' --exclude 'server/' --exclude 'client/' --exclude 'dataset/' --exclude '*.log' ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
-                    '''
-                }
+                sh '''
+                    set -eu
+                    mkdir -p "$DEPLOY_PATH"
+                    if [ ! -w "$DEPLOY_PATH" ]; then
+                        echo "Jenkins cannot write to $DEPLOY_PATH; grant the Jenkins service user write access." >&2
+                        exit 1
+                    fi
+                    rm -rf "$DEPLOY_PATH/server" "$DEPLOY_PATH/client" "$DEPLOY_PATH/dataset"
+                    rsync -av --delete \
+                        --exclude '.git' \
+                        --exclude '.env' \
+                        --exclude '.active-color' \
+                        --exclude '.deployed-state' \
+                        --exclude '.gateway-nginx.conf' \
+                        --exclude '.gateway-nginx.conf.previous' \
+                        --exclude 'server/' \
+                        --exclude 'client/' \
+                        --exclude 'dataset/' \
+                        --exclude '*.log' \
+                        ./ "$DEPLOY_PATH/"
+                '''
             }
         }
 
         stage('Inject environment') {
             steps {
                 withCredentials([file(credentialsId: 'babystar-env', variable: 'ENV_FILE')]) {
-                    sshagent(['ubuntu-vm-jenkins']) {
-                        sh '''
-                            scp -o StrictHostKeyChecking=no "$ENV_FILE" ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/.env
-                            ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "sed -i 's/\\r$//' ${DEPLOY_PATH}/.env"
-                        '''
-                    }
+                    sh '''
+                        set -eu
+                        sed 's/\\r$//' "$ENV_FILE" > "$DEPLOY_PATH/.env.tmp"
+                        chmod 600 "$DEPLOY_PATH/.env.tmp"
+                        mv "$DEPLOY_PATH/.env.tmp" "$DEPLOY_PATH/.env"
+                    '''
                 }
             }
         }
 
         stage('Build and start') {
             steps {
-                sshagent(['ubuntu-vm-jenkins']) {
-                    sh '''
-                        ssh ${TARGET_USER}@${TARGET_SERVER} "cd ${DEPLOY_PATH} && DEPLOY_COMMIT=${GIT_COMMIT} bash infra/deploy-blue-green.sh"
-                    '''
-                }
+                sh '''
+                    set -eu
+                    cd "$DEPLOY_PATH"
+                    DEPLOY_COMMIT="$GIT_COMMIT" bash infra/deploy-blue-green.sh
+                '''
             }
         }
 
         stage('Health check') {
             steps {
-                sshagent(['ubuntu-vm-jenkins']) {
-                    sh '''
-                        ssh ${TARGET_USER}@${TARGET_SERVER} "
-                            for i in {1..12}; do
-                                if curl -s -f http://localhost:9000/api/v1/health > /dev/null; then exit 0; fi
-                                sleep 5
-                            done
-                            docker logs --tail 80 babystar-gateway
-                            exit 1
-                        "
-                    '''
-                }
+                sh '''
+                    set -eu
+                    for i in $(seq 1 12); do
+                        if curl -fsS http://127.0.0.1:9000/api/v1/health >/dev/null && curl -fsS http://127.0.0.1:9000/ >/dev/null; then
+                            exit 0
+                        fi
+                        sleep 5
+                    done
+                    docker logs --tail 80 babystar-gateway
+                    exit 1
+                '''
             }
         }
     }
