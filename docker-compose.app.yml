@@ -14,9 +14,8 @@ services:
       GEMINI_API_KEY_EXERCISE_SUGGESTIONS: ${GEMINI_API_KEY_EXERCISE_SUGGESTIONS:-}
       GEMINI_API_KEY_QUIZ: ${GEMINI_API_KEY_QUIZ:-}
     ports:
-      - "${API_PORT}:8000"
+      - "127.0.0.1:${API_PORT}:8000"
     networks:
-      - app
       - babystar_shared
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     healthcheck:
@@ -30,26 +29,11 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-babystar}:${POSTGRES_PASSWORD:-babystar}@babystar-db:5432/${POSTGRES_DB:-babystar}
     networks:
-      - app
       - babystar_shared
     command: python -m app.worker
     restart: unless-stopped
 
-  web:
-    build: ./apps/web
-    environment:
-      API_INTERNAL_URL: http://api:8000
-      NEXT_PUBLIC_API_URL: /api/v1
-    ports:
-      - "${WEB_PORT}:3000"
-    networks:
-      - app
-    depends_on:
-      api:
-        condition: service_healthy
-
 networks:
-  app:
   babystar_shared:
     external: true
     name: babystar_shared

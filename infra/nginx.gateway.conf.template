@@ -5,10 +5,6 @@ http {
     server 127.0.0.1:__API_PORT__;
   }
 
-  upstream babystar_web {
-    server 127.0.0.1:__WEB_PORT__;
-  }
-
   server {
     listen 9000;
     client_max_body_size 10m;
@@ -30,8 +26,9 @@ http {
     }
 
     location / {
-      proxy_pass http://babystar_web;
-      proxy_set_header Host $host;
+      proxy_pass https://__RENDER_WEB_HOST__;
+      proxy_ssl_server_name on;
+      proxy_set_header Host __RENDER_WEB_HOST__;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
     }

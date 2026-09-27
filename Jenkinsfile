@@ -35,19 +35,6 @@ pipeline {
                             python -m pytest -p no:cacheprovider
                         '
                 '''
-                sh '''
-                    set -eu
-                    docker run --rm \
-                        -v "$WORKSPACE/apps/web:/workspace:ro" \
-                        node:22-alpine \
-                        sh -ec '
-                            rm -rf /tmp/babystar-web
-                            cp -a /workspace /tmp/babystar-web
-                            cd /tmp/babystar-web
-                            npm install
-                            npm run build
-                        '
-                '''
             }
         }
 
@@ -95,7 +82,7 @@ pipeline {
                                 if curl -s -f http://localhost:9000/api/v1/health > /dev/null; then exit 0; fi
                                 sleep 5
                             done
-                            docker compose -f ${DEPLOY_PATH}/docker-compose.yml logs --tail 80
+                            docker logs --tail 80 babystar-gateway
                             exit 1
                         "
                     '''

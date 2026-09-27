@@ -29,6 +29,17 @@ POSTGRES_DB="${POSTGRES_DB:-babystar}"
 POSTGRES_USER="${POSTGRES_USER:-babystar}"
 export POSTGRES_DB POSTGRES_USER
 
+# Do not remove the existing web container until its Render replacement is reachable.
+if [[ ! "${RENDER_WEB_ORIGIN:-}" =~ ^https://[A-Za-z0-9.-]+$ ]]; then
+  echo "Set RENDER_WEB_ORIGIN=https://<service>.onrender.com in the Jenkins babystar-env credential before deploying." >&2
+  exit 1
+fi
+render_web_host="${RENDER_WEB_ORIGIN#https://}"
+if ! curl --fail --silent --show-error --max-time 15 "${RENDER_WEB_ORIGIN}/" >/dev/null; then
+  echo "Render frontend is unreachable; keeping the current deployment active." >&2
+  exit 1
+fi
+
 active_color=""
 if [[ -f .active-color ]]; then
   active_color="$(tr -d '[:space:]' < .active-color)"
@@ -37,11 +48,9 @@ fi
 if [[ "$active_color" == "blue" ]]; then
   next_color="green"
   next_api_port=9201
-  next_web_port=9202
 else
   next_color="blue"
   next_api_port=9101
-  next_web_port=9102
 fi
 
 next_project="babystar-${next_color}"
@@ -71,13 +80,20 @@ wait_for_url() {
 cleanup_failed_rollout() {
   local status=$?
   if [[ "$status" -ne 0 ]]; then
+    if [[ "${gateway_updated:-0}" == "1" && -f .gateway-nginx.conf.previous ]]; then
+      cat .gateway-nginx.conf.previous > .gateway-nginx.conf
+      docker exec babystar-gateway nginx -s reload >/dev/null 2>&1 || true
+    fi
     docker compose --project-name "$next_project" --env-file .env -f docker-compose.app.yml down --remove-orphans >/dev/null 2>&1 || true
   fi
+  rm -f .gateway-nginx.conf.previous .gateway-nginx.conf.tmp
   exit "$status"
 }
 
 # Remove only the former single-stack deployment. Color stacks use different project names.
-cleanup_legacy_stack
+if [[ "$active_color" != "blue" && "$active_color" != "green" ]]; then
+  cleanup_legacy_stack
+fi
 
 docker network create babystar_shared >/dev/null 2>&1 || true
 docker volume create babystar_babystar_postgres >/dev/null
@@ -100,16 +116,16 @@ for attempt in $(seq 1 30); do
 done
 
 export API_PORT="$next_api_port"
-export WEB_PORT="$next_web_port"
 trap cleanup_failed_rollout EXIT
 
 docker compose --project-name "$next_project" --env-file .env -f docker-compose.app.yml up -d --build --remove-orphans
 wait_for_url "http://127.0.0.1:${next_api_port}/api/v1/health"
-wait_for_url "http://127.0.0.1:${next_web_port}/"
 
-sed -e "s/__API_PORT__/${next_api_port}/g" -e "s/__WEB_PORT__/${next_web_port}/g" \
+sed -e "s/__API_PORT__/${next_api_port}/g" -e "s/__RENDER_WEB_HOST__/${render_web_host}/g" \
   infra/nginx.gateway.conf.template > .gateway-nginx.conf.tmp
 if [[ -f .gateway-nginx.conf ]]; then
+  cp .gateway-nginx.conf .gateway-nginx.conf.previous
+  gateway_updated=1
   cat .gateway-nginx.conf.tmp > .gateway-nginx.conf
   rm -f .gateway-nginx.conf.tmp
 else
@@ -122,6 +138,7 @@ if docker ps --format '{{.Names}}' | grep -qx babystar-gateway; then
 else
   docker rm -f babystar-gateway >/dev/null 2>&1 || true
   docker compose --project-name babystar-gateway --env-file .env -f docker-compose.gateway.yml up -d
+  gateway_updated=1
 fi
 
 wait_for_url "http://127.0.0.1:9000/api/v1/health"
@@ -136,4 +153,5 @@ if [[ -n "$deployment_commit" ]]; then
   printf '%s %s\n' "$deployment_commit" "$env_fingerprint" > .deployed-state
 fi
 trap - EXIT
-echo "BabyStar ${next_color} is active on ports ${next_api_port}/${next_web_port}."
+rm -f .gateway-nginx.conf.previous
+echo "BabyStar ${next_color} API is active on port ${next_api_port}; the web gateway proxies ${RENDER_WEB_ORIGIN}."

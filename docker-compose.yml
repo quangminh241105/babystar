@@ -50,7 +50,7 @@ services:
   web:
     build: ./apps/web
     environment:
-      API_INTERNAL_URL: http://api:8000
+      API_ORIGIN: http://api:8000
       NEXT_PUBLIC_API_URL: /api/v1
     depends_on:
       api:
