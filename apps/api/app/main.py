@@ -285,6 +285,8 @@ def google_login(payload: GoogleLoginRequest, request: Request, db: Session = De
     except Exception as exc:
         raise HTTPException(401, "Invalid Google credential") from exc
     email = claims.get("email", "").lower()
+    if not email or claims.get("email_verified") is not True:
+        raise HTTPException(401, "Google account email is not verified")
     user = db.scalar(select(User).where(or_(User.google_id == claims.get("sub"), User.email == email)))
     if not user:
         user = User(email=email, google_id=claims.get("sub"), auth_provider="google", is_email_verified=True, first_name=claims.get("given_name", ""), last_name=claims.get("family_name", ""), profile_image_url=claims.get("picture"))
@@ -298,9 +300,15 @@ def google_login(payload: GoogleLoginRequest, request: Request, db: Session = De
         user.profile_image_url = user.profile_image_url or claims.get("picture")
     db.commit()
     token = create_session(db, user, request)
-    response = JSONResponse({"success": True, "redirect": payload.redirect or "/", "user": user_dict(user)})
+    redirect = payload.redirect if payload.redirect and payload.redirect.startswith("/") else "/"
+    response = JSONResponse({"success": True, "redirect": redirect, "user": user_dict(user)})
     attach_session_cookie(response, token)
     return response
+
+
+@api.get("/auth/google/config")
+def google_config() -> dict[str, Any]:
+    return {"success": True, "configured": bool(settings.google_client_id), "client_id": settings.google_client_id}
 
 
 @api.post("/auth/logout")

@@ -28,6 +28,8 @@ The frontend is available at `http://localhost:3000`. During local development, 
 
 Production CORS defaults to only `https://babystar.qminh.com` and `https://babystar.mom`. For a separately hosted Render or Vercel frontend, set `CORS_ALLOWED_ORIGINS` to its exact HTTPS URL, set `NEXT_PUBLIC_API_URL` to the API's public `/api/v1` URL, and use `SESSION_SECURE=true` with `SESSION_SAMESITE=none` for cross-site cookie sessions.
 
+Google sign-in uses the public `GOOGLE_CLIENT_ID` from the API environment. Add the production domains (and any Render/Vercel frontend origin) to the Google OAuth client's authorized JavaScript origins. The frontend reads the configured client ID from `/api/v1/auth/google/config`; the client secret is never exposed.
+
 ## Run with Docker Compose
 
 ```powershell
@@ -38,6 +40,8 @@ docker compose up --build
 The complete stack is then available at `http://localhost:9000` through the reverse proxy. Compose starts PostgreSQL, FastAPI, the weekly/reminder worker, Next.js, and Nginx. The database is a fresh PostgreSQL schema; no MongoDB migration is run automatically.
 
 For local HTTP testing, change `SESSION_SECURE=false` and set `CORS_ALLOWED_ORIGINS=http://localhost:9000` in `.env`. Keep `SESSION_SECURE=true` for HTTPS production deployments.
+
+Jenkins production deployments use `infra/deploy-blue-green.sh`: PostgreSQL is shared, the API/web pair alternates between blue and green ports, and the stable Nginx gateway on port `9000` reloads only after the new color passes health checks. The previous color remains available until the replacement is healthy. The deployment host must provide Docker access to the Jenkins deploy user.
 
 Useful commands:
 

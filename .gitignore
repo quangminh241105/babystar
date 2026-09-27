@@ -10,6 +10,9 @@ yarn.lock
 **/__pycache__/
 **/.pytest_cache/
 apps/web/.next/
+.active-color
+.gateway-nginx.conf
+.gateway-nginx.conf.tmp
 
 # Environment variables
 # Keep example environment files tracked.

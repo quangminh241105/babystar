@@ -50,7 +50,7 @@ pipeline {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "mkdir -p ${DEPLOY_PATH}"
-                        rsync -avz --delete --exclude '.git' --exclude '.env' --exclude '*.log' ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
+                        rsync -avz --delete --exclude '.git' --exclude '.env' --exclude '.active-color' --exclude '.gateway-nginx.conf' --exclude '*.log' ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
                     '''
                 }
             }
@@ -70,17 +70,7 @@ pipeline {
             steps {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
-                        ssh ${TARGET_USER}@${TARGET_SERVER} "
-                            set -eu
-                            cd ${DEPLOY_PATH}
-                            docker compose down --remove-orphans
-                            for container in \$(docker ps -q --filter publish=9000); do
-                                echo \"Removing previous BabyStar port owner: \$container\"
-                                docker rm -f \"\$container\"
-                            done
-                            docker compose up -d --build
-                            docker compose ps
-                        "
+                        ssh ${TARGET_USER}@${TARGET_SERVER} "cd ${DEPLOY_PATH} && bash infra/deploy-blue-green.sh"
                     '''
                 }
             }
