@@ -71,7 +71,13 @@ pipeline {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
                         ssh ${TARGET_USER}@${TARGET_SERVER} "
+                            set -eu
                             cd ${DEPLOY_PATH}
+                            docker compose down --remove-orphans
+                            for container in \$(docker ps -q --filter publish=9000); do
+                                echo \"Removing previous BabyStar port owner: \$container\"
+                                docker rm -f \"\$container\"
+                            done
                             docker compose up -d --build
                             docker compose ps
                         "
