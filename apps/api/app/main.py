@@ -307,7 +307,9 @@ def google_login(payload: GoogleLoginRequest, request: Request, db: Session = De
 
 
 @api.get("/auth/google/config")
-def google_config() -> dict[str, Any]:
+def google_config(response: Response) -> dict[str, Any]:
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
     return {"success": True, "configured": bool(settings.google_client_id), "client_id": settings.google_client_id}
 
 
