@@ -11,6 +11,7 @@ yarn.lock
 **/.pytest_cache/
 apps/web/.next/
 .active-color
+.deployed-commit
 .gateway-nginx.conf
 .gateway-nginx.conf.tmp
 

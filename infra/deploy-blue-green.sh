@@ -11,6 +11,19 @@ if [[ -f .env ]]; then
   set +a
 fi
 
+exec 9>/tmp/babystar-deploy.lock
+echo "Waiting for the BabyStar deployment lock..."
+flock 9
+
+deployment_commit="${DEPLOY_COMMIT:-}"
+if [[ -n "$deployment_commit" && -f .deployed-commit ]]; then
+  deployed_commit="$(tr -d '[:space:]' < .deployed-commit)"
+  if [[ "$deployed_commit" == "$deployment_commit" ]]; then
+    echo "Commit ${deployment_commit} is already deployed; nothing to do."
+    exit 0
+  fi
+fi
+
 POSTGRES_DB="${POSTGRES_DB:-babystar}"
 POSTGRES_USER="${POSTGRES_USER:-babystar}"
 export POSTGRES_DB POSTGRES_USER
@@ -67,10 +80,12 @@ cleanup_legacy_stack
 
 docker network create babystar_shared >/dev/null 2>&1 || true
 docker volume create babystar_babystar_postgres >/dev/null
-if ! docker ps --format '{{.Names}}' | grep -qx babystar-db-shared; then
-  docker rm -f babystar-db-shared >/dev/null 2>&1 || true
+if docker ps -aq --filter 'name=^/babystar-db-shared$' | grep -q .; then
+  docker start babystar-db-shared >/dev/null 2>&1 || true
+  docker network connect babystar_shared babystar-db-shared >/dev/null 2>&1 || true
+else
+  docker compose --project-name babystar-db --env-file .env -f docker-compose.db.yml up -d
 fi
-docker compose --project-name babystar-db --env-file .env -f docker-compose.db.yml up -d
 
 for attempt in $(seq 1 30); do
   if docker exec babystar-db-shared pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
@@ -116,5 +131,8 @@ if [[ "$active_color" == "blue" || "$active_color" == "green" ]]; then
 fi
 
 printf '%s\n' "$next_color" > .active-color
+if [[ -n "$deployment_commit" ]]; then
+  printf '%s\n' "$deployment_commit" > .deployed-commit
+fi
 trap - EXIT
 echo "BabyStar ${next_color} is active on ports ${next_api_port}/${next_web_port}."

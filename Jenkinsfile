@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    options {
+        // GitHub can deliver duplicate push events. Do not deploy two builds at once.
+        disableConcurrentBuilds()
+        quietPeriod(10)
+    }
+
     environment {
         TARGET_SERVER = '192.168.1.199'
         TARGET_USER = 'deployer'
@@ -51,7 +57,7 @@ pipeline {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "mkdir -p ${DEPLOY_PATH}"
                         ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "rm -rf ${DEPLOY_PATH}/server ${DEPLOY_PATH}/client ${DEPLOY_PATH}/dataset"
-                        rsync -avz --delete --exclude '.git' --exclude '.env' --exclude '.active-color' --exclude '.gateway-nginx.conf' --exclude 'server/' --exclude 'client/' --exclude 'dataset/' --exclude '*.log' ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
+                        rsync -avz --delete --exclude '.git' --exclude '.env' --exclude '.active-color' --exclude '.deployed-commit' --exclude '.gateway-nginx.conf' --exclude 'server/' --exclude 'client/' --exclude 'dataset/' --exclude '*.log' ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
                     '''
                 }
             }
@@ -74,7 +80,7 @@ pipeline {
             steps {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
-                        ssh ${TARGET_USER}@${TARGET_SERVER} "cd ${DEPLOY_PATH} && bash infra/deploy-blue-green.sh"
+                        ssh ${TARGET_USER}@${TARGET_SERVER} "cd ${DEPLOY_PATH} && DEPLOY_COMMIT=${GIT_COMMIT} bash infra/deploy-blue-green.sh"
                     '''
                 }
             }
