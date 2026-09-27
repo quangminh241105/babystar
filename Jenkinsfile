@@ -50,7 +50,8 @@ pipeline {
                 sshagent(['ubuntu-vm-jenkins']) {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "mkdir -p ${DEPLOY_PATH}"
-                        rsync -avz --delete --exclude '.git' --exclude '.env' --exclude '.active-color' --exclude '.gateway-nginx.conf' --exclude '*.log' ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
+                        ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "rm -rf ${DEPLOY_PATH}/server ${DEPLOY_PATH}/client ${DEPLOY_PATH}/dataset"
+                        rsync -avz --delete --exclude '.git' --exclude '.env' --exclude '.active-color' --exclude '.gateway-nginx.conf' --exclude 'server/' --exclude 'client/' --exclude 'dataset/' --exclude '*.log' ./ ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/
                     '''
                 }
             }
@@ -60,7 +61,10 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'babystar-env', variable: 'ENV_FILE')]) {
                     sshagent(['ubuntu-vm-jenkins']) {
-                        sh 'scp -o StrictHostKeyChecking=no "$ENV_FILE" ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/.env'
+                        sh '''
+                            scp -o StrictHostKeyChecking=no "$ENV_FILE" ${TARGET_USER}@${TARGET_SERVER}:${DEPLOY_PATH}/.env
+                            ssh -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_SERVER} "sed -i 's/\\r$//' ${DEPLOY_PATH}/.env"
+                        '''
                     }
                 }
             }
