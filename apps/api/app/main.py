@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+import logging
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
@@ -58,6 +59,8 @@ from .security import (
     token_digest,
     verify_password,
 )
+
+logger = logging.getLogger(__name__)
 from .services import (
     build_weekly_report,
     completion_for_log,
@@ -283,9 +286,20 @@ def google_login(payload: GoogleLoginRequest, request: Request, db: Session = De
 
         claims = id_token.verify_oauth2_token(payload.credential, google_requests.Request(), settings.google_client_id)
     except Exception as exc:
+        logger.warning(
+            "Google ID token verification failed: error_type=%s error=%s configured_client_suffix=%s",
+            type(exc).__name__,
+            str(exc),
+            (settings.google_client_id or "")[-12:],
+        )
         raise HTTPException(401, "Invalid Google credential") from exc
     email = claims.get("email", "").lower()
     if not email or claims.get("email_verified") is not True:
+        logger.warning(
+            "Google ID token has no verified email: email_present=%s email_verified=%r",
+            bool(email),
+            claims.get("email_verified"),
+        )
         raise HTTPException(401, "Google account email is not verified")
     user = db.scalar(select(User).where(or_(User.google_id == claims.get("sub"), User.email == email)))
     if not user:
