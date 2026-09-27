@@ -10,6 +10,7 @@ yarn.lock
 **/__pycache__/
 **/.pytest_cache/
 apps/web/.next/
+apps/web/out/
 .active-color
 .deployed-state
 .gateway-nginx.conf

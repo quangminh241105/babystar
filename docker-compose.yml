@@ -49,9 +49,6 @@ services:
 
   web:
     build: ./apps/web
-    environment:
-      API_ORIGIN: http://api:8000
-      NEXT_PUBLIC_API_URL: /api/v1
     depends_on:
       api:
         condition: service_healthy
