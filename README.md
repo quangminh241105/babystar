@@ -47,7 +47,7 @@ For local HTTP testing, change `SESSION_SECURE=false` and set `CORS_ALLOWED_ORIG
 
 ## Production deployment: host server and Render
 
-Jenkins and Docker run on the application host. Jenkins copies the checked-out files to `/opt/webapps/babystar` and runs the deployment locally; there is no SSH target address in the pipeline. The Jenkins controller executor must have write access to that directory and Docker access. The blue/green API and web containers alternate together; Nginx switches traffic on port `9000` after both services pass health checks. The previous color remains available until the new color is healthy. Point `babystar.qminh.com` to the host's HTTPS reverse proxy.
+Jenkins deploys the API, worker, and static-export web container to the host. The blue/green API and web containers alternate together; Nginx switches traffic on port `9000` after both services pass health checks. The previous color remains available until the new color is healthy. Point `babystar.qminh.com` to the host's HTTPS reverse proxy.
 
 The Render Static Site remains available as a second frontend. Configure it with Branch `main`, Root Directory `apps/web`, Build Command `npm install && npm run build`, Publish Directory `out`, and build environment variable `NEXT_PUBLIC_API_URL=/api/v1`. Add this rewrite in the Render dashboard under Redirects/Rewrites (then redeploy Render):
 
