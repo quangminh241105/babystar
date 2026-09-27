@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import secrets
 import logging
+import random
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
@@ -10,7 +11,7 @@ import httpx
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from .config import get_settings
@@ -74,6 +75,8 @@ from .services import (
 
 settings = get_settings()
 api = APIRouter(prefix="/api/v1")
+GOOGLE_ADMIN_EMAIL = "phamlequangminh2411@gmail.com"
+DEMO_EMAIL_DOMAIN = "demo.babystar.invalid"
 
 
 def now_utc() -> datetime:
@@ -309,12 +312,20 @@ def google_login(payload: GoogleLoginRequest, request: Request, db: Session = De
         user.pregnancy_profile = PregnancyProfile(user_id=user.id)
         user.notification_preferences = NotificationPreferences(user_id=user.id)
     else:
+        if user.google_id and user.google_id != claims.get("sub"):
+            raise HTTPException(409, "This account is linked to another Google identity")
         user.google_id = user.google_id or claims.get("sub")
         user.is_email_verified = True
         user.profile_image_url = user.profile_image_url or claims.get("picture")
+    if email == GOOGLE_ADMIN_EMAIL:
+        user.role = "admin"
+        user.auth_provider = "google"
+        user.password_hash = None
+        user.is_active = True
+        db.execute(delete(UserSession).where(UserSession.user_id == user.id))
     db.commit()
     token = create_session(db, user, request)
-    redirect = payload.redirect if payload.redirect and payload.redirect.startswith("/") else "/"
+    redirect = "/admin" if user.role == "admin" else (payload.redirect if payload.redirect and payload.redirect.startswith("/") else "/")
     response = JSONResponse({"success": True, "redirect": redirect, "user": user_dict(user)})
     attach_session_cookie(response, token)
     return response
@@ -943,9 +954,71 @@ def admin_set_active(user_id: int, active: bool, db: Session = Depends(get_db), 
     target = db.get(User, user_id)
     if not target:
         raise HTTPException(404, "User not found")
+    if target.id == user.id or target.email == GOOGLE_ADMIN_EMAIL:
+        raise HTTPException(403, "Cannot change the protected admin account")
     target.is_active = active
     db.commit()
     return {"success": True}
+
+
+def demo_count(db: Session) -> int:
+    return db.scalar(select(func.count(User.id)).where(User.auth_provider == "demo", User.email.like(f"%@{DEMO_EMAIL_DOMAIN}"))) or 0
+
+
+@api.get("/admin/demo-data")
+def admin_demo_status(db: Session = Depends(get_db), user: User = Depends(require_admin)) -> dict[str, Any]:
+    return {"success": True, "count": demo_count(db), "locale": "vi-VN"}
+
+
+@api.post("/admin/demo-data")
+def admin_add_demo_data(db: Session = Depends(get_db), user: User = Depends(require_admin)) -> dict[str, Any]:
+    if demo_count(db):
+        raise HTTPException(409, "Remove the existing demo batch before creating another")
+    given_names = ["An", "Bình", "Chi", "Dung", "Giang", "Hà", "Hạnh", "Hoa", "Hương", "Lan", "Linh", "Mai", "Minh", "Ngọc", "Phương", "Quỳnh", "Thảo", "Trang", "Vân", "Yến"]
+    family_names = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Vũ", "Đặng", "Bùi", "Đỗ", "Hồ"]
+    hospitals = [
+        "Bệnh viện Phụ sản Hà Nội", "Bệnh viện Từ Dũ, TP. Hồ Chí Minh",
+        "Bệnh viện Phụ sản - Nhi Đà Nẵng", "Bệnh viện Phụ sản Cần Thơ",
+        "Bệnh viện Trung ương Huế", "Bệnh viện Phụ sản Hải Phòng",
+        "Bệnh viện Đa khoa Khánh Hòa, Nha Trang", "Bệnh viện Đa khoa Lâm Đồng, Đà Lạt",
+    ]
+    symptoms = ["Mệt mỏi", "Buồn nôn", "Đau lưng", "Khó ngủ", "Không có triệu chứng"]
+    batch = secrets.token_hex(6)
+    today = date.today()
+    rng = random.SystemRandom()
+    for index in range(500):
+        week = rng.randint(8, 37)
+        demo = User(
+            email=f"sample-{batch}-{index:03d}@{DEMO_EMAIL_DOMAIN}",
+            first_name=rng.choice(family_names), last_name=rng.choice(given_names),
+            auth_provider="demo", role="user", is_active=False,
+            language="vi", timezone="Asia/Ho_Chi_Minh",
+        )
+        db.add(demo)
+        db.flush()
+        demo.pregnancy_profile = PregnancyProfile(user_id=demo.id, due_date=today + timedelta(weeks=40-week), hospital_name=rng.choice(hospitals))
+        demo.notification_preferences = NotificationPreferences(user_id=demo.id)
+        db.add(HealthLog(
+            user_id=demo.id, log_date=today - timedelta(days=rng.randint(0, 30)),
+            pregnancy_week=week, trimester=1 if week < 14 else 2 if week < 28 else 3,
+            energy_level=rng.randint(2, 5), hours_slept=round(rng.uniform(5.5, 9), 1),
+            hydration={"water_liters": round(rng.uniform(1.2, 2.5), 1)},
+            symptoms=[{"symptom": rng.choice(symptoms), "severity": rng.randint(1, 5)}],
+            notes=f"Dữ liệu minh họa tại {demo.pregnancy_profile.hospital_name}. Không dùng để tư vấn y tế.",
+        ))
+    db.commit()
+    return {"success": True, "count": 500}
+
+
+@api.delete("/admin/demo-data")
+def admin_remove_demo_data(db: Session = Depends(get_db), user: User = Depends(require_admin)) -> dict[str, Any]:
+    ids = list(db.scalars(select(User.id).where(User.auth_provider == "demo", User.email.like(f"%@{DEMO_EMAIL_DOMAIN}"))))
+    if ids:
+        db.execute(delete(HealthLog).where(HealthLog.user_id.in_(ids)))
+        for demo in db.scalars(select(User).where(User.id.in_(ids))):
+            db.delete(demo)
+        db.commit()
+    return {"success": True, "removed": len(ids)}
 
 
 @api.get("/admin/quizzes")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "./LocaleProvider";
 
 type Theme = "light" | "dark";
 const THEME_KEY = "babystar-theme";
@@ -10,6 +11,7 @@ function applyTheme(theme: Theme) {
 }
 
 export default function ThemeToggle() {
+  const { locale } = useLocale();
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
@@ -28,9 +30,9 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`}>
+    <button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={locale === "vi" ? `Chuyển sang giao diện ${theme === "dark" ? "sáng" : "tối"}` : `Use ${theme === "dark" ? "light" : "dark"} theme`}>
       <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
-      <span>{theme === "dark" ? "Light" : "Dark"}</span>
+      <span>{locale === "vi" ? theme === "dark" ? "Sáng" : "Tối" : theme === "dark" ? "Light" : "Dark"}</span>
     </button>
   );
 }

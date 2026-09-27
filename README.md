@@ -30,6 +30,10 @@ Production CORS defaults to only `https://babystar.qminh.com` and `https://babys
 
 Google sign-in uses the public `GOOGLE_CLIENT_ID` from the API environment. Add the production domains (and any Render/Vercel frontend origin) to the Google OAuth client's authorized JavaScript origins. The frontend reads the configured client ID from `/api/v1/auth/google/config`; the client secret is never exposed.
 
+The verified Google account `phamlequangminh2411@gmail.com` receives the admin role on Google sign-in and is sent to `/admin`. If that email had a password account, its password and previous sessions are removed on promotion so admin access uses Google authentication. Admin API routes still enforce the role server-side.
+
+The admin dashboard can create one batch of 500 inactive Vietnamese demo accounts, each with a pregnancy profile and health log. Accounts are tagged with `auth_provider=demo` and a reserved `.invalid` email domain; the remove action deletes only those tagged accounts and their records. The EN/VI and light/dark choices are stored in the browser.
+
 ## Run with Docker Compose
 
 ```powershell
