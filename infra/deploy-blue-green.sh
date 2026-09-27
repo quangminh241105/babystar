@@ -16,10 +16,11 @@ echo "Waiting for the BabyStar deployment lock..."
 flock 9
 
 deployment_commit="${DEPLOY_COMMIT:-}"
-if [[ -n "$deployment_commit" && -f .deployed-commit ]]; then
-  deployed_commit="$(tr -d '[:space:]' < .deployed-commit)"
-  if [[ "$deployed_commit" == "$deployment_commit" ]]; then
-    echo "Commit ${deployment_commit} is already deployed; nothing to do."
+env_fingerprint="$(sed 's/\r$//' .env | sha256sum | awk '{print $1}')"
+if [[ -n "$deployment_commit" && -f .deployed-state ]]; then
+  read -r deployed_commit deployed_env_fingerprint < .deployed-state || true
+  if [[ "$deployed_commit" == "$deployment_commit" && "$deployed_env_fingerprint" == "$env_fingerprint" ]]; then
+    echo "Commit ${deployment_commit} with the current environment is already deployed; nothing to do."
     exit 0
   fi
 fi
@@ -132,7 +133,7 @@ fi
 
 printf '%s\n' "$next_color" > .active-color
 if [[ -n "$deployment_commit" ]]; then
-  printf '%s\n' "$deployment_commit" > .deployed-commit
+  printf '%s %s\n' "$deployment_commit" "$env_fingerprint" > .deployed-state
 fi
 trap - EXIT
 echo "BabyStar ${next_color} is active on ports ${next_api_port}/${next_web_port}."
